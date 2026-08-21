@@ -1,0 +1,111 @@
+// module for export functionality
+
+window.openSettings = function() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeSettings = function() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+window.exportAllData = function() {
+    const data = window.DB;
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const d = new Date();
+    const dateStr = d.toISOString().split('T')[0].replace(/-/g, '');
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lifeos_backup_${dateStr}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    if (window.toast) window.toast('Đã tải xuống bản sao lưu (JSON)', 'success');
+};
+
+window.exportFinanceCSV = function() {
+    const income = window.DB.income || [];
+    const expense = window.DB.expense || [];
+    
+    let csvContent = "Type,Date,Amount,Category/Source,Payment Method,Note\n";
+    
+    income.forEach(i => {
+        csvContent += `Income,${i.date || ''},${i.amt || 0},"${i.src || ''}","", "${i.note || ''}"\n`;
+    });
+    
+    expense.forEach(e => {
+        csvContent += `Expense,${e.date || ''},${e.amt || 0},"${e.cat || ''}","${e.pay || ''}","${e.note || ''}"\n`;
+    });
+    
+    const blob = new Blob(["\uFEFF"+csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM for excel
+    const url = URL.createObjectURL(blob);
+    
+    const d = new Date();
+    const dateStr = d.toISOString().split('T')[0].replace(/-/g, '');
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lifeos_finance_${dateStr}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    if (window.toast) window.toast('Đã tải xuống thu chi (CSV)', 'success');
+};
+
+window.exportNoteMarkdown = function() {
+    const id = document.getElementById('noteId').value;
+    if (!id || !window.DB.notes || !window.DB.notes[id]) {
+        if(window.toast) window.toast('Không tìm thấy ghi chú', 'error');
+        return;
+    }
+    const note = window.DB.notes[id];
+    let md = '# ' + (note.title || 'Untitled') + '\n\n';
+    
+    try {
+        const bodyObj = JSON.parse(note.body);
+        if (bodyObj.blocks) {
+            bodyObj.blocks.forEach(b => {
+                if (b.type === 'paragraph') md += b.data.text + '\n\n';
+                else if (b.type === 'header') md += '#'.repeat(b.data.level) + ' ' + b.data.text + '\n\n';
+                else if (b.type === 'list') {
+                    b.data.items.forEach(i => {
+                        md += (b.data.style === 'ordered' ? '1. ' : '- ') + i + '\n';
+                    });
+                    md += '\n';
+                }
+                else if (b.type === 'checklist') {
+                    b.data.items.forEach(i => {
+                        md += (i.checked ? '- [x] ' : '- [ ] ') + i.text + '\n';
+                    });
+                    md += '\n';
+                }
+                else if (b.type === 'code') md += '```\n' + b.data.code + '\n```\n\n';
+                else if (b.type === 'quote') md += '> ' + b.data.text + '\n\n';
+                else if (b.type === 'delimiter') md += '---\n\n';
+            });
+        }
+    } catch (e) {
+        // Fallback if not JSON (old notes)
+        const tmp = document.createElement('div');
+        tmp.innerHTML = note.body || '';
+        md += tmp.innerText || tmp.textContent;
+    }
+    
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (note.title || 'Note') + '.md';
+    a.click();
+    URL.revokeObjectURL(url);
+    if(window.toast) window.toast('Đã tải xuống Markdown', 'success');
+};

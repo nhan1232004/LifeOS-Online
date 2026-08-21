@@ -1,0 +1,17 @@
+{
+  "name": "LifeOS",
+  "short_name": "LifeOS",
+  "description": "Quản lý lịch, công việc và tài chính cá nhân",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07070f",
+  "theme_color": "#07070f",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
