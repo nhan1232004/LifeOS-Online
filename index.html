@@ -34,7 +34,7 @@ import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where
  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
- apiKey: "YOUR_FIREBASE_API_KEY",
+ apiKey: "",
  authDomain: "dashboard-39cf8.firebaseapp.com",
  projectId: "dashboard-39cf8",
  storageBucket: "dashboard-39cf8.firebasestorage.app",
@@ -43,7 +43,7 @@ const firebaseConfig = {
  measurementId: "G-QR34BV0C0X"
 };
 
-window.DEMO_MODE = firebaseConfig.apiKey === "PASTE_YOUR_API_KEY";
+window.DEMO_MODE = true;
 let app, auth, db, currentUser = null; window.currentUser = null;
 if (!window.DEMO_MODE) { app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); }
 
