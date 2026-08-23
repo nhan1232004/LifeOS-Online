@@ -199,14 +199,27 @@ async function persist(col,items){
   SIDEBAR / MOBILE NAV
 ──────────────────────────────────────────────────────── */
 function toggleMobileSidebar(){
- const sb=document.getElementById('sidebar');
- const ov=document.getElementById('sbOverlay');
- sb.classList.toggle('mobile-open');
- ov.classList.toggle('active');
+ const sb = document.getElementById('sidebar');
+ const ov = document.getElementById('sbOverlay');
+ const isOpen = sb.classList.contains('mobile-open');
+ if(isOpen) {
+  closeMobileSidebar();
+ // Auto-scroll mobile nav to show active item
+ const activeNav = document.querySelector('.mnav-item.active');
+ if(activeNav) activeNav.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+ } else {
+  sb.classList.add('mobile-open');
+  ov.classList.add('active');
+  ov.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+ }
 }
 function closeMobileSidebar(){
- document.getElementById('sidebar').classList.remove('mobile-open');
- document.getElementById('sbOverlay').classList.remove('active');
+ const sb = document.getElementById('sidebar');
+ const ov = document.getElementById('sbOverlay');
+ if(sb) { sb.classList.remove('mobile-open'); sb.style.transform = ''; }
+ if(ov) { ov.classList.remove('active'); ov.style.display = 'none'; }
+ document.body.style.overflow = '';
 }
 
 let deferredPrompt;

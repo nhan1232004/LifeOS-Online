@@ -34,7 +34,7 @@ import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where
  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
- apiKey: "",
+ apiKey: "AIzaSyDOv1gI7x-9ljsrabTCH6qnsmXtteEtMO0",
  authDomain: "dashboard-39cf8.firebaseapp.com",
  projectId: "dashboard-39cf8",
  storageBucket: "dashboard-39cf8.firebasestorage.app",
@@ -43,7 +43,7 @@ const firebaseConfig = {
  measurementId: "G-QR34BV0C0X"
 };
 
-window.DEMO_MODE = true;
+window.DEMO_MODE = false;
 let app, auth, db, currentUser = null; window.currentUser = null;
 if (!window.DEMO_MODE) { app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); }
 
@@ -174,6 +174,7 @@ async function showApp(user) {
   listenSharedData();
   if (typeof renderWorkspaceSwitcher === 'function') renderWorkspaceSwitcher();
   if (window.initNotifications) window.initNotifications();
+  if (window.lucide) window.lucide.createIcons();
 }
 function showLogin() {
  document.getElementById('loginScreen').style.display='flex';
@@ -186,7 +187,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1786276431668">
+<link rel="stylesheet" href="css/style.css?v=1787504418981">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -689,11 +690,22 @@ window.getCurrentUser = () => currentUser;
 
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav" id="mobileNav">
- <div class="mnav-item active" onclick="nav('today',this)" data-page="today"><i data-lucide="sun" style="width:20px;height:20px"></i><span>Hôm nay</span></div>
- <div class="mnav-item" onclick="nav('calendar',this)" data-page="calendar"><i data-lucide="calendar" style="width:20px;height:20px"></i><span>Lịch</span></div>
- <div class="mnav-item" onclick="nav('todos',this)" data-page="todos"><i data-lucide="check-square" style="width:20px;height:20px"></i><span>Việc cần</span><span class="mnav-badge" id="mBadgeTodo" style="display:none">0</span></div>
- <div class="mnav-item" onclick="nav('notes',this)" data-page="notes"><i data-lucide="sticky-note" style="width:20px;height:20px"></i><span>Ghi chú</span></div>
- <div class="mnav-item" onclick="toggleMobileSidebar()"><i data-lucide="menu" style="width:20px;height:20px"></i><span>Thêm</span></div>
+ <div class="mnav-scroll">
+  <div class="mnav-item active" onclick="nav('today',this)" data-page="today"><i data-lucide="sun" style="width:20px;height:20px"></i><span>Hôm nay</span></div>
+  <div class="mnav-item" onclick="nav('overview',this)" data-page="overview"><i data-lucide="layout-dashboard" style="width:20px;height:20px"></i><span>Tổng quan</span></div>
+  <div class="mnav-item" onclick="nav('calendar',this)" data-page="calendar"><i data-lucide="calendar" style="width:20px;height:20px"></i><span>Lịch</span></div>
+  <div class="mnav-item" onclick="nav('schedule',this)" data-page="schedule"><i data-lucide="calendar-range" style="width:20px;height:20px"></i><span>Lịch tuần</span></div>
+  <div class="mnav-item" onclick="nav('todos',this)" data-page="todos"><i data-lucide="check-square" style="width:20px;height:20px"></i><span>Việc cần</span><span class="mnav-badge" id="mBadgeTodo" style="display:none">0</span></div>
+  <div class="mnav-item" onclick="nav('projects',this)" data-page="projects"><i data-lucide="folder-kanban" style="width:20px;height:20px"></i><span>Dự án</span></div>
+  <div class="mnav-item" onclick="nav('finance',this)" data-page="finance"><i data-lucide="wallet" style="width:20px;height:20px"></i><span>Thu chi</span></div>
+  <div class="mnav-item" onclick="nav('stats',this)" data-page="stats"><i data-lucide="bar-chart-3" style="width:20px;height:20px"></i><span>Thống kê</span></div>
+  <div class="mnav-item" onclick="nav('notes',this)" data-page="notes"><i data-lucide="sticky-note" style="width:20px;height:20px"></i><span>Ghi chú</span></div>
+  <div class="mnav-item" onclick="nav('habits',this)" data-page="habits"><i data-lucide="flame" style="width:20px;height:20px"></i><span>Thói quen</span></div>
+  <div class="mnav-item" onclick="nav('goals',this)" data-page="goals"><i data-lucide="target" style="width:20px;height:20px"></i><span>Mục tiêu</span></div>
+  <div class="mnav-item" onclick="nav('journal',this)" data-page="journal"><i data-lucide="book-open" style="width:20px;height:20px"></i><span>Nhật ký</span></div>
+  <div class="mnav-item" onclick="nav('pomodoro',this)" data-page="pomodoro"><i data-lucide="timer" style="width:20px;height:20px"></i><span>Pomodoro</span></div>
+  <div class="mnav-item" onclick="nav('vocab',this)" data-page="vocab"><i data-lucide="languages" style="width:20px;height:20px"></i><span>Từ vựng</span></div>
+ </div>
 </nav>
 </div><!-- /appShell -->
 
@@ -1120,18 +1132,18 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 
-<script src="js/workspace.js?v=1786276431668"></script>
-<script src="js/projViews.js?v=1786276431668"></script>
-<script src="js/main.js?v=1786276431668"></script>
-<script src="js/modules/todos.js?v=1786276431668"></script>
-<script src="js/modules/notes.js?v=1786276431668"></script>
-<script src="js/modules/habits.js?v=1786276431668"></script>
-<script src="js/modules/goals.js?v=1786276431668"></script>
-<script src="js/modules/journal.js?v=1786276431668"></script>
-<script src="js/modules/pomodoro.js?v=1786276431668"></script>
-<script src="js/modules/vocab.js?v=1786276431668"></script>
-<script src="js/modules/mocktests.js?v=1786276431668"></script>
-<script src="js/modules/cmd.js?v=1786276431668"></script>
+<script src="js/workspace.js?v=1787504032483"></script>
+<script src="js/projViews.js?v=1787504032483"></script>
+<script src="js/main.js?v=1787504418981"></script>
+<script src="js/modules/todos.js?v=1787504032483"></script>
+<script src="js/modules/notes.js?v=1787504032483"></script>
+<script src="js/modules/habits.js?v=1787504032483"></script>
+<script src="js/modules/goals.js?v=1787504032483"></script>
+<script src="js/modules/journal.js?v=1787504032483"></script>
+<script src="js/modules/pomodoro.js?v=1787504032483"></script>
+<script src="js/modules/vocab.js?v=1787504032483"></script>
+<script src="js/modules/mocktests.js?v=1787504032483"></script>
+<script src="js/modules/cmd.js?v=1787504032483"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
