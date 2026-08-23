@@ -1161,54 +1161,30 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 
-<!-- SETTINGS MODAL -->
-<div class="overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
- <div class="modal" style="max-width:480px">
-  <div class="mh"><h3 style="display:flex;align-items:center;gap:6px"><i data-lucide="settings" style="width:18px;height:18px"></i> Cài đặt & Dữ liệu</h3><button class="mclose" onclick="closeSettings()">✕</button></div>
-  <div class="mb-body" style="display:flex;flex-direction:column;gap:16px">
-   <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
-    <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="download" style="width:14px;height:14px"></i> Sao lưu dữ liệu (JSON)</div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Tải xuống toàn bộ dữ liệu LifeOS dưới dạng JSON để sao lưu an toàn.</p>
-    <button class="btn btn-p btn-sm" onclick="exportAllData()"><i data-lucide="download" style="width:13px;height:13px;margin-right:4px"></i> Export JSON</button>
-   </div>
-   <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
-    <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="file-spreadsheet" style="width:14px;height:14px"></i> Xuất Thu Chi (CSV)</div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Tải file CSV để mở bằng Excel / Google Sheets.</p>
-    <button class="btn btn-outline btn-sm" onclick="exportFinanceCSV()"><i data-lucide="file-spreadsheet" style="width:13px;height:13px;margin-right:4px"></i> Export CSV</button>
-   </div>
-   <div style="padding:16px;background:rgba(255,82,82,0.05);border-radius:10px;border:1px solid rgba(255,82,82,0.15)">
-    <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--red);display:flex;align-items:center;gap:6px"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Xóa dữ liệu</div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Xóa toàn bộ dữ liệu trong workspace hiện tại. Không thể hoàn tác!</p>
-    <button class="btn btn-d btn-sm" onclick="if(confirm('Bạn chắc chắn muốn xóa toàn bộ dữ liệu?')) { window.DB={}; persist('events',[]); toast('Đã xóa dữ liệu!','success'); closeSettings(); }"><i data-lucide="trash-2" style="width:13px;height:13px;margin-right:4px"></i> Xóa tất cả</button>
-   </div>
-  </div>
- </div>
-</div>
-<script src="js/modules/export.js?v=1"></script>
 
 <!-- SETTINGS MODAL -->
 <div class="overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
- <div class="modal" style="max-width:460px">
+ <div class="modal" style="max-width:480px">
   <div class="mh"><h3 style="display:flex;align-items:center;gap:8px"><i data-lucide="settings" style="width:18px;height:18px;color:var(--primary)"></i> Cài đặt &amp; Dữ liệu</h3><button class="mclose" onclick="closeSettings()">✕</button></div>
   <div class="mb-body" style="display:flex;flex-direction:column;gap:14px">
    <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
     <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="download" style="width:14px;height:14px;color:var(--green)"></i> Sao lưu dữ liệu (JSON)</div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Tải xuống toàn bộ dữ liệu LifeOS dưới dạng JSON để sao lưu an toàn.</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Tải xuống toàn bộ dữ liệu LifeOS dưới dạng JSON để sao lưu an toàn.</p>
     <button class="btn btn-p btn-sm" onclick="exportAllData()"><i data-lucide="download" style="width:13px;height:13px;margin-right:4px"></i> Export JSON</button>
    </div>
    <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
     <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="file-spreadsheet" style="width:14px;height:14px;color:var(--cyan)"></i> Xuất Thu Chi (CSV)</div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Tải file CSV để mở bằng Excel / Google Sheets.</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Tải file CSV để mở bằng Excel / Google Sheets.</p>
     <button class="btn btn-outline btn-sm" onclick="exportFinanceCSV()"><i data-lucide="file-spreadsheet" style="width:13px;height:13px;margin-right:4px"></i> Export CSV</button>
    </div>
    <div style="padding:16px;background:rgba(255,82,82,0.06);border-radius:10px;border:1px solid rgba(255,82,82,0.15)">
     <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--red);display:flex;align-items:center;gap:6px"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Xóa dữ liệu</div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Xóa toàn bộ dữ liệu trong workspace hiện tại. Không thể hoàn tác!</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Xóa toàn bộ dữ liệu trong workspace hiện tại. Không thể hoàn tác!</p>
     <button class="btn btn-d btn-sm" onclick="if(confirm('Bạn chắc chắn muốn xóa toàn bộ dữ liệu?')) { window.DB={}; if(window.toast)toast('Đã xóa dữ liệu!','success'); closeSettings(); }"><i data-lucide="trash-2" style="width:13px;height:13px;margin-right:4px"></i> Xóa tất cả</button>
    </div>
   </div>
  </div>
 </div>
-<script src="js/modules/export.js?v=2"></script>
+<script src="js/modules/export.js?v=3"></script>
 </body>
 </html>

@@ -1382,3 +1382,138 @@ input[type="checkbox"]:checked {
  .mnav-item { padding: 8px 2px; }
  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
 }
+
+
+/* ═══════════════════════════════════════════════════════════
+  PREMIUM MOBILE UI & TOUCH UX ENHANCEMENTS
+═══════════════════════════════════════════════════════════ */
+
+/* Prevent iOS auto-zoom on form inputs */
+@media (max-width: 639px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Modal Bottom-Sheet design on mobile */
+@media (max-width: 639px) {
+  .overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  
+  .overlay .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 88dvh !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6) !important;
+  }
+  
+  .overlay.open .modal {
+    transform: translateY(0) !important;
+  }
+
+  /* Handle / Drag pill for mobile modal */
+  .modal::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: var(--glass-b);
+    border-radius: 2px;
+    margin: 8px auto 4px;
+    flex-shrink: 0;
+  }
+
+  .mh {
+    padding: 10px 18px 14px !important;
+    background: var(--bg1) !important;
+  }
+
+  .mb-body {
+    padding: 16px 18px 24px !important;
+  }
+
+  /* Topbar responsive adjustments */
+  .topbar {
+    padding: 0 10px !important;
+    height: 54px !important;
+    justify-content: space-between;
+  }
+
+  .topbar-info {
+    max-width: 140px;
+    overflow: hidden;
+  }
+
+  .topbar-title {
+    font-size: 15px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .topbar-sub {
+    display: none;
+  }
+
+  /* Mobile Bottom Navigation Touch Polish */
+  .mobile-nav {
+    display: grid !important;
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding: 4px 0 env(safe-area-inset-bottom, 0px);
+    background: rgba(14, 14, 28, 0.92) !important;
+    backdrop-filter: blur(20px) saturate(1.8) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(1.8) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    z-index: 990 !important;
+  }
+
+  .mnav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: var(--text3);
+    border-radius: 10px;
+    margin: 0 2px;
+    user-select: none;
+  }
+
+  .mnav-item.active {
+    color: var(--primary) !important;
+    background: rgba(124, 77, 255, 0.1);
+  }
+
+  .mnav-item.active i {
+    transform: translateY(-1px);
+    color: var(--primary) !important;
+  }
+
+  /* Ensure body padding accommodates mobile nav */
+  .content {
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Improved Touch Targets */
+  .btn, .icon-btn, .sb-item {
+    touch-action: manipulation;
+  }
+
+  /* Smooth horizontal scroll for cards & grids */
+  .kpi-grid, .kanban, .tbl-wrap, #projGanttView {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  .kpi {
+    scroll-snap-align: start;
+  }
+}

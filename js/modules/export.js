@@ -1,21 +1,31 @@
 // module for export functionality
 
 window.openSettings = function() {
-    const modal = document.getElementById('settingsModal');
-    if (modal) {
-        modal.style.display = 'flex';
+    if (typeof openModal === 'function') {
+        openModal('settingsModal');
+    } else {
+        const modal = document.getElementById('settingsModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('open');
+        }
     }
 };
 
 window.closeSettings = function() {
-    const modal = document.getElementById('settingsModal');
-    if (modal) {
-        modal.style.display = 'none';
+    if (typeof closeModal === 'function') {
+        closeModal('settingsModal');
+    } else {
+        const modal = document.getElementById('settingsModal');
+        if (modal) {
+            modal.classList.remove('open');
+            modal.style.display = 'none';
+        }
     }
 };
 
 window.exportAllData = function() {
-    const data = window.DB;
+    const data = window.DB || {};
     const jsonStr = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -33,8 +43,8 @@ window.exportAllData = function() {
 };
 
 window.exportFinanceCSV = function() {
-    const income = window.DB.income || [];
-    const expense = window.DB.expense || [];
+    const income = (window.DB && window.DB.income) || [];
+    const expense = (window.DB && window.DB.expenses) || (window.DB && window.DB.expense) || [];
     
     let csvContent = "Type,Date,Amount,Category/Source,Payment Method,Note\n";
     
@@ -46,7 +56,7 @@ window.exportFinanceCSV = function() {
         csvContent += `Expense,${e.date || ''},${e.amt || 0},"${e.cat || ''}","${e.pay || ''}","${e.note || ''}"\n`;
     });
     
-    const blob = new Blob(["\uFEFF"+csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM for excel
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM for excel
     const url = URL.createObjectURL(blob);
     
     const d = new Date();
@@ -62,12 +72,17 @@ window.exportFinanceCSV = function() {
 };
 
 window.exportNoteMarkdown = function() {
-    const id = document.getElementById('noteId').value;
-    if (!id || !window.DB.notes || !window.DB.notes[id]) {
+    const idEl = document.getElementById('noteId');
+    const id = idEl ? idEl.value : null;
+    if (!id || !window.DB || !window.DB.notes) {
         if(window.toast) window.toast('Không tìm thấy ghi chú', 'error');
         return;
     }
-    const note = window.DB.notes[id];
+    const note = window.DB.notes.find(x => x.id === id);
+    if (!note) {
+        if(window.toast) window.toast('Không tìm thấy ghi chú', 'error');
+        return;
+    }
     let md = '# ' + (note.title || 'Untitled') + '\n\n';
     
     try {
@@ -94,7 +109,6 @@ window.exportNoteMarkdown = function() {
             });
         }
     } catch (e) {
-        // Fallback if not JSON (old notes)
         const tmp = document.createElement('div');
         tmp.innerHTML = note.body || '';
         md += tmp.innerText || tmp.textContent;
