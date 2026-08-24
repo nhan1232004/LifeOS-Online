@@ -1,4 +1,4 @@
-// module for export functionality
+// module for export & import functionality
 
 window.openSettings = function() {
     if (typeof openModal === 'function') {
@@ -42,9 +42,47 @@ window.exportAllData = function() {
     if (window.toast) window.toast('Đã tải xuống bản sao lưu (JSON)', 'success');
 };
 
+window.importAllData = function(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const parsed = JSON.parse(e.target.result);
+            if (typeof parsed !== 'object' || parsed === null) throw new Error('File không hợp lệ');
+
+            const collections = ['events', 'todos', 'projects', 'proj_tasks', 'income', 'expense', 'notes', 'habits', 'goals', 'journal', 'vocab', 'mocktests'];
+            let restoredCount = 0;
+
+            collections.forEach(col => {
+                if (Array.isArray(parsed[col])) {
+                    window.DB[col] = parsed[col];
+                    if (typeof persist === 'function') persist(col, window.DB[col]);
+                    restoredCount++;
+                }
+            });
+
+            if (restoredCount === 0) {
+                toast('File không chứa dữ liệu LifeOS hợp lệ!', 'error');
+                return;
+            }
+
+            if (window.renderAll) window.renderAll();
+            toast('Khôi phục dữ liệu thành công!', 'success');
+            closeSettings();
+        } catch (err) {
+            console.error('Import error:', err);
+            toast('Lỗi đọc file sao lưu: ' + err.message, 'error');
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // Reset input
+};
+
 window.exportFinanceCSV = function() {
     const income = (window.DB && window.DB.income) || [];
-    const expense = (window.DB && window.DB.expenses) || (window.DB && window.DB.expense) || [];
+    const expense = (window.DB && window.DB.expense) || (window.DB && window.DB.expenses) || [];
     
     let csvContent = "Type,Date,Amount,Category/Source,Payment Method,Note\n";
     
@@ -56,7 +94,7 @@ window.exportFinanceCSV = function() {
         csvContent += `Expense,${e.date || ''},${e.amt || 0},"${e.cat || ''}","${e.pay || ''}","${e.note || ''}"\n`;
     });
     
-    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM for excel
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     
     const d = new Date();

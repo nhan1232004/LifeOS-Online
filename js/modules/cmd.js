@@ -70,7 +70,13 @@ function updateCmdSelection() {
 
 function executeCmd(item) {
   closeModal('mCmd');
-  if (item.type === 'action') {
+  if (item.type === 'ai') {
+    closeModal('mCmd');
+    if (typeof window.askAiQuick === 'function') {
+      window.askAiQuick(item.query);
+    }
+    return;
+  } else if (item.type === 'action') {
     item.action();
   } else if (item.type === 'todo') {
     nav('todos', document.querySelector('[data-page="todos"]'));
@@ -179,6 +185,14 @@ setTimeout(() => {
     // Limit to 20 results
     cmdItems = cmdItems.slice(0, 20);
     
+    // Always prepend or provide "Ask LifeOS AI" option
+    cmdItems.unshift({
+      type: 'ai',
+      text: `✨ Hỏi LifeOS AI: "${q}"`,
+      desc: 'Yêu cầu AI thực hiện hoặc giải đáp ngay',
+      icon: 'sparkles',
+      query: q
+    });
     if (cmdItems.length === 0) {
       resEl.innerHTML = '<div style="color:var(--text3); font-size:13px; text-align:center; padding:20px;">Không tìm thấy kết quả.</div>';
     } else {

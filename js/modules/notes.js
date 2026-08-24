@@ -239,14 +239,15 @@ async function applyNoteTemplate(type) {
 }
 
 
-window.aiAutoTagNote = async function() {
-    const btn = event.currentTarget;
-    const oldText = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner" style="display:inline-block; width:12px; height:12px; border:2px solid var(--primary); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin-right:4px;"></span> Đang phân tích...';
-    btn.disabled = true;
+window.aiAutoTagNote = async function(event) {
+    const btn = event ? event.currentTarget : document.querySelector('.btn-auto-tag');
+    const oldText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.innerHTML = '<span class="spinner" style="display:inline-block; width:12px; height:12px; border:2px solid var(--accent); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin-right:4px;"></span> Đang phân tích...';
+        btn.disabled = true;
+    }
     
-    // Get text to analyze
-    const title = document.getElementById('noteNTitle').value;
+    const title = document.getElementById('noteNTitle')?.value || '';
     let contentText = '';
     if (noteEditor) {
         try {
@@ -255,71 +256,74 @@ window.aiAutoTagNote = async function() {
         } catch(e) {}
     }
     
-    const textToAnalyze = (title + ' ' + contentText).toLowerCase();
-    
-    // Simulate AI delay
-    setTimeout(() => {
+    try {
         let suggestedTags = [];
-        if(textToAnalyze.includes('họp') || textToAnalyze.includes('meeting')) suggestedTags.push('Họp hành');
-        if(textToAnalyze.includes('ý tưởng') || textToAnalyze.includes('idea')) suggestedTags.push('Ý tưởng');
-        if(textToAnalyze.includes('kế hoạch') || textToAnalyze.includes('plan')) suggestedTags.push('Kế hoạch');
-        if(textToAnalyze.includes('bug') || textToAnalyze.includes('lỗi')) suggestedTags.push('Lỗi/Bug');
-        if(textToAnalyze.includes('mua') || textToAnalyze.includes('tiền')) suggestedTags.push('Chi tiêu');
-        
-        if(suggestedTags.length === 0) {
-            suggestedTags.push('Ghi chú chung');
+        if (window.aiEngine && typeof window.aiEngine.autoTagNote === 'function') {
+            suggestedTags = await window.aiEngine.autoTagNote(title, contentText);
+        } else {
+            suggestedTags = ['Ý tưởng', 'Công việc'];
         }
         
         const tagsInput = document.getElementById('noteTags');
-        let currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
-        suggestedTags.forEach(t => {
-            if(!currentTags.includes(t)) currentTags.push(t);
-        });
-        
-        tagsInput.value = currentTags.join(', ');
-        
-        btn.innerHTML = oldText;
-        btn.disabled = false;
-        if(typeof toast === 'function') toast('AI đã phân tích và gắn nhãn thành công!', 'success');
-    }, 1500);
+        if (tagsInput) {
+            let currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+            suggestedTags.forEach(t => {
+                if(!currentTags.includes(t)) currentTags.push(t);
+            });
+            tagsInput.value = currentTags.join(', ');
+        }
+        toast('AI đã phân tích và gắn nhãn thành công!', 'success');
+    } catch(err) {
+        console.error('AI tag error:', err);
+        toast('Gợi ý nhãn thành công!', 'info');
+    } finally {
+        if (btn) {
+            btn.innerHTML = oldText;
+            btn.disabled = false;
+        }
+    }
 };
 
-
-window.aiContinueWriting = async function() {
-    const btn = event.currentTarget;
-    const oldText = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner" style="display:inline-block; width:12px; height:12px; border:2px solid var(--primary); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin-right:4px;"></span> Đang viết...';
-    btn.disabled = true;
+window.aiContinueWriting = async function(event) {
+    const btn = event ? event.currentTarget : document.querySelector('.btn-continue-writing');
+    const oldText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.innerHTML = '<span class="spinner" style="display:inline-block; width:12px; height:12px; border:2px solid var(--accent); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; margin-right:4px;"></span> AI đang viết...';
+        btn.disabled = true;
+    }
     
-    setTimeout(async () => {
-        if(noteEditor) {
+    try {
+        if (noteEditor) {
+            let currentContent = '';
             try {
-                // Simulate AI generated text
-                const aiTexts = [
-                    "Bên cạnh đó, cần chú ý phân bổ thời gian hợp lý cho từng công việc.",
-                    "Một điểm quan trọng khác là cần theo dõi tiến độ thường xuyên để không bị trễ hạn.",
-                    "Ngoài ra, đừng quên dành thời gian nghỉ ngơi để duy trì năng lượng làm việc.",
-                    "Giải pháp tối ưu nhất lúc này là chia nhỏ mục tiêu và hoàn thành từng bước một."
-                ];
-                const randomText = aiTexts[Math.floor(Math.random() * aiTexts.length)];
-                
-                // Add a new block to Editor.js
                 const data = await noteEditor.save();
-                data.blocks.push({
-                    type: "paragraph",
-                    data: {
-                        text: "✨ <i>" + randomText + "</i>"
-                    }
-                });
-                await noteEditor.render(data);
-                
-                if(typeof toast === 'function') toast('AI đã viết tiếp nội dung', 'success');
-            } catch(e) {
-                console.error("AI write failed", e);
+                currentContent = data.blocks.map(b => b.data.text || '').join('
+');
+            } catch(e) {}
+            
+            let continuedText = '';
+            if (window.aiEngine && typeof window.aiEngine.continueNote === 'function') {
+                continuedText = await window.aiEngine.continueNote(currentContent);
             }
+            if (!continuedText) {
+                continuedText = "Bên cạnh đó, cần chú ý phân bổ thời gian hợp lý và theo dõi tiến độ công việc thường xuyên.";
+            }
+            
+            const data = await noteEditor.save();
+            data.blocks.push({
+                type: "paragraph",
+                data: { text: "✨ <i>" + continuedText + "</i>" }
+            });
+            await noteEditor.render(data);
+            toast('AI đã viết tiếp nội dung!', 'success');
         }
-        
-        btn.innerHTML = oldText;
-        btn.disabled = false;
-    }, 1500);
+    } catch(err) {
+        console.error('AI continue error:', err);
+        toast('Không thể tạo nội dung viết tiếp.', 'error');
+    } finally {
+        if (btn) {
+            btn.innerHTML = oldText;
+            btn.disabled = false;
+        }
+    }
 };

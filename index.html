@@ -216,7 +216,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1787590053930">
+<link rel="stylesheet" href="css/style.css?v=1787591005716">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -1180,49 +1180,42 @@ window.getCurrentUser = () => currentUser;
   <i data-lucide="bot" style="width:24px; height:24px;"></i>
 </div>
 
-<div id="aiChatPanel" style="display:none; position:fixed; bottom:80px; right:20px; width:350px; max-height:500px; height:70vh; background:var(--bg2); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.3); z-index:9999; flex-direction:column; overflow:hidden;">
-  <div style="padding:12px 16px; background:var(--pri); color:#fff; display:flex; justify-content:space-between; align-items:center;">
+<div id="aiModal" style="display:none; position:fixed; bottom:82px; right:18px; width:380px; max-width:calc(100vw - 36px); max-height:560px; height:75vh; background:var(--bg-raised); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-lg); z-index:9999; flex-direction:column; overflow:hidden; animation:pageFadeIn 0.25s ease;">
+  <!-- Header -->
+  <div style="padding:14px 18px; background:linear-gradient(135deg, var(--accent), #5e35b1); color:#fff; display:flex; justify-content:space-between; align-items:center;">
     <div style="display:flex; align-items:center; gap:8px;">
-      <i data-lucide="sparkles" style="width:18px;height:18px;"></i>
-      <strong style="font-size:15px;">LifeOS AI Cố vấn</strong>
+      <i data-lucide="sparkles" class="ic-18"></i>
+      <strong style="font-size:15px; font-weight:700;">LifeOS AI Trợ Lý</strong>
     </div>
-    <div style="display:flex; gap:8px;">
-      <button onclick="clearAiHistory()" style="background:transparent; border:none; color:#fff; cursor:pointer;" title="Xóa lịch sử chat"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>
-      <button onclick="toggleAiSettings()" style="background:transparent; border:none; color:#fff; cursor:pointer;"><i data-lucide="settings" style="width:16px;height:16px;"></i></button>
-      <button onclick="toggleAiChat()" style="background:transparent; border:none; color:#fff; cursor:pointer;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
-    </div>
-  </div>
-
-  <div id="aiSettings" style="display:none; padding:12px; border-bottom:1px solid var(--border); background:var(--bg);">
-    <label style="font-size:12px; color:var(--text3); margin-bottom:4px; display:block;">Google Gemini API Key:</label>
-    <div style="display:flex; gap:6px; margin-bottom:8px;">
-      <input type="password" id="aiApiKey" placeholder="Nhập API Key..." style="flex:1; padding:6px 10px; border-radius:6px; border:1px solid var(--border); background:var(--bg2); color:var(--text1); font-size:12px;">
-    </div>
-    <label style="font-size:12px; color:var(--text3); margin-bottom:4px; display:block;">Chọn Mô hình (Model):</label>
-    <div style="display:flex; gap:6px;">
-      <select id="aiModelSelect" style="flex:1; padding:6px 10px; border-radius:6px; border:1px solid var(--border); background:var(--bg2); color:var(--text1); font-size:12px;">
-        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (Nhanh, nhẹ)</option>
-        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-        <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
-        <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (Cao cấp)</option>
-        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Cổ điển)</option>
-      </select>
-      <button class="btn btn-p btn-sm" onclick="saveAiKey()">Lưu</button>
-    </div>
-    <div style="font-size:10px; color:var(--amber); margin-top:4px;">*Mã và cài đặt được lưu cục bộ trên trình duyệt.</div>
-  </div>
-
-  <div id="aiMessages" style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px; font-size:13px; line-height:1.5;">
-    <div style="align-self:flex-start; background:var(--bg); border:1px solid var(--border); padding:10px 14px; border-radius:12px; border-bottom-left-radius:2px; max-width:85%;">
-      Chào bạn! Tôi là Cố vấn AI của LifeOS. Tôi có thể phân tích dữ liệu tài chính, công việc và đưa ra lời khuyên cho bạn. Bạn cần giúp gì hôm nay?
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button onclick="openAiKeyModal()" style="background:rgba(255,255,255,0.15); border:none; color:#fff; cursor:pointer; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600;" title="Cấu hình Gemini API Key">🔑 Key</button>
+      <button onclick="clearAiHistory()" style="background:transparent; border:none; color:#fff; cursor:pointer; padding:2px;" title="Xóa lịch sử"><i data-lucide="trash-2" class="ic-16"></i></button>
+      <button onclick="toggleAiChat()" style="background:transparent; border:none; color:#fff; cursor:pointer; padding:2px;"><i data-lucide="x" class="ic-18"></i></button>
     </div>
   </div>
 
-  <div style="padding:12px; border-top:1px solid var(--border); display:flex; gap:8px; background:var(--bg2);">
-    <input type="text" id="aiChatInput" placeholder="Hỏi AI (VD: Làm sao để tiết kiệm hơn?)" style="flex:1; padding:10px 14px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text1); font-size:13px;" onkeypress="if(event.key==='Enter') sendAiMessage()">
-    <button onclick="sendAiMessage()" style="background:var(--pri); color:#fff; border:none; border-radius:50%; width:38px; height:38px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-      <i data-lucide="send" style="width:16px;height:16px;"></i>
+  <!-- Undo Pill Container -->
+  <div id="aiUndoPill" style="display:none; align-items:center; justify-content:space-between; padding:6px 14px; background:rgba(124,77,255,0.15); border-bottom:1px solid var(--border); font-size:12px; color:var(--text-hi);"></div>
+
+  <!-- Messages List -->
+  <div id="aiMessages" style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; font-size:13px; line-height:1.5;">
+    <div class="ai-msg ai-msg-bot" style="align-self:flex-start; background:var(--surface); border:1px solid var(--border); color:var(--text-hi); padding:12px 16px; border-radius:14px 14px 14px 2px; max-width:90%; font-size:13.5px; line-height:1.6;">
+      Xin chào! Tôi là <b>LifeOS AI</b>. Tôi có thể giúp bạn:<br>
+      • Thêm / sửa / xóa công việc, lịch trình, ghi chú, thói quen<br>
+      • Ghi chép thu chi & phân tích ngân sách tài chính<br>
+      • Bật / chỉnh đồng hồ Pomodoro tập trung<br>
+      • Trả lời và phân tích mọi số liệu năng suất của bạn!
+    </div>
+  </div>
+
+  <!-- Input & Controls -->
+  <div style="padding:12px; border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; background:var(--bg-overlay);">
+    <input type="text" id="aiInput" placeholder="Nhập yêu cầu (VD: thêm việc họp lúc 9h)..." style="flex:1; padding:9px 14px; border-radius:20px; border:1px solid var(--border); background:var(--bg-raised); color:var(--text-hi); font-size:13px; outline:none;" onkeypress="if(event.key==='Enter') sendAiChat()">
+    <button id="aiMicBtn" onclick="startVoiceInput()" style="background:var(--surface); border:1px solid var(--border); color:var(--text-hi); border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;" title="Nhập bằng giọng nói">
+      <i data-lucide="mic" class="ic-16"></i>
+    </button>
+    <button onclick="sendAiChat()" style="background:var(--accent); color:#fff; border:none; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 2px 8px rgba(124,77,255,0.4);" title="Gửi tin nhắn">
+      <i data-lucide="send" class="ic-16"></i>
     </button>
   </div>
 </div>
@@ -1246,18 +1239,18 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 
-<script src="js/workspace.js?v=1787590053930"></script>
-<script src="js/projViews.js?v=1787590053930"></script>
-<script src="js/main.js?v=1787590053930"></script>
-<script src="js/modules/todos.js?v=1787590053930"></script>
-<script src="js/modules/notes.js?v=1787590053930"></script>
-<script src="js/modules/habits.js?v=1787590053930"></script>
-<script src="js/modules/goals.js?v=1787590053930"></script>
-<script src="js/modules/journal.js?v=1787590053930"></script>
-<script src="js/modules/pomodoro.js?v=1787590053930"></script>
-<script src="js/modules/vocab.js?v=1787590053930"></script>
-<script src="js/modules/mocktests.js?v=1787590053930"></script>
-<script src="js/modules/cmd.js?v=1787590053930"></script>
+<script src="js/workspace.js?v=1787591005716"></script>
+<script src="js/projViews.js?v=1787591005716"></script>
+<script src="js/main.js?v=1787591005716"></script>
+<script src="js/modules/todos.js?v=1787591005716"></script>
+<script src="js/modules/notes.js?v=1787591005716"></script>
+<script src="js/modules/habits.js?v=1787591005716"></script>
+<script src="js/modules/goals.js?v=1787591005716"></script>
+<script src="js/modules/journal.js?v=1787591005716"></script>
+<script src="js/modules/pomodoro.js?v=1787591005716"></script>
+<script src="js/modules/vocab.js?v=1787591005716"></script>
+<script src="js/modules/mocktests.js?v=1787591005716"></script>
+<script src="js/modules/cmd.js?v=1787591005716"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1294,9 +1287,19 @@ window.getCurrentUser = () => currentUser;
   <div class="mh"><h3 style="display:flex;align-items:center;gap:8px"><i data-lucide="settings" style="width:18px;height:18px;color:var(--primary)"></i> Cài đặt &amp; Dữ liệu</h3><button class="mclose" onclick="closeSettings()">✕</button></div>
   <div class="mb-body" style="display:flex;flex-direction:column;gap:14px">
    <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
-    <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="download" style="width:14px;height:14px;color:var(--green)"></i> Sao lưu dữ liệu (JSON)</div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Tải xuống toàn bộ dữ liệu LifeOS dưới dạng JSON để sao lưu an toàn.</p>
-    <button class="btn btn-p btn-sm" onclick="exportAllData()"><i data-lucide="download" style="width:13px;height:13px;margin-right:4px"></i> Export JSON</button>
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="sparkles" style="width:14px;height:14px;color:var(--accent)"></i> Cấu hình Google Gemini AI Key</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Kích hoạt trợ lý AI thông minh bằng Gemini API Key (miễn phí từ Google AI Studio).</p>
+    <button class="btn btn-p btn-sm" onclick="openAiKeyModal()"><i data-lucide="key" style="width:13px;height:13px;margin-right:4px"></i> Cài đặt Gemini API Key</button>
+   </div>
+
+   <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="download" style="width:14px;height:14px;color:var(--green)"></i> Sao lưu & Khôi phục dữ liệu (JSON)</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Tải xuống toàn bộ dữ liệu hoặc khôi phục từ file JSON đã lưu trước đó.</p>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-p btn-sm" onclick="exportAllData()"><i data-lucide="download" style="width:13px;height:13px;margin-right:4px"></i> Export JSON</button>
+      <input type="file" id="importJsonFile" accept=".json" style="display:none" onchange="importAllData(event)">
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('importJsonFile').click()"><i data-lucide="upload" style="width:13px;height:13px;margin-right:4px"></i> Import / Khôi phục</button>
+    </div>
    </div>
    <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
     <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="file-spreadsheet" style="width:14px;height:14px;color:var(--cyan)"></i> Xuất Thu Chi (CSV)</div>
@@ -1311,6 +1314,7 @@ window.getCurrentUser = () => currentUser;
   </div>
  </div>
 </div>
-<script src="js/modules/export.js?v=1787590053930"></script>
+<script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
+<script src="js/modules/export.js?v=1787591005716"></script>
 </body>
 </html>

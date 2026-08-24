@@ -1855,96 +1855,77 @@ window.renderProjGantt = function(projId) {
 };
 
 
-window.generateAIDigest = function() {
+window.generateAIDigest = async function() {
     openModal('mAIDigest');
     const loading = document.getElementById('aiDigestLoading');
     const content = document.getElementById('aiDigestContent');
-    loading.style.display = 'block';
-    content.style.display = 'none';
-    
-    // Simulate AI generation time based on data
-    setTimeout(() => {
-        const now = new Date();
-        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        
-        const todos = (window.DB.todos || []).filter(t => t.done && t.date >= sevenDaysAgo);
-        const exps = (window.DB.expenses || []).filter(e => e.date >= sevenDaysAgo);
-        const notes = (window.DB.notes || []).filter(n => n.date >= sevenDaysAgo);
-        
-        let totalExp = exps.reduce((sum, e) => sum + (Number(e.amt) || 0), 0);
-        let expText = totalExp > 0 ? "Phân tích chi tiêu" : "Không có giao dịch";
-        
-        let insight = "Tuần qua bạn đã có một nhịp độ khá ổn định! ";
-        if(todos.length > 5) insight += "Đặc biệt, năng suất làm việc của bạn rất ấn tượng với " + todos.length + " nhiệm vụ hoàn thành. ";
-        else if(todos.length > 0) insight += "Bạn đang duy trì tiến độ công việc tốt. ";
-        
-        if(totalExp > 1000000) insight += "Tuy nhiên, ngân sách tuần này có vẻ đã vơi đi đáng kể (" + totalExp.toLocaleString('vi-VN') + "₫), hãy cẩn trọng hơn vào tuần tới nhé. ";
-        else if(totalExp > 0) insight += "Bạn đang quản lý chi tiêu rất kỷ luật. ";
-        
-        if(notes.length > 2) insight += "Đồng thời, sự sáng tạo của bạn cũng được thể hiện qua các ghi chú chi tiết. ";
-        insight += "Hãy tiếp tục giữ vững phong độ này trong tuần tiếp theo! 🚀";
+    if (loading) loading.style.display = 'block';
+    if (content) content.style.display = 'none';
 
-        let html = `
-<div style="display:flex; flex-direction:column; gap:20px; animation: fadeIn 0.5s ease;">
-  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px;">
+    try {
+        let digestData = null;
+        if (window.aiEngine && typeof window.aiEngine.generateWeeklyDigest === 'function') {
+            digestData = await window.aiEngine.generateWeeklyDigest();
+        }
+        if (!digestData) {
+            const now = new Date();
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const todos = (window.DB.todos || []).filter(t => t.done && t.date >= sevenDaysAgo);
+            const exps = (window.DB.expense || []).filter(e => e.date >= sevenDaysAgo);
+            const totalExp = exps.reduce((sum, e) => sum + (Number(e.amt) || 0), 0);
+            digestData = {
+                todosCount: todos.length,
+                totalExp,
+                insight: "Tuần qua bạn đã duy trì tiến độ làm việc ổn định và kiểm soát chi tiêu tốt. Hãy tiếp tục giữ vững phong độ trong tuần mới! 🚀"
+            };
+        }
+
+        const html = `
+<div style="display:flex; flex-direction:column; gap:20px; animation: pageFadeIn 0.3s ease;">
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px;">
     <!-- Tasks Card -->
-    <div style="background:var(--bg1); padding:15px; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; gap:10px;">
-       <div style="display:flex; align-items:center; gap:8px; color:var(--text2); font-size:13px; font-weight:600; text-transform:uppercase;">
-          <i data-lucide="check-circle" style="width:16px; height:16px; color:var(--primary)"></i> Công việc
+    <div class="card-glass" style="padding:16px; display:flex; flex-direction:column; gap:8px;">
+       <div style="display:flex; align-items:center; gap:8px; color:var(--text-mid); font-size:12.5px; font-weight:600; text-transform:uppercase;">
+          <i data-lucide="check-circle" class="ic-16" style="color:var(--success)"></i> Công việc
        </div>
-       <div style="font-size:28px; font-weight:bold; color:var(--text);">${todos.length}</div>
-       <div style="font-size:12px; color:var(--text3);">nhiệm vụ hoàn thành</div>
+       <div style="font-size:26px; font-weight:800; color:var(--text-hi);">${digestData.todosCount}</div>
+       <div style="font-size:11.5px; color:var(--text-low);">nhiệm vụ hoàn thành tuần qua</div>
     </div>
     
     <!-- Finance Card -->
-    <div style="background:var(--bg1); padding:15px; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; gap:10px;">
-       <div style="display:flex; align-items:center; gap:8px; color:var(--text2); font-size:13px; font-weight:600; text-transform:uppercase;">
-          <i data-lucide="wallet" style="width:16px; height:16px; color:var(--red)"></i> Chi tiêu
+    <div class="card-glass" style="padding:16px; display:flex; flex-direction:column; gap:8px;">
+       <div style="display:flex; align-items:center; gap:8px; color:var(--text-mid); font-size:12.5px; font-weight:600; text-transform:uppercase;">
+          <i data-lucide="wallet" class="ic-16" style="color:var(--danger)"></i> Chi tiêu
        </div>
-       <div style="font-size:28px; font-weight:bold; color:var(--text);">${totalExp.toLocaleString('vi-VN')}₫</div>
-       <div style="font-size:12px; color:var(--text3);">${expText}</div>
-    </div>
-    
-    <!-- Notes Card -->
-    <div style="background:var(--bg1); padding:15px; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; gap:10px;">
-       <div style="display:flex; align-items:center; gap:8px; color:var(--text2); font-size:13px; font-weight:600; text-transform:uppercase;">
-          <i data-lucide="file-text" style="width:16px; height:16px; color:var(--green)"></i> Ghi chú
-       </div>
-       <div style="font-size:28px; font-weight:bold; color:var(--text);">${notes.length}</div>
-       <div style="font-size:12px; color:var(--text3);">ghi chú mới được tạo</div>
+       <div style="font-size:26px; font-weight:800; color:var(--text-hi); font-variant-numeric:tabular-nums;">${digestData.totalExp.toLocaleString('vi-VN')}₫</div>
+       <div style="font-size:11.5px; color:var(--text-low);">tổng chi 7 ngày gần nhất</div>
     </div>
   </div>
-  
-  <div style="background:linear-gradient(145deg, rgba(124, 77, 255, 0.1) 0%, rgba(0, 229, 255, 0.05) 100%); padding:20px; border-radius:12px; border:1px solid rgba(124, 77, 255, 0.2); display:flex; gap:15px; align-items:flex-start;">
-    <div style="background:var(--primary); padding:8px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; box-shadow:0 0 10px rgba(124,77,255,0.5);">
-       <i data-lucide="bot" style="width:20px; height:20px;"></i>
+
+  <!-- AI Coach Insight -->
+  <div style="background:linear-gradient(135deg, rgba(124,77,255,0.12), rgba(0,229,255,0.06)); border:1px solid rgba(124,77,255,0.25); border-radius:14px; padding:20px;">
+    <div style="display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; color:var(--accent-light); margin-bottom:10px;">
+      <i data-lucide="sparkles" class="ic-18"></i> Nhận xét từ LifeOS AI
     </div>
-    <div style="flex:1;">
-       <div style="font-size:13px; font-weight:700; color:var(--primary); margin-bottom:5px; text-transform:uppercase;">AI Insight</div>
-       <div id="aiInsightText" style="font-size:14.5px; line-height:1.6; color:var(--text); font-style:italic; min-height:80px;"></div>
-    </div>
+    <div style="font-size:13.5px; line-height:1.6; color:var(--text-hi);">${digestData.insight.replace(/\n/g, '<br>')}</div>
   </div>
-</div>
-        `;
-        
-        loading.style.display = 'none';
-        content.innerHTML = html;
-        content.style.display = 'block';
-        if(window.lucide) window.lucide.createIcons();
-        
-        // Typewriter effect
-        const el = document.getElementById('aiInsightText');
-        let i = 0;
-        el.innerHTML = '';
-        function typeWriter() {
-            if (i < insight.length) {
-                el.innerHTML += insight.charAt(i);
-                i++;
-                setTimeout(typeWriter, 20);
-            }
+</div>`;
+
+        if (content) {
+            content.innerHTML = html;
+            content.style.display = 'block';
         }
-        typeWriter();
-    }, 1500);
+        if (loading) loading.style.display = 'none';
+        if (window.lucide) window.lucide.createIcons();
+
+    } catch(err) {
+        console.error('Digest error:', err);
+        if (loading) loading.style.display = 'none';
+        if (content) {
+            content.innerHTML = '<div style="color:var(--danger);padding:20px;text-align:center;">Không thể tạo báo cáo lúc này. Vui lòng thử lại sau.</div>';
+            content.style.display = 'block';
+        }
+    }
 };
 
 // ── Global Keyboard Shortcuts ──
