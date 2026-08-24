@@ -139,9 +139,12 @@ function appendActionChip(title) {
 
 // ── Multi-turn Gemini API Core ──
 const MODELS = [
-  'gemini-2.0-flash',
+  'gemini-1.5-flash-latest',
   'gemini-1.5-flash',
-  'gemini-1.5-pro'
+  'gemini-2.0-flash',
+  'gemini-2.5-flash',
+  'gemini-1.5-pro-latest',
+  'gemini-pro'
 ];
 
 async function callGeminiRaw(contents, systemInstruction, tools) {
@@ -168,19 +171,24 @@ async function callGeminiRaw(contents, systemInstruction, tools) {
         body: JSON.stringify(payload)
       });
 
-      if (res.status === 429) {
-        console.warn(`Model ${model} rate limited, trying next...`);
-        continue;
-      }
       if (res.status === 400 || res.status === 403) {
         const errJson = await res.json().catch(() => ({}));
-        if (errJson.error?.message?.includes('API key')) {
+        const msg = errJson.error?.message || '';
+        if (msg.toLowerCase().includes('api key') || msg.toLowerCase().includes('api_key') || msg.toLowerCase().includes('invalid')) {
           throw new Error('KEY_KHONG_HOP_LE');
         }
+        // If it's a model specific 400, try next model
+        console.warn(`Model ${model} returned 400 (${msg}), trying next...`);
+        lastError = new Error(`Model ${model}: ${msg}`);
+        continue;
       }
+
       if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`API ${res.status}: ${txt}`);
+        const errJson = await res.json().catch(() => ({}));
+        const msg = errJson.error?.message || (await res.text().catch(() => `HTTP ${res.status}`));
+        console.warn(`Model ${model} returned ${res.status} (${msg}), trying next model...`);
+        lastError = new Error(msg);
+        continue; // Try next model in list!
       }
 
       const data = await res.json();
@@ -188,6 +196,7 @@ async function callGeminiRaw(contents, systemInstruction, tools) {
     } catch (err) {
       lastError = err;
       if (err.message === 'KEY_KHONG_HOP_LE' || err.message === 'CHUA_CO_KEY') throw err;
+      console.warn(`Error calling model ${model}:`, err.message);
     }
   }
   throw lastError || new Error('Không thể kết nối đến máy chủ AI.');
