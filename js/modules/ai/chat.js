@@ -6,7 +6,7 @@ import { AI_TOOL_DECLARATIONS, executeAiTool } from './tools.js';
 import { buildAiSystemPrompt } from './context.js';
 
 let aiChatHistory = [];
-const DEFAULT_GEMINI_KEY = ""; // Users can enter their personal key or use demo
+const DEFAULT_GEMINI_KEY = "";
 
 // ── Markdown Formatter ──
 function formatMarkdown(text) {
@@ -94,10 +94,16 @@ window.closeAiModal = function() {
 
 window.openAiKeyModal = function() {
   const cur = localStorage.getItem('lifeos_gemini_key') || '';
-  const key = prompt('Nhập Gemini API Key của bạn (hoàn toàn miễn phí tại https://aistudio.google.com):', cur);
+  const key = prompt('Nhập Gemini API Key của bạn (miễn phí tại https://aistudio.google.com):', cur);
   if (key !== null) {
-    localStorage.setItem('lifeos_gemini_key', key.trim());
-    toast('Đã lưu Gemini API Key!', 'success');
+    const trimmed = key.trim();
+    localStorage.setItem('lifeos_gemini_key', trimmed);
+    if (trimmed) {
+      toast('Đã lưu Gemini API Key!', 'success');
+      appendMessage('ai', '✅ **Đã kết nối Gemini API Key thành công!** Bạn có thể ra lệnh và trò chuyện tự nhiên ngay bây giờ.');
+    } else {
+      toast('Đã xóa Gemini API Key', 'info');
+    }
   }
 };
 
@@ -137,14 +143,36 @@ function appendActionChip(title) {
   c.scrollTop = c.scrollHeight;
 }
 
+function appendApiKeyPromptCard() {
+  const c = document.getElementById('aiMessages');
+  if (!c) return;
+
+  const card = document.createElement('div');
+  card.style.cssText = 'background:linear-gradient(135deg, rgba(124,77,255,0.12), rgba(0,229,255,0.06)); border:1px solid rgba(124,77,255,0.3); border-radius:12px; padding:14px; margin-top:8px;';
+  card.innerHTML = `
+    <div style="font-weight:700; font-size:13.5px; color:var(--accent-light); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+      <i data-lucide="key" class="ic-16"></i> Kích hoạt Google Gemini AI
+    </div>
+    <div style="font-size:12.5px; color:var(--text-mid); line-height:1.5; margin-bottom:10px;">
+      Để kích hoạt khả năng suy luận ngôn ngữ tự nhiên không giới hạn, bạn chỉ cần nhập <b>Gemini API Key</b> cá nhân (hoàn toàn miễn phí).
+    </div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <button class="btn btn-p btn-sm" onclick="openAiKeyModal()"><i data-lucide="key" class="ic-14"></i> Nhập Gemini API Key</button>
+      <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn btn-outline btn-sm" style="text-decoration:none;"><i data-lucide="external-link" class="ic-14"></i> Lấy Key Miễn Phí</a>
+    </div>
+  `;
+  c.appendChild(card);
+  if (window.lucide) window.lucide.createIcons();
+  c.scrollTop = c.scrollHeight;
+}
+
 // ── Multi-turn Gemini API Core ──
 const MODELS = [
   'gemini-1.5-flash-latest',
   'gemini-1.5-flash',
   'gemini-2.0-flash',
   'gemini-2.5-flash',
-  'gemini-1.5-pro-latest',
-  'gemini-pro'
+  'gemini-1.5-pro-latest'
 ];
 
 async function callGeminiRaw(contents, systemInstruction, tools) {
@@ -174,10 +202,9 @@ async function callGeminiRaw(contents, systemInstruction, tools) {
       if (res.status === 400 || res.status === 403) {
         const errJson = await res.json().catch(() => ({}));
         const msg = errJson.error?.message || '';
-        if (msg.toLowerCase().includes('api key') || msg.toLowerCase().includes('api_key') || msg.toLowerCase().includes('invalid')) {
+        if (msg.toLowerCase().includes('api key') || msg.toLowerCase().includes('api_key') || msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('permission_denied') || msg.toLowerCase().includes('has not been used in project')) {
           throw new Error('KEY_KHONG_HOP_LE');
         }
-        // If it's a model specific 400, try next model
         console.warn(`Model ${model} returned 400 (${msg}), trying next...`);
         lastError = new Error(`Model ${model}: ${msg}`);
         continue;
@@ -186,9 +213,12 @@ async function callGeminiRaw(contents, systemInstruction, tools) {
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
         const msg = errJson.error?.message || (await res.text().catch(() => `HTTP ${res.status}`));
+        if (msg.includes('not found for API version') || msg.includes('NOT_FOUND') || msg.includes('PERMISSION_DENIED')) {
+          throw new Error('KEY_KHONG_HOP_LE');
+        }
         console.warn(`Model ${model} returned ${res.status} (${msg}), trying next model...`);
         lastError = new Error(msg);
-        continue; // Try next model in list!
+        continue;
       }
 
       const data = await res.json();
@@ -199,7 +229,123 @@ async function callGeminiRaw(contents, systemInstruction, tools) {
       console.warn(`Error calling model ${model}:`, err.message);
     }
   }
-  throw lastError || new Error('Không thể kết nối đến máy chủ AI.');
+  throw lastError || new Error('CHUA_CO_KEY');
+}
+
+// ── Smart Local Heuristic Engine (Offline / No Key Fallback) ──
+async function executeLocalHeuristicAi(text) {
+  const t = text.toLowerCase().trim();
+  
+  // 1. Pomodoro
+  if (t.includes('pomodoro') || t.includes('tập trung') || t.includes('hẹn giờ')) {
+    if (t.includes('nghỉ') || t.includes('dừng') || t.includes('tạm dừng')) {
+      const res = await executeAiTool('control_pomodoro', { action: 'pause' });
+      appendActionChip(res.message);
+      return '⏱️ Đã tạm dừng phiên Pomodoro cho bạn!';
+    } else {
+      let mins = 25;
+      const mMatch = t.match(/(\d+)\s*(phút|p|m)/);
+      if (mMatch) mins = Number(mMatch[1]);
+      const res = await executeAiTool('control_pomodoro', { action: 'set', minutes: mins });
+      await executeAiTool('control_pomodoro', { action: 'start' });
+      appendActionChip(res.message);
+      return `⏱️ Đã bắt đầu phiên Pomodoro **${mins} phút** tập trung cao độ! Chúc bạn làm việc hiệu quả.`;
+    }
+  }
+
+  // 2. Navigation
+  if (t.startsWith('chuyển') || t.startsWith('mở') || t.startsWith('xem trang')) {
+    if (t.includes('lịch')) { await executeAiTool('navigate_page', { page: 'calendar' }); return '📅 Đã chuyển sang trang **Lịch**.'; }
+    if (t.includes('todo') || t.includes('công việc')) { await executeAiTool('navigate_page', { page: 'todos' }); return '📝 Đã chuyển sang trang **Việc cần làm**.'; }
+    if (t.includes('dự án')) { await executeAiTool('navigate_page', { page: 'projects' }); return '📁 Đã chuyển sang trang **Dự án**.'; }
+    if (t.includes('thu chi') || t.includes('tiền')) { await executeAiTool('navigate_page', { page: 'finance' }); return '💰 Đã chuyển sang trang **Thu chi**.'; }
+    if (t.includes('ghi chú')) { await executeAiTool('navigate_page', { page: 'notes' }); return '📋 Đã chuyển sang trang **Ghi chú**.'; }
+    if (t.includes('thói quen')) { await executeAiTool('navigate_page', { page: 'habits' }); return '🔥 Đã chuyển sang trang **Thói quen**.'; }
+    if (t.includes('mục tiêu')) { await executeAiTool('navigate_page', { page: 'goals' }); return '🎯 Đã chuyển sang trang **Mục tiêu**.'; }
+    if (t.includes('hôm nay')) { await executeAiTool('navigate_page', { page: 'today' }); return '☀️ Đã chuyển sang màn hình **Hôm nay**.'; }
+  }
+
+  // 3. Finance expense (chi / tiêu / mua)
+  if (t.startsWith('chi ') || t.startsWith('tiêu ') || t.startsWith('mua ') || t.includes('đã chi') || t.includes('hết')) {
+    let amt = 0;
+    const numMatch = t.match(/(\d+[\d\.,]*)\s*(k|nghìn|ngàn|tr|triệu|đ|vnd)?/i);
+    if (numMatch) {
+      let raw = parseFloat(numMatch[1].replace(/,/g, ''));
+      const unit = (numMatch[2] || '').toLowerCase();
+      if (unit === 'k' || unit === 'nghìn' || unit === 'ngàn') raw *= 1000;
+      else if (unit === 'tr' || unit === 'triệu') raw *= 1000000;
+      else if (raw < 1000) raw *= 1000; // default e.g. "50" -> 50k
+      amt = raw;
+    }
+    if (amt > 0) {
+      let cat = 'Ăn uống';
+      if (t.includes('xăng') || t.includes('xe') || t.includes('grab')) cat = 'Đi lại';
+      else if (t.includes('mua') || t.includes('sắm') || t.includes('áo') || t.includes('quần')) cat = 'Mua sắm';
+      else if (t.includes('tiền nhà') || t.includes('điện') || t.includes('nước')) cat = 'Nhà ở';
+      
+      const res = await executeAiTool('manage_finance', { action: 'add', type: 'expense', amt, cat, note: text });
+      appendActionChip(res.message);
+      return `💸 Đã ghi nhận khoản chi **${amt.toLocaleString('vi-VN')}₫** vào danh mục **${cat}**!`;
+    }
+  }
+
+  // 4. Finance income (thu / nhận / lương)
+  if (t.startsWith('thu ') || t.startsWith('nhận ') || t.includes('lương') || t.includes('thưởng')) {
+    let amt = 0;
+    const numMatch = t.match(/(\d+[\d\.,]*)\s*(k|nghìn|ngàn|tr|triệu|đ|vnd)?/i);
+    if (numMatch) {
+      let raw = parseFloat(numMatch[1].replace(/,/g, ''));
+      const unit = (numMatch[2] || '').toLowerCase();
+      if (unit === 'k' || unit === 'nghìn' || unit === 'ngàn') raw *= 1000;
+      else if (unit === 'tr' || unit === 'triệu') raw *= 1000000;
+      else if (raw < 1000) raw *= 1000;
+      amt = raw;
+    }
+    if (amt > 0) {
+      const src = t.includes('lương') ? 'Lương' : (t.includes('freelance') ? 'Freelance' : 'Khác');
+      const res = await executeAiTool('manage_finance', { action: 'add', type: 'income', amt, src, note: text });
+      appendActionChip(res.message);
+      return `💰 Đã ghi nhận khoản thu **${amt.toLocaleString('vi-VN')}₫** từ nguồn **${src}**!`;
+    }
+  }
+
+  // 5. Todo (thêm việc / làm / todo)
+  if (t.startsWith('thêm việc') || t.startsWith('tạo việc') || t.startsWith('todo:') || t.startsWith('nhớ ') || t.startsWith('cần làm')) {
+    const taskName = text.replace(/^(thêm việc|tạo việc|todo:|nhớ|cần làm)\s*/i, '').trim() || text;
+    let pri = 'mid';
+    if (t.includes('gấp') || t.includes('quan trọng')) pri = 'high';
+    const res = await executeAiTool('manage_todo', { action: 'add', text: taskName, priority: pri });
+    appendActionChip(res.message);
+    return `✓ Đã thêm nhiệm vụ: **"${taskName}"** (${pri.toUpperCase()}) vào danh sách việc hôm nay!`;
+  }
+
+  // 6. Habit checkin
+  if (t.includes('thói quen') && (t.includes('xong') || t.includes('hoàn thành') || t.includes('checkin'))) {
+    const db = window.DB || {};
+    const habits = db.habits || [];
+    if (habits.length > 0) {
+      const h = habits.find(x => t.includes(x.name.toLowerCase())) || habits[0];
+      const res = await executeAiTool('manage_habit', { action: 'checkin', id: h.id });
+      appendActionChip(res.message);
+      return `🔥 Đã check-in thói quen **"${h.name}"** hôm nay!`;
+    }
+  }
+
+  // 7. Stats Query
+  if (t.includes('thống kê') || t.includes('tổng quan') || t.includes('báo cáo') || t.includes('số dư')) {
+    const res = await executeAiTool('query_stats', { domain: 'all' });
+    const d = res.data;
+    return `📊 **Tổng quan số liệu hiện tại:**\n- **Tài chính**: Tổng thu ${d.finance.totalIncome.toLocaleString('vi-VN')}₫ | Tổng chi ${d.finance.totalExpense.toLocaleString('vi-VN')}₫ | **Số dư: ${d.finance.netBalance.toLocaleString('vi-VN')}₫**\n- **Năng suất**: Hoàn thành ${d.productivity.doneTodos}/${d.productivity.totalTodos} việc (${d.productivity.completionRate})\n- **Dự án**: ${d.projects.active} dự án đang triển khai.`;
+  }
+
+  // 8. Theme Toggle
+  if (t.includes('theme') || t.includes('giao diện') || t.includes('chủ đề')) {
+    const theme = t.includes('sáng') || t.includes('light') ? 'light' : 'dark';
+    const res = await executeAiTool('set_theme', { theme });
+    return res.message;
+  }
+
+  return null;
 }
 
 // ── Multi-turn Function Calling Execution Loop ──
@@ -238,14 +384,12 @@ async function processUserAiMessage(promptText) {
       const functionCalls = parts.filter(p => p.functionCall);
       const textParts = parts.filter(p => p.text);
 
-      // Save model turn in history
       aiChatHistory.push({
         role: 'model',
         parts: parts
       });
 
       if (functionCalls.length > 0) {
-        // Execute each tool and collect responses
         const responseParts = [];
         for (const fc of functionCalls) {
           const call = fc.functionCall;
@@ -262,13 +406,11 @@ async function processUserAiMessage(promptText) {
           });
         }
 
-        // Send function responses back to Gemini for final response synthesis
         aiChatHistory.push({
           role: 'user',
           parts: responseParts
         });
       } else {
-        // No more tool calls, model provided final natural text
         finalModelText = textParts.map(p => p.text).join('\n');
         break;
       }
@@ -284,18 +426,13 @@ async function processUserAiMessage(promptText) {
     if (loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
     console.error('AI Processing Error:', err);
 
-    if (err.message === 'CHUA_CO_KEY') {
-      appendMessage('ai', '⚠️ Bạn chưa cài đặt **Gemini API Key**.\n\nVui lòng bấm nút **"Cài đặt Key"** bên dưới (hoàn toàn miễn phí từ Google) để kích hoạt toàn bộ tính năng Trợ lý AI!');
-      const keyBtn = document.createElement('button');
-      keyBtn.className = 'btn btn-p btn-sm';
-      keyBtn.style.cssText = 'margin:6px 0 12px;';
-      keyBtn.textContent = '🔑 Cài đặt Gemini API Key';
-      keyBtn.onclick = window.openAiKeyModal;
-      if (c) c.appendChild(keyBtn);
-    } else if (err.message === 'KEY_KHONG_HOP_LE') {
-      appendMessage('ai', '❌ Gemini API Key không hợp lệ hoặc đã hết hạn. Vui lòng kiểm tra và nhập lại Key trong phần cài đặt.');
+    // Try local heuristic execution first so actions work offline
+    const localResult = await executeLocalHeuristicAi(promptText);
+    if (localResult) {
+      appendMessage('ai', localResult);
     } else {
-      appendMessage('ai', `⚠️ Không thể kết nối AI: ${err.message}. Vui lòng thử lại!`);
+      appendMessage('ai', 'Chào bạn! Để trò chuyện và ra lệnh ngôn ngữ tự nhiên không giới hạn cùng **LifeOS AI**, bạn chỉ cần kết nối **Gemini API Key** cá nhân (miễn phí từ Google AI Studio).');
+      appendApiKeyPromptCard();
     }
   }
 }
@@ -373,12 +510,25 @@ window.aiEngine = {
       const match = res.match(/\[.*\]/s);
       if (match) return JSON.parse(match[0]);
     } catch(e) {}
-    return ['Ý tưởng', 'Công việc'];
+    
+    // Heuristic Fallback
+    const combined = (title + ' ' + content).toLowerCase();
+    const tags = [];
+    if (combined.includes('họp') || combined.includes('meeting')) tags.push('Họp hành');
+    if (combined.includes('ý tưởng') || combined.includes('idea')) tags.push('Ý tưởng');
+    if (combined.includes('kế hoạch') || combined.includes('plan')) tags.push('Kế hoạch');
+    if (combined.includes('bug') || combined.includes('lỗi')) tags.push('Lỗi/Bug');
+    if (combined.includes('mua') || combined.includes('tiền')) tags.push('Tài chính');
+    return tags.length > 0 ? tags : ['Ý tưởng', 'Công việc'];
   },
 
   async continueNote(currentContent) {
     const prompt = `Dưới đây là phần nội dung ghi chú đang viết dở:\n"${currentContent}"\n\nHãy viết tiếp 1 đến 2 đoạn văn ngắn mạch lạc, tự nhiên và chuyên nghiệp để bổ sung ý tưởng cho ghi chú này.`;
-    return await this.generateText(prompt, 'Bạn là trợ lý soạn thảo văn bản sáng tạo.');
+    try {
+      const res = await this.generateText(prompt, 'Bạn là trợ lý soạn thảo văn bản sáng tạo.');
+      if (res) return res;
+    } catch(e) {}
+    return "Bên cạnh đó, cần chú ý phân bổ thời gian hợp lý và theo dõi tiến độ các đầu việc thường xuyên.";
   },
 
   async generateWeeklyDigest() {
@@ -406,7 +556,6 @@ Viết một đoạn nhận xét truyền cảm hứng, ngắn gọn (3-4 câu),
       const insight = await this.generateText(summaryPrompt, 'Bạn là huấn luyện viên phong cách sống và năng suất cá nhân hàng đầu.');
       return { todosCount: todos.length, totalExp, totalInc, notesCount: notes.length, insight };
     } catch(e) {
-      // Fallback
       let fallbackInsight = `Tuần qua bạn đã hoàn thành ${todos.length} nhiệm vụ và kiểm soát chi tiêu ở mức ${totalExp.toLocaleString('vi-VN')}₫. Hãy tiếp tục giữ vững phong độ trong tuần mới! 🚀`;
       return { todosCount: todos.length, totalExp, totalInc, notesCount: notes.length, insight: fallbackInsight };
     }
