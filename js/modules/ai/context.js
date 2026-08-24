@@ -6,16 +6,17 @@ export function buildAiSystemPrompt() {
   const dt = new Date();
   const dateStr = dt.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
   const timeStr = dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-  const td = today();
+  const td = typeof today === 'function' ? today() : (window.today ? window.today() : dt.toISOString().split('T')[0]);
 
-  const todos = window.DB.todos || [];
-  const events = window.DB.events || [];
-  const income = window.DB.income || [];
-  const expense = window.DB.expense || [];
-  const habits = window.DB.habits || [];
-  const projects = window.DB.projects || [];
-  const goals = window.DB.goals || [];
-  const notes = window.DB.notes || [];
+  const db = window.DB || {};
+  const todos = db.todos || [];
+  const events = db.events || [];
+  const income = db.income || [];
+  const expense = db.expense || [];
+  const habits = db.habits || [];
+  const projects = db.projects || [];
+  const goals = db.goals || [];
+  const notes = db.notes || [];
 
   const pendingTodayTodos = todos.filter(t => (t.date === td || t.date === '') && !t.done);
   const todayEvents = events.filter(e => e.dateStart === td);
@@ -34,7 +35,7 @@ QUY TẮC BẮT BUỘC KHI PHỤC VỤ NGƯỜI DÙNG:
 4. KHÔNG TỰ BỊA DỮ LIỆU: Nếu cần số liệu tổng hợp, hãy gọi tool query_stats hoặc search_data để có con số chính xác 100%.
 
 TÓM TẮT TRẠNG THÁI HIỆN TẠI:
-- Công việc hôm nay cần làm (${pendingTodayTodos.length} việc): ${pendingTodayTodos.slice(0, 5).map(t => `[${t.priority.toUpperCase()}] ${t.text}`).join('; ') || 'Không có việc tồn'}
+- Công việc hôm nay cần làm (${pendingTodayTodos.length} việc): ${pendingTodayTodos.slice(0, 5).map(t => `[${t.priority ? t.priority.toUpperCase() : 'MID'}] ${t.text}`).join('; ') || 'Không có việc tồn'}
 - Lịch trình hôm nay: ${todayEvents.map(e => `${e.title} (${e.timeStart || 'cả ngày'})`).join('; ') || 'Trống lịch'}
 - Tài chính: Tổng thu ${totalInc.toLocaleString('vi-VN')}₫ | Tổng chi ${totalExp.toLocaleString('vi-VN')}₫ | Số dư: ${(totalInc - totalExp).toLocaleString('vi-VN')}₫
 - Dự án đang chạy: ${activeProjects.map(p => p.name).join(', ') || 'Không có'}

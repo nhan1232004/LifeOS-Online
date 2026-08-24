@@ -5,6 +5,25 @@
 window.AI_UNDO_BUFFER = null;
 window.AI_UNDO_TIMER = null;
 
+function safeToday() {
+  return typeof today === 'function' ? today() : (window.today ? window.today() : new Date().toISOString().split('T')[0]);
+}
+
+function safeUid() {
+  return typeof uid === 'function' ? uid() : (window.uid ? window.uid() : 'id_' + Math.random().toString(36).substr(2, 9));
+}
+
+async function safePersist(col, data) {
+  if (typeof persist === 'function') return await persist(col, data);
+  if (typeof window.persist === 'function') return await window.persist(col, data);
+}
+
+function safeToast(msg, type) {
+  if (typeof toast === 'function') toast(msg, type);
+  else if (typeof window.toast === 'function') window.toast(msg, type);
+  else console.log(`[Toast ${type}]`, msg);
+}
+
 function setAiUndo(description, snapshotFn, restoreFn) {
   if (window.AI_UNDO_TIMER) clearTimeout(window.AI_UNDO_TIMER);
   window.AI_UNDO_BUFFER = { description, restoreFn };
@@ -24,7 +43,7 @@ function setAiUndo(description, snapshotFn, restoreFn) {
 window.executeAiUndo = function() {
   if (window.AI_UNDO_BUFFER && typeof window.AI_UNDO_BUFFER.restoreFn === 'function') {
     window.AI_UNDO_BUFFER.restoreFn();
-    toast('Đã hoàn tác thao tác AI!', 'success');
+    safeToast('Đã hoàn tác thao tác AI!', 'success');
     window.AI_UNDO_BUFFER = null;
     const undoPill = document.getElementById('aiUndoPill');
     if (undoPill) undoPill.style.display = 'none';
@@ -300,58 +319,61 @@ export const AI_TOOL_DECLARATIONS = [
 // ==========================================
 export async function executeAiTool(name, args) {
   try {
+    const td = safeToday();
+    const db = window.DB || {};
+
     switch(name) {
       // 1. TODO
       case "manage_todo": {
-        if (!window.DB.todos) window.DB.todos = [];
-        const snapshot = JSON.stringify(window.DB.todos);
+        if (!db.todos) db.todos = [];
+        const snapshot = JSON.stringify(db.todos);
         
         if (args.action === "add") {
           const item = {
-            id: uid(),
+            id: safeUid(),
             text: args.text || "Nhiệm vụ mới",
             priority: args.priority || "mid",
-            date: args.date || today(),
+            date: args.date || td,
             note: args.note || "",
             done: false
           };
-          window.DB.todos.push(item);
-          await persist('todos', window.DB.todos);
+          db.todos.push(item);
+          await safePersist('todos', db.todos);
           setAiUndo(`Thêm việc "${item.text}"`, null, async () => {
-            window.DB.todos = JSON.parse(snapshot);
-            await persist('todos', window.DB.todos);
+            db.todos = JSON.parse(snapshot);
+            await safePersist('todos', db.todos);
           });
           if (window.renderAll) window.renderAll();
           return { success: true, message: `Đã thêm việc: "${item.text}" (${item.priority.toUpperCase()}) hạn ${item.date}`, item };
         }
         if (args.action === "toggle") {
-          const item = window.DB.todos.find(t => t.id === args.id || (args.text && t.text.toLowerCase().includes(args.text.toLowerCase())));
+          const item = db.todos.find(t => t.id === args.id || (args.text && t.text.toLowerCase().includes(args.text.toLowerCase())));
           if (!item) return { success: false, message: "Không tìm thấy nhiệm vụ phù hợp." };
           item.done = args.done !== undefined ? args.done : !item.done;
-          await persist('todos', window.DB.todos);
+          await safePersist('todos', db.todos);
           if (window.renderAll) window.renderAll();
           return { success: true, message: `Đã ${item.done ? 'hoàn thành' : 'mở lại'} việc: "${item.text}"`, item };
         }
         if (args.action === "edit") {
-          const item = window.DB.todos.find(t => t.id === args.id || (args.text && t.text.toLowerCase().includes(args.text.toLowerCase())));
+          const item = db.todos.find(t => t.id === args.id || (args.text && t.text.toLowerCase().includes(args.text.toLowerCase())));
           if (!item) return { success: false, message: "Không tìm thấy nhiệm vụ để sửa." };
           if (args.text) item.text = args.text;
           if (args.priority) item.priority = args.priority;
           if (args.date !== undefined) item.date = args.date;
           if (args.note !== undefined) item.note = args.note;
           if (args.done !== undefined) item.done = args.done;
-          await persist('todos', window.DB.todos);
+          await safePersist('todos', db.todos);
           if (window.renderAll) window.renderAll();
           return { success: true, message: `Đã cập nhật việc: "${item.text}"`, item };
         }
         if (args.action === "delete") {
-          const idx = window.DB.todos.findIndex(t => t.id === args.id || (args.text && t.text.toLowerCase().includes(args.text.toLowerCase())));
+          const idx = db.todos.findIndex(t => t.id === args.id || (args.text && t.text.toLowerCase().includes(args.text.toLowerCase())));
           if (idx === -1) return { success: false, message: "Không tìm thấy việc cần xóa." };
-          const deleted = window.DB.todos.splice(idx, 1)[0];
-          await persist('todos', window.DB.todos);
+          const deleted = db.todos.splice(idx, 1)[0];
+          await safePersist('todos', db.todos);
           setAiUndo(`Xóa việc "${deleted.text}"`, null, async () => {
-            window.DB.todos = JSON.parse(snapshot);
-            await persist('todos', window.DB.todos);
+            db.todos = JSON.parse(snapshot);
+            await safePersist('todos', db.todos);
           });
           if (window.renderAll) window.renderAll();
           return { success: true, message: `Đã xóa việc: "${deleted.text}"`, deleted };
@@ -361,37 +383,37 @@ export async function executeAiTool(name, args) {
 
       // 2. CALENDAR
       case "manage_calendar": {
-        if (!window.DB.events) window.DB.events = [];
-        const snapshot = JSON.stringify(window.DB.events);
+        if (!db.events) db.events = [];
+        const snapshot = JSON.stringify(db.events);
 
         if (args.action === "add") {
           const item = {
-            id: uid(),
+            id: safeUid(),
             title: args.title || "Sự kiện mới",
-            dateStart: args.dateStart || today(),
-            dateEnd: args.dateEnd || args.dateStart || today(),
+            dateStart: args.dateStart || td,
+            dateEnd: args.dateEnd || args.dateStart || td,
             timeStart: args.timeStart || "",
             timeEnd: args.timeEnd || "",
             type: args.type || "work",
             desc: args.desc || ""
           };
-          window.DB.events.push(item);
-          await persist('events', window.DB.events);
+          db.events.push(item);
+          await safePersist('events', db.events);
           setAiUndo(`Thêm sự kiện "${item.title}"`, null, async () => {
-            window.DB.events = JSON.parse(snapshot);
-            await persist('events', window.DB.events);
+            db.events = JSON.parse(snapshot);
+            await safePersist('events', db.events);
           });
           if (window.renderAll) window.renderAll();
           return { success: true, message: `Đã lên lịch sự kiện: "${item.title}" vào ngày ${item.dateStart} ${item.timeStart ? 'lúc ' + item.timeStart : ''}`, item };
         }
         if (args.action === "delete") {
-          const idx = window.DB.events.findIndex(e => e.id === args.id || (args.title && e.title.toLowerCase().includes(args.title.toLowerCase())));
+          const idx = db.events.findIndex(e => e.id === args.id || (args.title && e.title.toLowerCase().includes(args.title.toLowerCase())));
           if (idx === -1) return { success: false, message: "Không tìm thấy sự kiện cần xóa." };
-          const deleted = window.DB.events.splice(idx, 1)[0];
-          await persist('events', window.DB.events);
+          const deleted = db.events.splice(idx, 1)[0];
+          await safePersist('events', db.events);
           setAiUndo(`Xóa sự kiện "${deleted.title}"`, null, async () => {
-            window.DB.events = JSON.parse(snapshot);
-            await persist('events', window.DB.events);
+            db.events = JSON.parse(snapshot);
+            await safePersist('events', db.events);
           });
           if (window.renderAll) window.renderAll();
           return { success: true, message: `Đã xóa sự kiện: "${deleted.title}"`, deleted };
@@ -402,14 +424,14 @@ export async function executeAiTool(name, args) {
       // 3. FINANCE
       case "manage_finance": {
         const col = args.type === "income" ? "income" : "expense";
-        if (!window.DB[col]) window.DB[col] = [];
-        const snapshot = JSON.stringify(window.DB[col]);
+        if (!db[col]) db[col] = [];
+        const snapshot = JSON.stringify(db[col]);
 
         if (args.action === "add") {
           const item = {
-            id: uid(),
+            id: safeUid(),
             amt: Number(args.amt) || 0,
-            date: args.date || today(),
+            date: args.date || td,
             note: args.note || ""
           };
           if (args.type === "income") item.src = args.src || "Khác";
@@ -417,20 +439,20 @@ export async function executeAiTool(name, args) {
             item.cat = args.cat || "Khác";
             item.pay = args.pay || "Tiền mặt";
           }
-          window.DB[col].push(item);
-          await persist(col, window.DB[col]);
+          db[col].push(item);
+          await safePersist(col, db[col]);
           setAiUndo(`Thêm ${col === 'income' ? 'thu' : 'chi'} ${item.amt.toLocaleString('vi-VN')}₫`, null, async () => {
-            window.DB[col] = JSON.parse(snapshot);
-            await persist(col, window.DB[col]);
+            db[col] = JSON.parse(snapshot);
+            await safePersist(col, db[col]);
           });
           if (window.renderAll) window.renderAll();
           return { success: true, message: `Đã ghi nhận ${args.type === 'income' ? 'khoản thu' : 'khoản chi'}: ${item.amt.toLocaleString('vi-VN')} ₫ (${item.src || item.cat})`, item };
         }
         if (args.action === "delete") {
-          const idx = window.DB[col].findIndex(x => x.id === args.id);
+          const idx = db[col].findIndex(x => x.id === args.id);
           if (idx === -1) return { success: false, message: "Không tìm thấy giao dịch để xóa." };
-          const deleted = window.DB[col].splice(idx, 1)[0];
-          await persist(col, window.DB[col]);
+          const deleted = db[col].splice(idx, 1)[0];
+          await safePersist(col, db[col]);
           if (window.renderAll) window.renderAll();
           return { success: true, message: `Đã xóa giao dịch ${deleted.amt.toLocaleString('vi-VN')} ₫` };
         }
@@ -439,31 +461,31 @@ export async function executeAiTool(name, args) {
 
       // 4. HABITS
       case "manage_habit": {
-        if (!window.DB.habits) window.DB.habits = [];
-        const snapshot = JSON.stringify(window.DB.habits);
+        if (!db.habits) db.habits = [];
+        const snapshot = JSON.stringify(db.habits);
 
         if (args.action === "add") {
           const item = {
-            id: uid(),
+            id: safeUid(),
             name: args.name || "Thói quen mới",
             target: args.target || "Mỗi ngày",
             streak: 0,
             history: []
           };
-          window.DB.habits.push(item);
-          await persist('habits', window.DB.habits);
+          db.habits.push(item);
+          await safePersist('habits', db.habits);
           if (window.renderAll) window.renderAll();
           return { success: true, message: `Đã thêm thói quen mới: "${item.name}"`, item };
         }
         if (args.action === "checkin") {
-          const targetDate = args.date || today();
-          const habit = window.DB.habits.find(h => h.id === args.id || (args.name && h.name.toLowerCase().includes(args.name.toLowerCase())));
+          const targetDate = args.date || td;
+          const habit = db.habits.find(h => h.id === args.id || (args.name && h.name.toLowerCase().includes(args.name.toLowerCase())));
           if (!habit) return { success: false, message: "Không tìm thấy thói quen." };
           if (!habit.history) habit.history = [];
           if (!habit.history.includes(targetDate)) {
             habit.history.push(targetDate);
             habit.streak = (habit.streak || 0) + 1;
-            await persist('habits', window.DB.habits);
+            await safePersist('habits', db.habits);
             if (window.renderAll) window.renderAll();
             return { success: true, message: `✓ Đã hoàn thành thói quen "${habit.name}" hôm nay! Chuỗi: ${habit.streak} ngày 🔥`, habit };
           } else {
@@ -475,26 +497,26 @@ export async function executeAiTool(name, args) {
 
       // 5. GOALS
       case "manage_goal": {
-        if (!window.DB.goals) window.DB.goals = [];
+        if (!db.goals) db.goals = [];
         if (args.action === "add") {
           const item = {
-            id: uid(),
+            id: safeUid(),
             title: args.title || "Mục tiêu mới",
             target: Number(args.target) || 100,
             current: Number(args.current) || 0,
             category: args.category || "Tài chính",
             deadline: args.deadline || ""
           };
-          window.DB.goals.push(item);
-          await persist('goals', window.DB.goals);
+          db.goals.push(item);
+          await safePersist('goals', db.goals);
           if (window.renderAll) window.renderAll();
           return { success: true, message: `Đã thiết lập mục tiêu: "${item.title}" (${item.current}/${item.target})`, item };
         }
         if (args.action === "update_progress") {
-          const goal = window.DB.goals.find(g => g.id === args.id || (args.title && g.title.toLowerCase().includes(args.title.toLowerCase())));
+          const goal = db.goals.find(g => g.id === args.id || (args.title && g.title.toLowerCase().includes(args.title.toLowerCase())));
           if (!goal) return { success: false, message: "Không tìm thấy mục tiêu." };
           if (args.current !== undefined) goal.current = Number(args.current);
-          await persist('goals', window.DB.goals);
+          await safePersist('goals', db.goals);
           if (window.renderAll) window.renderAll();
           return { success: true, message: `Đã cập nhật tiến độ mục tiêu "${goal.title}": ${goal.current}/${goal.target} (${Math.round((goal.current/goal.target)*100)}%)`, goal };
         }
@@ -503,17 +525,17 @@ export async function executeAiTool(name, args) {
 
       // 6. VOCABULARY
       case "manage_vocab": {
-        if (!window.DB.vocab) window.DB.vocab = [];
+        if (!db.vocab) db.vocab = [];
         if (args.action === "add") {
           const item = {
-            id: uid(),
+            id: safeUid(),
             word: args.word || "",
             ipa: args.ipa || "",
             meaning: args.meaning || "",
             example: args.example || ""
           };
-          window.DB.vocab.push(item);
-          await persist('vocab', window.DB.vocab);
+          db.vocab.push(item);
+          await safePersist('vocab', db.vocab);
           if (window.renderAll) window.renderAll();
           return { success: true, message: `Đã thêm từ vựng: "${item.word}" (${item.ipa}): ${item.meaning}`, item };
         }
@@ -522,12 +544,11 @@ export async function executeAiTool(name, args) {
 
       // 7. STATS QUERY
       case "query_stats": {
-        const td = today();
-        const todos = window.DB.todos || [];
-        const inc = window.DB.income || [];
-        const exp = window.DB.expense || [];
-        const habits = window.DB.habits || [];
-        const projs = window.DB.projects || [];
+        const todos = db.todos || [];
+        const inc = db.income || [];
+        const exp = db.expense || [];
+        const habits = db.habits || [];
+        const projs = db.projects || [];
 
         const totalInc = inc.reduce((s, x) => s + (Number(x.amt) || 0), 0);
         const totalExp = exp.reduce((s, x) => s + (Number(x.amt) || 0), 0);
@@ -598,10 +619,10 @@ export async function executeAiTool(name, args) {
       case "search_data": {
         const q = (args.query || "").toLowerCase();
         const results = [];
-        (window.DB.todos || []).forEach(t => { if ((t.text||"").toLowerCase().includes(q)) results.push({ type: "Todo", text: t.text, date: t.date, done: t.done }); });
-        (window.DB.notes || []).forEach(n => { if ((n.title||"").toLowerCase().includes(q)) results.push({ type: "Ghi chú", title: n.title, date: n.date }); });
-        (window.DB.events || []).forEach(e => { if ((e.title||"").toLowerCase().includes(q)) results.push({ type: "Sự kiện", title: e.title, date: e.dateStart }); });
-        (window.DB.projects || []).forEach(p => { if ((p.name||"").toLowerCase().includes(q)) results.push({ type: "Dự án", name: p.name, status: p.status }); });
+        (db.todos || []).forEach(t => { if ((t.text||"").toLowerCase().includes(q)) results.push({ type: "Todo", text: t.text, date: t.date, done: t.done }); });
+        (db.notes || []).forEach(n => { if ((n.title||"").toLowerCase().includes(q)) results.push({ type: "Ghi chú", title: n.title, date: n.date }); });
+        (db.events || []).forEach(e => { if ((e.title||"").toLowerCase().includes(q)) results.push({ type: "Sự kiện", title: e.title, date: e.dateStart }); });
+        (db.projects || []).forEach(p => { if ((p.name||"").toLowerCase().includes(q)) results.push({ type: "Dự án", name: p.name, status: p.status }); });
         return { success: true, count: results.length, results: results.slice(0, 10) };
       }
 

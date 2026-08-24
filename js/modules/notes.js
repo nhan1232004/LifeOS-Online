@@ -297,8 +297,7 @@ window.aiContinueWriting = async function(event) {
             let currentContent = '';
             try {
                 const data = await noteEditor.save();
-                currentContent = data.blocks.map(b => b.data.text || '').join('
-');
+                currentContent = data.blocks.map(b => b.data.text || '').join('\n');
             } catch(e) {}
             
             let continuedText = '';
