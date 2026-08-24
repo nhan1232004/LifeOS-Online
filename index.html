@@ -70,16 +70,25 @@ function buildDefault() {
   events: [
    { id: 'e1', title: 'Họp chiến lược sản phẩm Q3', dateStart: t, dateEnd: t, timeStart: '09:00', timeEnd: '10:30', type: 'work', desc: 'Đánh giá tiến độ ra mắt tính năng AI và Mobile App' },
    { id: 'e2', title: 'Tập Gym & Cardio', dateStart: t, dateEnd: t, timeStart: '17:30', timeEnd: '19:00', type: 'health', desc: 'Buổi tập ngực và chạy bộ 5km' },
-   { id: 'e3', title: 'Deadline nộp Báo cáo dự án', dateStart: off(2), dateEnd: off(2), timeStart: '17:00', timeEnd: '', type: 'work', desc: 'Gửi bản hoàn thiện cho Tech Lead' },
-   { id: 'e4', title: 'Tiệc sinh nhật em gái', dateStart: off(5), dateEnd: off(5), timeStart: '19:00', timeEnd: '21:30', type: 'social', desc: 'Địa điểm: Nhà hàng The Deck' },
-   { id: 'e5', title: 'Workshop UI/UX Design System', dateStart: off(8), dateEnd: off(8), timeStart: '14:00', timeEnd: '16:30', type: 'study', desc: 'Học hỏi quy chuẩn Atomic Design' }
+   { id: 'e3', title: 'Review Code cùng Senior Dev', dateStart: off(1), dateEnd: off(1), timeStart: '14:00', timeEnd: '15:00', type: 'work', desc: 'Refactor component kiến trúc Single Page App' },
+   { id: 'e4', title: 'Deadline nộp Báo cáo dự án', dateStart: off(2), dateEnd: off(2), timeStart: '17:00', timeEnd: '', type: 'work', desc: 'Gửi bản hoàn thiện cho Tech Lead' },
+   { id: 'e5', title: 'Tiệc sinh nhật em gái', dateStart: off(5), dateEnd: off(5), timeStart: '19:00', timeEnd: '21:30', type: 'social', desc: 'Địa điểm: Nhà hàng The Deck' },
+   { id: 'e6', title: 'Workshop UI/UX Design System', dateStart: off(8), dateEnd: off(8), timeStart: '14:00', timeEnd: '16:30', type: 'study', desc: 'Học hỏi quy chuẩn Atomic Design' },
+   { id: 'e7', title: 'Thanh toán tiền nhà tháng 9', dateStart: off(10), dateEnd: off(10), timeStart: '08:00', timeEnd: '', type: 'personal', desc: 'Chuyển khoản qua App' }
   ],
   todos: [
    { id: 't1', text: 'Tối ưu hóa Performance & Lighthouse LifeOS (≥ 90 score)', priority: 'high', date: t, note: 'Kiểm tra bundle size và lazy loading', done: true },
-   { id: 't2', text: 'Hoàn thiện bản thiết kế UI Focused Glass', priority: 'high', date: t, note: 'Chuẩn hóa design tokens và icons', done: false },
-   { id: 't3', text: 'Đánh giá và review Pull Request cho team', priority: 'mid', date: t, note: 'Module Kanban drag-and-drop', done: false },
-   { id: 't4', text: 'Luyện 20 từ vựng IELTS chuyên ngành công nghệ', priority: 'mid', date: off(1), note: 'Bộ flashcard LifeOS', done: false },
-   { id: 't5', text: 'Thanh toán tiền điện & Internet tháng này', priority: 'low', date: off(3), note: 'Chuyển khoản qua app ngân hàng', done: false }
+   { id: 't2', text: 'Hoàn thiện bản thiết kế UI Focused Glass', priority: 'high', date: t, note: 'Chuẩn hóa design tokens và icons', done: true },
+   { id: 't3', text: 'Đánh giá và review Pull Request cho team', priority: 'high', date: t, note: 'Module Kanban drag-and-drop', done: false },
+   { id: 't4', text: 'Luyện 20 từ vựng IELTS chuyên ngành công nghệ', priority: 'mid', date: t, note: 'Bộ flashcard LifeOS', done: false },
+   { id: 't5', text: 'Thanh toán tiền điện & Internet tháng này', priority: 'low', date: t, note: 'Chuyển khoản qua app ngân hàng', done: false },
+   { id: 't6', text: 'Chạy bộ 5km công viên buổi chiều', priority: 'mid', date: t, note: 'Duy trì mục tiêu sức khỏe', done: true },
+   { id: 't7', text: 'Viết bài blog chia sẻ kinh nghiệm Vanilla JS', priority: 'mid', date: off(1), note: 'Đăng tải trên Dev.to và Medium', done: false },
+   { id: 't8', text: 'Học bài Grammar Unit 12 IELTS', priority: 'low', date: off(1), note: 'Ôn tập mệnh đề quan hệ', done: false },
+   { id: 't9', text: 'Kiểm tra bảo dưỡng xe máy định kỳ', priority: 'low', date: off(2), note: 'Thay dầu nhớt máy và phanh', done: false },
+   { id: 't10', text: 'Đọc 30 trang sách Atomic Habits', priority: 'mid', date: off(2), note: 'Chương 4: Quy luật rõ ràng', done: false },
+   { id: 't11', text: 'Dọn dẹp bàn làm việc & backup ổ cứng', priority: 'low', date: off(3), note: 'Sync lên Google Drive', done: false },
+   { id: 't12', text: 'Chuẩn bị slide thuyết trình Demo Day', priority: 'high', date: off(4), note: 'Tập dượt thời lượng 10 phút', done: false }
   ],
   projects: [
    { id: 'p1', name: 'LifeOS Web App Portfolio', status: 'Đang làm', priority: 'high', budget: 15000000, due: off(10), tags: ['Frontend', 'PWA', 'Productivity'], desc: 'Ứng dụng quản lý toàn diện dành cho lập trình viên và cá nhân' },
@@ -91,41 +100,53 @@ function buildDefault() {
    { id: 'pt2', projId: 'p1', title: 'Nâng cấp Mobile Bottom-Sheet Navigation', status: 'doing', priority: 'high', due: off(1) },
    { id: 'pt3', projId: 'p1', title: 'Tích hợp Frappe Gantt Chart tương tác', status: 'doing', priority: 'mid', due: off(4) },
    { id: 'pt4', projId: 'p1', title: 'Viết tài liệu README.md chuẩn quốc tế', status: 'todo', priority: 'mid', due: off(7) },
-   { id: 'pt5', projId: 'p2', title: 'Phân tích yêu cầu và Database Schema', status: 'todo', priority: 'high', due: off(15) }
+   { id: 'pt5', projId: 'p1', title: 'Tối ưu tốc độ tải trang dưới 1.5s', status: 'todo', priority: 'high', due: off(8) },
+   { id: 'pt6', projId: 'p2', title: 'Phân tích yêu cầu và Database Schema', status: 'todo', priority: 'high', due: off(15) },
+   { id: 'pt7', projId: 'p2', title: 'Thiết kế API RESTful với Express & JWT', status: 'todo', priority: 'mid', due: off(20) },
+   { id: 'pt8', projId: 'p3', title: 'Thử nghiệm Function Calling với Gemini 2.0', status: 'done', priority: 'high', due: off(-3) },
+   { id: 'pt9', projId: 'p3', title: 'Tích hợp Web Speech API nhận diện giọng nói', status: 'done', priority: 'mid', due: off(-2) }
   ],
   income: [
    { id: 'i1', src: 'Lương Công ty Full-time', amt: 22000000, date: t, note: 'Lương tháng 08/2026' },
    { id: 'i2', src: 'Dự án Freelance Frontend', amt: 6500000, date: off(-4), note: 'Thiết kế Landing page doanh nghiệp' },
-   { id: 'i3', src: 'Lợi nhuận Cổ phiếu / ETF', amt: 1800000, date: off(-10), note: 'Cổ tức định kỳ' }
+   { id: 'i3', src: 'Lợi nhuận Cổ phiếu / ETF', amt: 1800000, date: off(-10), note: 'Cổ tức định kỳ' },
+   { id: 'i4', src: 'Thưởng hiệu suất quý II', amt: 5000000, date: off(-15), note: 'KPI đạt 120%' }
   ],
   expense: [
-   { id: 'x1', cat: 'Ăn uống', amt: 350000, date: t, pay: 'Ví điện tử', note: 'Ăn trưa team & cà phê' },
+   { id: 'x1', cat: 'Ăn uống', amt: 350000, date: t, pay: 'Ví điện tử', note: 'Ăn trưa team & cà phê sáng' },
    { id: 'x2', cat: 'Đi lại', amt: 120000, date: t, pay: 'Ví điện tử', note: 'Grab di chuyển làm việc' },
    { id: 'x3', cat: 'Học tập', amt: 1200000, date: off(-3), pay: 'Thẻ ngân hàng', note: 'Khóa học Advanced Frontend Architecture' },
    { id: 'x4', cat: 'Giải trí', amt: 260000, date: off(-5), pay: 'Thẻ ngân hàng', note: 'Netflix & Spotify Family' },
    { id: 'x5', cat: 'Sức khoẻ', amt: 650000, date: off(-7), pay: 'Tiền mặt', note: 'Gói thành viên Gym tháng' },
-   { id: 'x6', cat: 'Nhà ở', amt: 4500000, date: off(-10), pay: 'Chuyển khoản', note: 'Tiền thuê căn hộ & dịch vụ' }
+   { id: 'x6', cat: 'Nhà ở', amt: 4500000, date: off(-10), pay: 'Chuyển khoản', note: 'Tiền thuê căn hộ & dịch vụ' },
+   { id: 'x7', cat: 'Mua sắm', amt: 850000, date: off(-12), pay: 'Thẻ ngân hàng', note: 'Bàn phím cơ không dây' },
+   { id: 'x8', cat: 'Ăn uống', amt: 520000, date: off(-14), pay: 'Ví điện tử', note: 'Đi siêu thị mua đồ ăn cả tuần' }
   ],
   notes: [
    { id: 'n1', title: '🎯 Mục tiêu phát triển sự nghiệp 2026', content: '1. Nâng cao kỹ năng Web Performance và Accessibility (WCAG AA).\n2. Thành thạo Single Page App không phụ thuộc framework nặng (Zero-overhead architecture).\n3. Đóng góp vào các dự án mã nguồn mở.', date: t, tags: ['Career', 'Goals'], pinned: true },
-   { id: 'n2', title: '💡 Ý tưởng tính năng mới cho LifeOS', content: '1. AI Weekly Digest phân tích thói quen và chi tiêu.\n2. Tích hợp Gantt Timeline cho Kanban Board.\n3. Pomodoro âm thanh trắng (White Noise / Lofi Beats).', date: off(-2), tags: ['Product', 'Ideas'], pinned: false }
+   { id: 'n2', title: '💡 Ý tưởng tính năng mới cho LifeOS', content: '1. AI Weekly Digest phân tích thói quen và chi tiêu.\n2. Tích hợp Gantt Timeline cho Kanban Board.\n3. Pomodoro âm thanh trắng (White Noise / Lofi Beats).', date: off(-2), tags: ['Product', 'Ideas'], pinned: true },
+   { id: 'n3', title: '📚 Ghi chú học tập System Design', content: 'Các nguyên lý cơ bản: Caching (Redis), Load Balancing (Nginx), Database Indexing và Partitioning. Luôn thiết kế theo hướng Stateless Server.', date: off(-6), tags: ['Architecture', 'Study'], pinned: false }
   ],
   habits: [
-   { id: 'h1', name: 'Đọc sách công nghệ 30 phút', streak: 12, target: 'Mỗi ngày', history: [t, off(-1), off(-2), off(-3), off(-4)] },
-   { id: 'h2', name: 'Uống đủ 2L nước & Vận động', streak: 8, target: 'Mỗi ngày', history: [t, off(-1), off(-2)] },
-   { id: 'h3', name: 'Học 15 từ vựng tiếng Anh', streak: 15, target: 'Mỗi ngày', history: [t, off(-1), off(-2), off(-3)] }
+   { id: 'h1', name: 'Đọc sách công nghệ 30 phút', streak: 12, target: 'Mỗi ngày', history: [t, off(-1), off(-2), off(-3), off(-4), off(-5), off(-6)] },
+   { id: 'h2', name: 'Uống đủ 2L nước & Vận động', streak: 8, target: 'Mỗi ngày', history: [t, off(-1), off(-2), off(-3)] },
+   { id: 'h3', name: 'Học 15 từ vựng tiếng Anh', streak: 15, target: 'Mỗi ngày', history: [t, off(-1), off(-2), off(-3), off(-4)] },
+   { id: 'h4', name: 'Ngủ trước 23:30', streak: 5, target: 'Mỗi ngày', history: [off(-1), off(-2), off(-3), off(-4), off(-5)] }
   ],
   goals: [
    { id: 'g1', title: 'Quỹ dự phòng tài chính 6 tháng', target: 60000000, current: 42000000, category: 'Tài chính', deadline: off(90) },
-   { id: 'g2', title: 'Đạt chứng chỉ IELTS 7.5+', target: 100, current: 75, category: 'Học tập', deadline: off(120) }
+   { id: 'g2', title: 'Đạt chứng chỉ IELTS 7.5+', target: 100, current: 75, category: 'Học tập', deadline: off(120) },
+   { id: 'g3', title: 'Hoàn thành 12 cuốn sách chuyên ngành', target: 12, current: 8, category: 'Học tập', deadline: off(150) }
   ],
   journal: [
-   { id: 'j1', title: 'Một ngày làm việc hiệu quả và tập trung', content: 'Hôm nay hoàn thành xuất sắc các mục tiêu quan trọng. Cảm giác tập trung với kỹ thuật Pomodoro đem lại năng suất rất cao. Cần duy trì nhịp độ này!', date: t, mood: 'happy' }
+   { id: 'j1', title: 'Một ngày làm việc hiệu quả và tập trung', content: 'Hôm nay hoàn thành xuất sắc các mục tiêu quan trọng. Cảm giác tập trung với kỹ thuật Pomodoro đem lại năng suất rất cao. Cần duy trì nhịp độ này!', date: t, mood: 'happy' },
+   { id: 'j2', title: 'Tổng kết tuần và định hướng mới', content: 'Tuần qua đã đạt được 80% kế hoạch đề ra. Cần kiểm soát chi tiêu ăn ngoài tốt hơn vào cuối tuần.', date: off(-3), mood: 'calm' }
   ],
   vocab: [
    { id: 'v1', word: 'resilient', ipa: '/rɪˈzɪl.jənt/', meaning: 'kiên cường, có khả năng phục hồi nhanh', example: 'She is a resilient developer who learns quickly from bugs.' },
    { id: 'v2', word: 'streamline', ipa: '/ˈstriːm.laɪn/', meaning: 'hợp lý hóa, tối ưu hóa quy trình', example: 'We streamlined our deployment pipeline using CI/CD automation.' },
-   { id: 'v3', word: 'meticulous', ipa: '/məˈtɪk.jə.ləs/', meaning: 'tỉ mỉ, cẩn trọng trong từng chi tiết', example: 'The UI was designed with meticulous attention to spacing.' }
+   { id: 'v3', word: 'meticulous', ipa: '/məˈtɪk.jə.ləs/', meaning: 'tỉ mỉ, cẩn trọng trong từng chi tiết', example: 'The UI was designed with meticulous attention to spacing.' },
+   { id: 'v4', word: 'ubiquitous', ipa: '/juːˈbɪk.wɪ.təs/', meaning: 'phổ biến, có mặt ở khắp mọi nơi', example: 'Smartphones have become ubiquitous in daily life.' }
   ]
  };
 }
@@ -216,7 +237,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1787591627566">
+<link rel="stylesheet" href="css/style.css?v=1787592523775">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -1239,18 +1260,18 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 
-<script src="js/workspace.js?v=1787591627566"></script>
-<script src="js/projViews.js?v=1787591627566"></script>
-<script src="js/main.js?v=1787591627566"></script>
-<script src="js/modules/todos.js?v=1787591627566"></script>
-<script src="js/modules/notes.js?v=1787591627566"></script>
-<script src="js/modules/habits.js?v=1787591627566"></script>
-<script src="js/modules/goals.js?v=1787591627566"></script>
-<script src="js/modules/journal.js?v=1787591627566"></script>
-<script src="js/modules/pomodoro.js?v=1787591627566"></script>
-<script src="js/modules/vocab.js?v=1787591627566"></script>
-<script src="js/modules/mocktests.js?v=1787591627566"></script>
-<script src="js/modules/cmd.js?v=1787591627566"></script>
+<script src="js/workspace.js?v=1787592523775"></script>
+<script src="js/projViews.js?v=1787592523775"></script>
+<script src="js/main.js?v=1787592523775"></script>
+<script src="js/modules/todos.js?v=1787592523775"></script>
+<script src="js/modules/notes.js?v=1787592523775"></script>
+<script src="js/modules/habits.js?v=1787592523775"></script>
+<script src="js/modules/goals.js?v=1787592523775"></script>
+<script src="js/modules/journal.js?v=1787592523775"></script>
+<script src="js/modules/pomodoro.js?v=1787592523775"></script>
+<script src="js/modules/vocab.js?v=1787592523775"></script>
+<script src="js/modules/mocktests.js?v=1787592523775"></script>
+<script src="js/modules/cmd.js?v=1787592523775"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1315,6 +1336,6 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 <script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
-<script src="js/modules/export.js?v=1787591627566"></script>
+<script src="js/modules/export.js?v=1787592523775"></script>
 </body>
 </html>

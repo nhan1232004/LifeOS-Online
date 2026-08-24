@@ -14,13 +14,31 @@ const EC   = {work:'#7c4dff',personal:'#ff6b9d',health:'#00e676',social:'#00e5ff
 const SB   = {Backlog:'bk','Cần làm':'bp','Đang làm':'ba','Hoàn thành':'bg'};
 const PRI_C = {high:'var(--red)',mid:'var(--amber)',low:'var(--green)'};
 
-function toast(msg,type='info'){
- const w=document.getElementById('toastWrap');
- const e=document.createElement('div');
- e.className=`toast t-${type}`;
- e.innerHTML=`<span>${{success:'',error:'',info:''}[type]}</span><span>${msg}</span>`;
+let lastToastMsg = '';
+let lastToastTime = 0;
+function toast(msg, type='info'){
+ const now = Date.now();
+ if (msg === lastToastMsg && now - lastToastTime < 2000) return;
+ lastToastMsg = msg;
+ lastToastTime = now;
+ 
+ const w = document.getElementById('toastWrap');
+ if (!w) return;
+ 
+ while (w.children.length >= 3) {
+   w.removeChild(w.firstChild);
+ }
+
+ const e = document.createElement('div');
+ e.className = `toast t-${type}`;
+ const icons = { success: '✓', error: '⚠️', info: 'ℹ️' };
+ e.innerHTML = `<span style="margin-right:6px; font-weight:700;">${icons[type]||'•'}</span><span style="flex:1">${msg}</span>`;
  w.appendChild(e);
- setTimeout(()=>{e.style.cssText='opacity:0;transform:translateX(100%);transition:all .25s';setTimeout(()=>e.remove(),250);},2500);
+ 
+ setTimeout(() => {
+   e.style.cssText = 'opacity:0; transform:translateY(-8px); transition:all .25s ease;';
+   setTimeout(() => { if (e.parentNode) e.parentNode.removeChild(e); }, 250);
+ }, 3000);
 }
 
 
@@ -1088,7 +1106,12 @@ function renderCal(){
   const evs=(window.DB.events||[]).filter(e=>e.dateStart<=ds&&(e.dateEnd||e.dateStart)>=ds);
   const pills=evs.slice(0,3).map(e=>`<span class="ev-pill" style="background:${EC[e.type]||'#7c4dff'}22;color:${EC[e.type]||'#7c4dff'}" onclick="event.stopPropagation();editEv('${e.id}')">${e.timeStart?e.timeStart+' ':''}${e.title}</span>`).join('');
   const more=evs.length>3?`<span class="ev-pill" style="background:var(--glass);color:var(--text3)">+${evs.length-3}</span>`:'';
-  cells+=`<div class="bcd" onclick="openEv('${ds}')"><div class="bcd-num${ds===t?' today':''}">${d}</div>${pills}${more}</div>`;
+  
+  // Responsive dots on mobile (<640px)
+  const dots=evs.slice(0,3).map(e=>`<span class="cal-dot" style="background:${EC[e.type]||'#7c4dff'}"></span>`).join('');
+  const dotHtml=evs.length>0?`<div class="cal-dots">${dots}${evs.length>3?'<span style="font-size:8px;color:var(--text-low);line-height:1;">+</span>':''}</div>`:'';
+  
+  cells+=`<div class="bcd" onclick="openEv('${ds}')"><div class="bcd-num${ds===t?' today':''}">${d}</div>${pills}${more}${dotHtml}</div>`;
  }
  const total=startDow+last.getDate(), rem=7-(total%7===0?7:total%7);
  for(let i=1;i<=rem&&rem<7;i++)cells+=`<div class="bcd"><div class="bcd-num om">${i}</div></div>`;
@@ -1296,12 +1319,23 @@ function getCO() {
  const t1 = isLight ? '#4a5568' : '#9090b0';
  const t2 = isLight ? '#718096' : '#50507a';
  const g = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,.04)';
+ const isMobile = window.innerWidth < 640;
  return {
-  responsive:true,maintainAspectRatio:false,
-  plugins:{legend:{labels:{color:t1,font:{size:10},padding:10}}},
-  scales:{
-   x:{ticks:{color:t2,font:{size:9.5}},grid:{color:g}},
-   y:{ticks:{color:t2,font:{size:9.5}},grid:{color:g}}
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { labels: { color: t1, font: { size: 10 }, padding: 8 } } },
+  scales: {
+   x: {
+     ticks: {
+       color: t2,
+       font: { size: 9.5 },
+       maxTicksLimit: isMobile ? 5 : 12,
+       maxRotation: 0,
+       minRotation: 0
+     },
+     grid: { color: g }
+   },
+   y: { ticks: { color: t2, font: { size: 9.5 } }, grid: { color: g } }
   }
  };
 }
