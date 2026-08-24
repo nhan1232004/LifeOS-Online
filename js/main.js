@@ -1542,22 +1542,47 @@ function renderStats(){
 function renderToday() {
   const dt = new Date();
   const dateStr = dt.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
-  const elDate = document.getElementById('todayDateStr');
-  if (elDate) elDate.textContent = 'Hôm nay, ' + dateStr;
+  const hr = dt.getHours();
+  let greeting = 'Chào buổi sáng ☀️';
+  if (hr >= 12 && hr < 18) greeting = 'Chào buổi chiều 🌤️';
+  else if (hr >= 18 || hr < 5) greeting = 'Chào buổi tối 🌙';
 
   const td = today();
-  
+  const allTodayTodos = (window.DB.todos || []).filter(x => x.date === td || x.date === '');
+  const doneCount = allTodayTodos.filter(x => x.done).length;
+  const totalCount = allTodayTodos.length;
+  const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+
+  const elDate = document.getElementById('todayDateStr');
+  if (elDate) {
+    elDate.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--accent-light);margin-bottom:2px;">${greeting}</div>
+        <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;">Hôm nay, ${dateStr}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);padding:6px 14px;border-radius:20px;">
+        <i data-lucide="check-circle-2" class="ic-16" style="color:var(--success)"></i>
+        <span style="font-size:12px;font-weight:600;color:var(--text-hi);">${doneCount}/${totalCount} việc (${pct}%)</span>
+      </div>
+    </div>`;
+  }
+
   // 1. Render Todos
-  const todos = (window.DB.todos || []).filter(x => (x.date === td || x.date === '') && !x.done);
+  const todos = allTodayTodos.filter(x => !x.done);
   const todoEl = document.getElementById('todayTodoList');
   if (todoEl) {
     if (!todos.length) {
-      todoEl.innerHTML = '<div style="color:var(--text3); font-size:13px; text-align:center; padding:10px 0;">Thảnh thơi! Không có việc nào cần làm.</div>';
+      todoEl.innerHTML = `<div class="empty-state" style="padding:24px 16px; margin:0;">
+        <div class="empty-state-icon" style="width:38px;height:38px;"><i data-lucide="check-circle" class="ic-18"></i></div>
+        <div class="empty-state-title" style="font-size:13.5px;">Tất cả đã hoàn thành!</div>
+        <div class="empty-state-desc" style="font-size:11.5px; margin-bottom:10px;">Không còn việc nào tồn đọng trong ngày.</div>
+        <button class="btn btn-p btn-sm" onclick="openTodoModal()"><i data-lucide="plus" class="ic-14"></i> Thêm việc</button>
+      </div>`;
     } else {
-      todoEl.innerHTML = todos.map(t => `<div class="todo-item" style="padding:8px 12px; background:var(--surface); border-radius:6px; display:flex; align-items:center; gap:10px;">
-        <input type="checkbox" onchange="toggleTodo('${t.id}')">
-        <span style="flex:1; font-size:14px; ${t.priority==='high'?'color:var(--red);font-weight:600':''} ${t.priority==='low'?'color:var(--text3)':''} ">${t.text}</span>
-        <button class="icon-btn" onclick="editTodo('${t.id}')"><i data-lucide="edit-2" style="width:12px;height:12px"></i></button>
+      todoEl.innerHTML = todos.map(t => `<div class="todo-item" style="padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; gap:12px; transition:var(--t);">
+        <input type="checkbox" onchange="toggleTodo('${t.id}')" style="width:17px;height:17px;cursor:pointer;accent-color:var(--accent);">
+        <span style="flex:1; font-size:13.5px; ${t.priority==='high'?'color:var(--danger);font-weight:600':''} ${t.priority==='low'?'color:var(--text-low)':''} ">${t.text}</span>
+        <button class="icon-btn" onclick="editTodo('${t.id}')"><i data-lucide="edit-2" class="ic-14"></i></button>
       </div>`).join('');
     }
   }
@@ -1567,48 +1592,47 @@ function renderToday() {
   const habitEl = document.getElementById('todayHabitList');
   if (habitEl) {
     if (!habits.length) {
-      habitEl.innerHTML = '<div style="color:var(--text3); font-size:13px; text-align:center; padding:10px 0;">Chưa thiết lập thói quen.</div>';
+      habitEl.innerHTML = `<div class="empty-state" style="padding:24px 16px; margin:0;">
+        <div class="empty-state-icon" style="width:38px;height:38px;"><i data-lucide="flame" class="ic-18"></i></div>
+        <div class="empty-state-title" style="font-size:13.5px;">Chưa có thói quen</div>
+        <div class="empty-state-desc" style="font-size:11.5px; margin-bottom:10px;">Thêm thói quen để rèn luyện mỗi ngày.</div>
+        <button class="btn btn-p btn-sm" onclick="openHabitModal()"><i data-lucide="plus" class="ic-14"></i> Thêm thói quen</button>
+      </div>`;
     } else {
       habitEl.innerHTML = habits.map(h => {
-        const done = (h.logs && h.logs.includes(td));
-        return `<div style="padding:8px 12px; background:var(--surface); border-radius:6px; display:flex; align-items:center; justify-content:space-between;">
-          <span style="font-size:14px; ${done ? 'text-decoration:line-through; color:var(--text3)' : ''}">${h.name}</span>
-          <button class="btn btn-sm ${done ? 'btn-outline' : 'btn-p'}" onclick="toggleHabitDay('${h.id}', '${td}')" style="padding:2px 8px">${done ? 'Đã làm' : 'Check'}</button>
+        const isDone = (h.history && h.history.includes(td)) || (h.logs && h.logs.includes(td));
+        return `<div style="padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:13.5px; font-weight:600; ${isDone ? 'text-decoration:line-through;color:var(--text-low)' : 'color:var(--text-hi)'}">${h.name}</div>
+            <div style="font-size:11px; color:var(--warning); margin-top:2px;">🔥 Chuỗi ${h.streak || 0} ngày</div>
+          </div>
+          <button class="btn btn-sm ${isDone ? 'btn-ghost' : 'btn-p'}" onclick="toggleHabitLog('${h.id}', '${td}')" style="font-size:12px; padding:4px 12px;">
+            ${isDone ? '✓ Đã xong' : 'Hoàn thành'}
+          </button>
         </div>`;
       }).join('');
     }
   }
 
   // 3. Render Events
-  const events = (window.DB.events || []).filter(e => e.start.startsWith(td));
-  // Sort by time
-  events.sort((a,b) => a.start.localeCompare(b.start));
-  
-  const evEl = document.getElementById('todayEventList');
-  if (evEl) {
+  const events = (window.DB.events || []).filter(e => e.dateStart === td);
+  const eventEl = document.getElementById('todayEventList');
+  if (eventEl) {
     if (!events.length) {
-      evEl.innerHTML = '<div style="color:var(--text3); font-size:13px; text-align:center; padding:10px 0;">Lịch trình hôm nay trống.</div>';
+      eventEl.innerHTML = `<div class="empty-state" style="padding:24px 16px; margin:0;">
+        <div class="empty-state-icon" style="width:38px;height:38px;"><i data-lucide="calendar" class="ic-18"></i></div>
+        <div class="empty-state-title" style="font-size:13.5px;">Không có sự kiện hôm nay</div>
+        <div class="empty-state-desc" style="font-size:11.5px; margin-bottom:10px;">Lịch trình hôm nay trống rỗng.</div>
+        <button class="btn btn-p btn-sm" onclick="openEv()"><i data-lucide="plus" class="ic-14"></i> Thêm sự kiện</button>
+      </div>`;
     } else {
-      evEl.innerHTML = events.map(e => {
-        const time = e.start.includes('T') ? e.start.split('T')[1].substring(0,5) : 'Cả ngày';
-        return `<div style="padding:8px 12px; background:var(--surface); border-left:3px solid ${e.color||'var(--primary)'}; border-radius:4px; display:flex; gap:15px; align-items:center; cursor:pointer;" onclick="editEv('${e.id}')">
-          <span style="font-size:13px; color:var(--text2); min-width:45px;">${time}</span>
-          <span style="font-size:14px; flex:1;">${e.title}</span>
-        </div>`;
-      }).join('');
-    }
-  }
-
-  // 4. Update Pomodoro (handled by existing pomUpdateDisplay, but we'll bind the element)
-  const todayPom = document.getElementById('todayPomDisplay');
-  if (todayPom) {
-    const m = Math.floor(pomLeft / 60).toString().padStart(2, '0');
-    const s = (pomLeft % 60).toString().padStart(2, '0');
-    todayPom.textContent = m + ':' + s;
-    const btn = document.getElementById('btnTodayPomToggle');
-    if (btn) {
-      btn.textContent = pomRunning ? 'Tạm dừng' : 'Bắt đầu';
-      btn.className = pomRunning ? 'btn btn-outline' : 'btn btn-p';
+      eventEl.innerHTML = events.map(e => `<div style="padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:13.5px; font-weight:600; color:var(--text-hi);">${e.title}</div>
+          <div style="font-size:11.5px; color:var(--text-mid); margin-top:2px;">${e.timeStart ? e.timeStart + (e.timeEnd ? ' - ' + e.timeEnd : '') : 'Cả ngày'}</div>
+        </div>
+        <button class="icon-btn" onclick="editEv('${e.id}')"><i data-lucide="edit-2" class="ic-14"></i></button>
+      </div>`).join('');
     }
   }
 
@@ -1922,3 +1946,20 @@ window.generateAIDigest = function() {
         typeWriter();
     }, 1500);
 };
+
+// ── Global Keyboard Shortcuts ──
+document.addEventListener('keydown', (e) => {
+  // ESC: Close open modals / bottom sheets
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.overlay.open').forEach(m => {
+      m.classList.remove('open');
+      m.style.display = 'none';
+    });
+    if (typeof closeMobileSidebar === 'function') closeMobileSidebar();
+  }
+  // Ctrl + K / Cmd + K: Open Command Palette
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    if (typeof toggleCmdPalette === 'function') toggleCmdPalette();
+  }
+});

@@ -64,40 +64,69 @@ const LOCAL_KEY = 'lifeos_v4';
 function demoLoad() { try { const d = localStorage.getItem(LOCAL_KEY); if(d) return JSON.parse(d); } catch{} return buildDefault(); }
 function demoSave(data) { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); }
 function buildDefault() {
- const t=new Date().toISOString().split('T')[0];
- const off=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
+ const t = new Date().toISOString().split('T')[0];
+ const off = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0]; };
  return {
-  events:[
-   {id:'e1',title:'Họp team tuần',dateStart:t,dateEnd:t,timeStart:'09:00',timeEnd:'10:00',type:'work',desc:''},
-   {id:'e2',title:'Gym buổi tối',dateStart:t,dateEnd:t,timeStart:'18:00',timeEnd:'19:30',type:'health',desc:''},
-   {id:'e3',title:'Deadline báo cáo Q2',dateStart:off(3),dateEnd:off(3),timeStart:'17:00',timeEnd:'',type:'work',desc:''},
-   {id:'e4',title:'Sinh nhật em gái',dateStart:off(7),dateEnd:off(7),timeStart:'',timeEnd:'',type:'social',desc:''},
+  events: [
+   { id: 'e1', title: 'Họp chiến lược sản phẩm Q3', dateStart: t, dateEnd: t, timeStart: '09:00', timeEnd: '10:30', type: 'work', desc: 'Đánh giá tiến độ ra mắt tính năng AI và Mobile App' },
+   { id: 'e2', title: 'Tập Gym & Cardio', dateStart: t, dateEnd: t, timeStart: '17:30', timeEnd: '19:00', type: 'health', desc: 'Buổi tập ngực và chạy bộ 5km' },
+   { id: 'e3', title: 'Deadline nộp Báo cáo dự án', dateStart: off(2), dateEnd: off(2), timeStart: '17:00', timeEnd: '', type: 'work', desc: 'Gửi bản hoàn thiện cho Tech Lead' },
+   { id: 'e4', title: 'Tiệc sinh nhật em gái', dateStart: off(5), dateEnd: off(5), timeStart: '19:00', timeEnd: '21:30', type: 'social', desc: 'Địa điểm: Nhà hàng The Deck' },
+   { id: 'e5', title: 'Workshop UI/UX Design System', dateStart: off(8), dateEnd: off(8), timeStart: '14:00', timeEnd: '16:30', type: 'study', desc: 'Học hỏi quy chuẩn Atomic Design' }
   ],
-  todos:[
-   {id:'t1',text:'Hoàn thiện báo cáo tháng 6',priority:'high',date:t,note:'',done:false},
-   {id:'t2',text:'Chuyển khoản tiết kiệm',priority:'high',date:t,note:'',done:true},
-   {id:'t3',text:'Review code của team',priority:'mid',date:t,note:'',done:false},
-   {id:'t4',text:'Gọi điện cho gia đình',priority:'mid',date:off(1),note:'',done:false},
+  todos: [
+   { id: 't1', text: 'Tối ưu hóa Performance & Lighthouse LifeOS (≥ 90 score)', priority: 'high', date: t, note: 'Kiểm tra bundle size và lazy loading', done: true },
+   { id: 't2', text: 'Hoàn thiện bản thiết kế UI Focused Glass', priority: 'high', date: t, note: 'Chuẩn hóa design tokens và icons', done: false },
+   { id: 't3', text: 'Đánh giá và review Pull Request cho team', priority: 'mid', date: t, note: 'Module Kanban drag-and-drop', done: false },
+   { id: 't4', text: 'Luyện 20 từ vựng IELTS chuyên ngành công nghệ', priority: 'mid', date: off(1), note: 'Bộ flashcard LifeOS', done: false },
+   { id: 't5', text: 'Thanh toán tiền điện & Internet tháng này', priority: 'low', date: off(3), note: 'Chuyển khoản qua app ngân hàng', done: false }
   ],
-  projects:[
-   {id:'p1',name:'Website Công ty',status:'Đang làm',priority:'high',budget:30000000,due:off(14),tags:['Web','Frontend'],desc:''},
-   {id:'p2',name:'App quản lý kho',status:'Cần làm',priority:'mid',budget:50000000,due:'2026-09-30',tags:['Mobile'],desc:''},
-   {id:'p3',name:'Nghiên cứu AI tools',status:'Backlog',priority:'low',budget:0,due:'',tags:['Nghiên cứu'],desc:''},
-   {id:'p4',name:'Cải thiện CI/CD',status:'Hoàn thành',priority:'mid',budget:5000000,due:off(-7),tags:['DevOps'],desc:''},
+  projects: [
+   { id: 'p1', name: 'LifeOS Web App Portfolio', status: 'Đang làm', priority: 'high', budget: 15000000, due: off(10), tags: ['Frontend', 'PWA', 'Productivity'], desc: 'Ứng dụng quản lý toàn diện dành cho lập trình viên và cá nhân' },
+   { id: 'p2', name: 'Hệ thống Quản lý Bán lẻ Cloud', status: 'Cần làm', priority: 'mid', budget: 45000000, due: off(30), tags: ['Fullstack', 'NodeJS'], desc: 'Dự án thương mại điện tử đồng bộ đa kênh' },
+   { id: 'p3', name: 'Nghiên cứu Gemini & Claude AI API', status: 'Hoàn thành', priority: 'low', budget: 5000000, due: off(-5), tags: ['AI', 'Research'], desc: 'Tích hợp AI Digest tóm tắt tự động' }
   ],
-  income:[
-   {id:'i1',src:'Lương',amt:18000000,date:t,note:'Tháng 6/2026'},
-   {id:'i2',src:'Freelance',amt:4500000,date:off(-7),note:'Dự án website'},
-   {id:'i3',src:'Đầu tư',amt:1200000,date:off(-2),note:'Cổ phiếu'},
+  proj_tasks: [
+   { id: 'pt1', projId: 'p1', title: 'Thiết kế hệ thống Design Tokens duy nhất', status: 'done', priority: 'high', due: t },
+   { id: 'pt2', projId: 'p1', title: 'Nâng cấp Mobile Bottom-Sheet Navigation', status: 'doing', priority: 'high', due: off(1) },
+   { id: 'pt3', projId: 'p1', title: 'Tích hợp Frappe Gantt Chart tương tác', status: 'doing', priority: 'mid', due: off(4) },
+   { id: 'pt4', projId: 'p1', title: 'Viết tài liệu README.md chuẩn quốc tế', status: 'todo', priority: 'mid', due: off(7) },
+   { id: 'pt5', projId: 'p2', title: 'Phân tích yêu cầu và Database Schema', status: 'todo', priority: 'high', due: off(15) }
   ],
-  expense:[
-   {id:'x1',cat:'Ăn uống',amt:1200000,date:t,pay:'Tiền mặt',note:''},
-   {id:'x2',cat:'Đi lại',amt:650000,date:t,pay:'Ví điện tử',note:'Grab'},
-   {id:'x3',cat:'Giải trí',amt:350000,date:off(-7),pay:'Thẻ ngân hàng',note:'Netflix'},
-   {id:'x4',cat:'Học tập',amt:800000,date:off(-7),pay:'Chuyển khoản',note:'Khoá học online'},
-   {id:'x5',cat:'Sức khoẻ',amt:450000,date:off(-2),pay:'Tiền mặt',note:'Gym tháng'},
-   {id:'x6',cat:'Nhà ở',amt:3500000,date:off(-7),pay:'Chuyển khoản',note:'Tiền thuê nhà'},
+  income: [
+   { id: 'i1', src: 'Lương Công ty Full-time', amt: 22000000, date: t, note: 'Lương tháng 08/2026' },
+   { id: 'i2', src: 'Dự án Freelance Frontend', amt: 6500000, date: off(-4), note: 'Thiết kế Landing page doanh nghiệp' },
+   { id: 'i3', src: 'Lợi nhuận Cổ phiếu / ETF', amt: 1800000, date: off(-10), note: 'Cổ tức định kỳ' }
   ],
+  expense: [
+   { id: 'x1', cat: 'Ăn uống', amt: 350000, date: t, pay: 'Ví điện tử', note: 'Ăn trưa team & cà phê' },
+   { id: 'x2', cat: 'Đi lại', amt: 120000, date: t, pay: 'Ví điện tử', note: 'Grab di chuyển làm việc' },
+   { id: 'x3', cat: 'Học tập', amt: 1200000, date: off(-3), pay: 'Thẻ ngân hàng', note: 'Khóa học Advanced Frontend Architecture' },
+   { id: 'x4', cat: 'Giải trí', amt: 260000, date: off(-5), pay: 'Thẻ ngân hàng', note: 'Netflix & Spotify Family' },
+   { id: 'x5', cat: 'Sức khoẻ', amt: 650000, date: off(-7), pay: 'Tiền mặt', note: 'Gói thành viên Gym tháng' },
+   { id: 'x6', cat: 'Nhà ở', amt: 4500000, date: off(-10), pay: 'Chuyển khoản', note: 'Tiền thuê căn hộ & dịch vụ' }
+  ],
+  notes: [
+   { id: 'n1', title: '🎯 Mục tiêu phát triển sự nghiệp 2026', content: '1. Nâng cao kỹ năng Web Performance và Accessibility (WCAG AA).\n2. Thành thạo Single Page App không phụ thuộc framework nặng (Zero-overhead architecture).\n3. Đóng góp vào các dự án mã nguồn mở.', date: t, tags: ['Career', 'Goals'], pinned: true },
+   { id: 'n2', title: '💡 Ý tưởng tính năng mới cho LifeOS', content: '1. AI Weekly Digest phân tích thói quen và chi tiêu.\n2. Tích hợp Gantt Timeline cho Kanban Board.\n3. Pomodoro âm thanh trắng (White Noise / Lofi Beats).', date: off(-2), tags: ['Product', 'Ideas'], pinned: false }
+  ],
+  habits: [
+   { id: 'h1', name: 'Đọc sách công nghệ 30 phút', streak: 12, target: 'Mỗi ngày', history: [t, off(-1), off(-2), off(-3), off(-4)] },
+   { id: 'h2', name: 'Uống đủ 2L nước & Vận động', streak: 8, target: 'Mỗi ngày', history: [t, off(-1), off(-2)] },
+   { id: 'h3', name: 'Học 15 từ vựng tiếng Anh', streak: 15, target: 'Mỗi ngày', history: [t, off(-1), off(-2), off(-3)] }
+  ],
+  goals: [
+   { id: 'g1', title: 'Quỹ dự phòng tài chính 6 tháng', target: 60000000, current: 42000000, category: 'Tài chính', deadline: off(90) },
+   { id: 'g2', title: 'Đạt chứng chỉ IELTS 7.5+', target: 100, current: 75, category: 'Học tập', deadline: off(120) }
+  ],
+  journal: [
+   { id: 'j1', title: 'Một ngày làm việc hiệu quả và tập trung', content: 'Hôm nay hoàn thành xuất sắc các mục tiêu quan trọng. Cảm giác tập trung với kỹ thuật Pomodoro đem lại năng suất rất cao. Cần duy trì nhịp độ này!', date: t, mood: 'happy' }
+  ],
+  vocab: [
+   { id: 'v1', word: 'resilient', ipa: '/rɪˈzɪl.jənt/', meaning: 'kiên cường, có khả năng phục hồi nhanh', example: 'She is a resilient developer who learns quickly from bugs.' },
+   { id: 'v2', word: 'streamline', ipa: '/ˈstriːm.laɪn/', meaning: 'hợp lý hóa, tối ưu hóa quy trình', example: 'We streamlined our deployment pipeline using CI/CD automation.' },
+   { id: 'v3', word: 'meticulous', ipa: '/məˈtɪk.jə.ləs/', meaning: 'tỉ mỉ, cẩn trọng trong từng chi tiết', example: 'The UI was designed with meticulous attention to spacing.' }
+  ]
  };
 }
 
@@ -187,7 +216,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1787504418981">
+<link rel="stylesheet" href="css/style.css?v=1787590053930">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -209,10 +238,10 @@ window.getCurrentUser = () => currentUser;
   <div class="lcard-title gradient-text">LifeOS</div>
   <div class="lcard-sub">Quản lý lịch, dự án và tài chính cá nhân<br>Sync real-time mọi thiết bị</div>
   <div class="lcard-features">
-   <div class="lcard-feat"><div class="lcard-feat-ico"></div><span>Lịch & sự kiện – tháng / tuần</span></div>
-   <div class="lcard-feat"><div class="lcard-feat-ico"><i data-lucide="check-square" style="width:18px;height:18px"></i></div><span>Quản lý dự án Kanban board</span></div>
-   <div class="lcard-feat"><div class="lcard-feat-ico"></div><span>Theo dõi thu chi cá nhân</span></div>
-   <div class="lcard-feat"><div class="lcard-feat-ico"><i data-lucide="cloud" style="width:18px;height:18px"></i></div><span>Lưu tự động – mở ở bất cứ đâu</span></div>
+   <div class="lcard-feat"><div class="lcard-feat-ico"><i data-lucide="calendar" class="ic-18"></i></div><span>Lịch & sự kiện – tháng / tuần</span></div>
+   <div class="lcard-feat"><div class="lcard-feat-ico"><i data-lucide="check-square" class="ic-18"></i></div><span>Quản lý dự án Kanban board</span></div>
+   <div class="lcard-feat"><div class="lcard-feat-ico"><i data-lucide="wallet" class="ic-18"></i></div><span>Theo dõi thu chi cá nhân</span></div>
+   <div class="lcard-feat"><div class="lcard-feat-ico"><i data-lucide="cloud" class="ic-18"></i></div><span>Lưu tự động – mở ở bất cứ đâu</span></div>
   </div>
   <button class="btn-google" onclick="signInGoogle()">
    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.5 2.3 30.1 0 24 0 14.6 0 6.6 5.5 2.6 13.5l7.8 6C12.4 13 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.9 7.2l7.6 5.9C43.8 37 46.5 31 46.5 24z"/><path fill="#FBBC05" d="M10.4 28.5c-.5-1.5-.8-3-.8-4.5s.3-3 .8-4.5l-7.8-6C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.5l7.8-6z"/><path fill="#34A853" d="M24 48c6.1 0 11.2-2 14.9-5.4l-7.6-5.9c-2.1 1.4-4.7 2.3-7.3 2.3-6.3 0-11.6-4.2-13.6-9.9l-7.8 6C6.6 42.5 14.6 48 24 48z"/></svg>
@@ -244,8 +273,8 @@ window.getCurrentUser = () => currentUser;
      <svg id="sg1-ic" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><path d="m18 15-6-6-6 6"/></svg>
    </div>
    <div class="sb-group" id="sg1">
-     <div class="sb-item active" onclick="nav('today',this)"><i data-lucide="sun" style="width:18px;height:18px"></i><span>Hôm nay</span></div>
-     <div class="sb-item" onclick="nav('overview',this)"><i data-lucide="layout-dashboard" style="width:18px;height:18px"></i><span>Dashboard</span></div>
+     <div class="sb-item active" onclick="nav('today',this)"><i data-lucide="sun" class="ic-18"></i><span>Hôm nay</span></div>
+     <div class="sb-item" onclick="nav('overview',this)"><i data-lucide="layout-dashboard" class="ic-18"></i><span>Dashboard</span></div>
    </div>
 
    <div class="sb-sec" onclick="toggleSbGroup('sg2')">
@@ -253,8 +282,8 @@ window.getCurrentUser = () => currentUser;
      <svg id="sg2-ic" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><path d="m18 15-6-6-6 6"/></svg>
    </div>
    <div class="sb-group" id="sg2">
-     <div class="sb-item" onclick="nav('calendar',this)"><span class="si"></span><span>Lịch tháng</span></div>
-     <div class="sb-item" onclick="nav('schedule',this)"><i data-lucide="calendar-range" style="width:18px;height:18px"></i><span>Lịch tuần</span></div>
+     <div class="sb-item" onclick="nav('calendar',this)"><i data-lucide="calendar" class="ic-18"></i><span>Lịch tháng</span></div>
+     <div class="sb-item" onclick="nav('schedule',this)"><i data-lucide="calendar-range" class="ic-18"></i><span>Lịch tuần</span></div>
    </div>
 
    <div class="sb-sec" onclick="toggleSbGroup('sg3')">
@@ -262,8 +291,8 @@ window.getCurrentUser = () => currentUser;
      <svg id="sg3-ic" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><path d="m18 15-6-6-6 6"/></svg>
    </div>
    <div class="sb-group" id="sg3">
-     <div class="sb-item" onclick="nav('projects',this)"><i data-lucide="folders" style="width:18px;height:18px"></i><span>Dự án</span><span class="sb-badge" id="badgeProj">0</span></div>
-     <div class="sb-item" onclick="nav('todos',this)"><span class="si"></span><span>Việc cần làm</span><span class="sb-badge" id="badgeTodo">0</span></div>
+     <div class="sb-item" onclick="nav('projects',this)"><i data-lucide="folders" class="ic-18"></i><span>Dự án</span><span class="sb-badge" id="badgeProj">0</span></div>
+     <div class="sb-item" onclick="nav('todos',this)"><i data-lucide="check-square" class="ic-18"></i><span>Việc cần làm</span><span class="sb-badge" id="badgeTodo">0</span></div>
    </div>
 
    <div class="sb-sec" onclick="toggleSbGroup('sg4')">
@@ -271,9 +300,9 @@ window.getCurrentUser = () => currentUser;
      <svg id="sg4-ic" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><path d="m18 15-6-6-6 6"/></svg>
    </div>
    <div class="sb-group" id="sg4">
-     <div class="sb-item" onclick="nav('finance',this)"><span class="si"></span><span>Thu chi</span></div>
-     <div class="sb-item" onclick="nav('stats',this)"><span class="si"></span><span>Thống kê</span></div>
-     <div class="sb-item" onclick="nav('goals',this)"><span class="si"></span><span>Mục tiêu</span></div>
+     <div class="sb-item" onclick="nav('finance',this)"><i data-lucide="wallet" class="ic-18"></i><span>Thu chi</span></div>
+     <div class="sb-item" onclick="nav('stats',this)"><i data-lucide="bar-chart-3" class="ic-18"></i><span>Thống kê</span></div>
+     <div class="sb-item" onclick="nav('goals',this)"><i data-lucide="target" class="ic-18"></i><span>Mục tiêu</span></div>
    </div>
 
    <div class="sb-sec" onclick="toggleSbGroup('sg5')">
@@ -281,10 +310,10 @@ window.getCurrentUser = () => currentUser;
      <svg id="sg5-ic" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><path d="m18 15-6-6-6 6"/></svg>
    </div>
    <div class="sb-group" id="sg5">
-     <div class="sb-item" onclick="nav('notes',this)"><i data-lucide="sticky-note" style="width:18px;height:18px"></i><span>Ghi chú</span></div>
-     <div class="sb-item" onclick="nav('habits',this)"><i data-lucide="repeat" style="width:18px;height:18px"></i><span>Thói quen</span></div>
-     <div class="sb-item" onclick="nav('journal',this)"><i data-lucide="book" style="width:18px;height:18px"></i><span>Nhật ký</span></div>
-     <div class="sb-item" onclick="nav('pomodoro',this)"><span class="si">⏱️</span><span>Pomodoro</span></div>
+     <div class="sb-item" onclick="nav('notes',this)"><i data-lucide="sticky-note" class="ic-18"></i><span>Ghi chú</span></div>
+     <div class="sb-item" onclick="nav('habits',this)"><i data-lucide="repeat" class="ic-18"></i><span>Thói quen</span></div>
+     <div class="sb-item" onclick="nav('journal',this)"><i data-lucide="book" class="ic-18"></i><span>Nhật ký</span></div>
+     <div class="sb-item" onclick="nav('pomodoro',this)"><i data-lucide="timer" class="ic-18"></i><span>Pomodoro</span></div>
    </div>
 
    <div class="sb-sec" onclick="toggleSbGroup('sg6')">
@@ -292,7 +321,7 @@ window.getCurrentUser = () => currentUser;
      <svg id="sg6-ic" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><path d="m18 15-6-6-6 6"/></svg>
    </div>
    <div class="sb-group" id="sg6">
-     <div class="sb-item" onclick="nav('vocab',this)"><i data-lucide="languages" style="width:18px;height:18px"></i><span>Từ vựng</span></div>
+     <div class="sb-item" onclick="nav('vocab',this)"><i data-lucide="languages" class="ic-18"></i><span>Từ vựng</span></div>
    </div>
   </nav>
   <div class="sb-bottom">
@@ -322,8 +351,8 @@ window.getCurrentUser = () => currentUser;
      <span class="sync-dot"></span>
      <span class="sync-lbl" id="syncLbl">Đã đồng bộ</span>
     </div>
-    <button class="btn btn-sm" onclick="toggleTheme()" id="themeBtn" style="font-size:16px;padding:4px 8px;border:none" title="Chuyển Sáng/Tối"><i data-lucide="sun" style="width:18px;height:18px"></i></button>
-     <button class="btn btn-sm" onclick="openSettings()" style="font-size:16px;padding:4px 8px;border:none" title="Cài đặt & Dữ liệu"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
+    <button class="btn btn-sm" onclick="toggleTheme()" id="themeBtn" style="font-size:16px;padding:4px 8px;border:none" title="Chuyển Sáng/Tối"><i data-lucide="sun" class="ic-18"></i></button>
+     <button class="btn btn-sm" onclick="openSettings()" style="font-size:16px;padding:4px 8px;border:none" title="Cài đặt & Dữ liệu"><i data-lucide="settings" class="ic-18"></i></button>
    </div>
   </div>
 
@@ -648,15 +677,34 @@ window.getCurrentUser = () => currentUser;
 
    <!-- ▸ POMODORO -->
    <div class="page" id="p-pomodoro">
-    <div style="max-width:500px;margin:0 auto">
-     <div class="card" style="text-align:center;padding:30px 20px">
-      <div style="font-size:16px;font-weight:700;margin-bottom:20px">⏱️ Pomodoro Timer</div>
-      <div id="pomodoroStatus" style="font-size:13px;color:var(--text2);margin-bottom:8px">Tập trung làm việc</div>
-      <div id="pomodoroTimer" style="font-size:clamp(48px,12vw,72px);font-weight:800;letter-spacing:2px;font-variant-numeric:tabular-nums;color:var(--accent)">25:00</div>
-      <div style="display:flex;gap:10px;justify-content:center;margin:24px 0 16px">
-       <button class="btn btn-p" id="pomStartBtn" onclick="pomToggle()" style="min-width:100px">▶ Bắt đầu</button>
-       <button class="btn" onclick="pomReset()">⟲ Đặt lại</button>
+    <div style="max-width:520px;margin:0 auto">
+     <div class="card" style="text-align:center;padding:32px 20px">
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:18px;font-weight:700;margin-bottom:8px">
+       <i data-lucide="timer" class="ic-20" style="color:var(--accent)"></i> Pomodoro Focus
       </div>
+      <div id="pomodoroStatus" style="font-size:13px;color:var(--text-mid);margin-bottom:12px">Tập trung làm việc</div>
+      
+      <!-- Circular Progress Ring -->
+      <div class="pom-ring-wrap" style="position:relative; width:220px; height:220px; margin:16px auto;">
+        <svg viewBox="0 0 100 100" style="width:100%; height:100%; transform:rotate(-90deg);">
+          <circle cx="50" cy="50" r="44" fill="none" stroke="var(--glass-b)" stroke-width="6"></circle>
+          <circle id="pomRingProgress" cx="50" cy="50" r="44" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="0" style="transition:stroke-dashoffset 0.5s linear, stroke 0.3s;"></circle>
+        </svg>
+        <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <div id="pomodoroTimer" class="pom-time" style="font-size:42px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--text-hi); line-height:1;">25:00</div>
+          <div style="font-size:11.5px; color:var(--text-low); margin-top:4px;">Phút : Giây</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:center;margin:20px 0 16px">
+       <button class="btn btn-p" id="pomStartBtn" onclick="pomToggle()" style="min-width:120px; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+        <i data-lucide="play" class="ic-16"></i> Bắt đầu
+       </button>
+       <button class="btn" onclick="pomReset()" style="display:inline-flex; align-items:center; gap:6px;">
+        <i data-lucide="rotate-ccw" class="ic-14"></i> Đặt lại
+       </button>
+      </div>
+
       <div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">
        <button class="btn btn-sm ftab active" onclick="pomSet(25,this)">25 phút</button>
        <button class="btn btn-sm ftab" onclick="pomSet(30,this)">30 phút</button>
@@ -664,11 +712,12 @@ window.getCurrentUser = () => currentUser;
        <button class="btn btn-sm ftab" onclick="pomSet(5,this)">5p nghỉ</button>
        <button class="btn btn-sm ftab" onclick="pomSet(15,this)">15p nghỉ</button>
       </div>
-      <div style="background:var(--glass);padding:14px;border-radius:var(--r-sm)">
-       <div style="font-size:12px;color:var(--text3);margin-bottom:6px"> Thống kê hôm nay</div>
+
+      <div style="background:var(--glass);padding:16px;border-radius:var(--r);border:1px solid var(--border);">
+       <div style="font-size:12px;font-weight:600;color:var(--text-mid);margin-bottom:10px">📊 Thống kê hôm nay</div>
        <div style="display:flex;justify-content:space-around">
-        <div><div style="font-size:24px;font-weight:800;color:var(--green)" id="pomCount">0</div><div style="font-size:11px;color:var(--text3)">Phiên hoàn thành</div></div>
-        <div><div style="font-size:24px;font-weight:800;color:var(--cyan)" id="pomMins">0</div><div style="font-size:11px;color:var(--text3)">Phút tập trung</div></div>
+        <div><div style="font-size:24px;font-weight:800;color:var(--success)" id="pomCount">0</div><div style="font-size:11.5px;color:var(--text-low);margin-top:2px;">Phiên hoàn thành</div></div>
+        <div><div style="font-size:24px;font-weight:800;color:var(--accent-cyan)" id="pomMins">0</div><div style="font-size:11.5px;color:var(--text-low);margin-top:2px;">Phút tập trung</div></div>
        </div>
       </div>
      </div>
@@ -689,24 +738,89 @@ window.getCurrentUser = () => currentUser;
    </div>
 
 <!-- MOBILE BOTTOM NAV -->
+<!-- MOBILE 5-TAB BOTTOM NAVIGATION -->
 <nav class="mobile-nav" id="mobileNav">
- <div class="mnav-scroll">
-  <div class="mnav-item active" onclick="nav('today',this)" data-page="today"><i data-lucide="sun" style="width:20px;height:20px"></i><span>Hôm nay</span></div>
-  <div class="mnav-item" onclick="nav('overview',this)" data-page="overview"><i data-lucide="layout-dashboard" style="width:20px;height:20px"></i><span>Tổng quan</span></div>
-  <div class="mnav-item" onclick="nav('calendar',this)" data-page="calendar"><i data-lucide="calendar" style="width:20px;height:20px"></i><span>Lịch</span></div>
-  <div class="mnav-item" onclick="nav('schedule',this)" data-page="schedule"><i data-lucide="calendar-range" style="width:20px;height:20px"></i><span>Lịch tuần</span></div>
-  <div class="mnav-item" onclick="nav('todos',this)" data-page="todos"><i data-lucide="check-square" style="width:20px;height:20px"></i><span>Việc cần</span><span class="mnav-badge" id="mBadgeTodo" style="display:none">0</span></div>
-  <div class="mnav-item" onclick="nav('projects',this)" data-page="projects"><i data-lucide="folder-kanban" style="width:20px;height:20px"></i><span>Dự án</span></div>
-  <div class="mnav-item" onclick="nav('finance',this)" data-page="finance"><i data-lucide="wallet" style="width:20px;height:20px"></i><span>Thu chi</span></div>
-  <div class="mnav-item" onclick="nav('stats',this)" data-page="stats"><i data-lucide="bar-chart-3" style="width:20px;height:20px"></i><span>Thống kê</span></div>
-  <div class="mnav-item" onclick="nav('notes',this)" data-page="notes"><i data-lucide="sticky-note" style="width:20px;height:20px"></i><span>Ghi chú</span></div>
-  <div class="mnav-item" onclick="nav('habits',this)" data-page="habits"><i data-lucide="flame" style="width:20px;height:20px"></i><span>Thói quen</span></div>
-  <div class="mnav-item" onclick="nav('goals',this)" data-page="goals"><i data-lucide="target" style="width:20px;height:20px"></i><span>Mục tiêu</span></div>
-  <div class="mnav-item" onclick="nav('journal',this)" data-page="journal"><i data-lucide="book-open" style="width:20px;height:20px"></i><span>Nhật ký</span></div>
-  <div class="mnav-item" onclick="nav('pomodoro',this)" data-page="pomodoro"><i data-lucide="timer" style="width:20px;height:20px"></i><span>Pomodoro</span></div>
-  <div class="mnav-item" onclick="nav('vocab',this)" data-page="vocab"><i data-lucide="languages" style="width:20px;height:20px"></i><span>Từ vựng</span></div>
+ <div class="mnav-5">
+  <div class="mnav-item active" onclick="nav('today',this)" data-page="today">
+   <i data-lucide="sun" class="ic-20"></i>
+   <span>Hôm nay</span>
+  </div>
+  <div class="mnav-item" onclick="nav('calendar',this)" data-page="calendar">
+   <i data-lucide="calendar" class="ic-20"></i>
+   <span>Lịch</span>
+  </div>
+  <div class="mnav-item" onclick="nav('projects',this)" data-page="projects">
+   <i data-lucide="folder-kanban" class="ic-20"></i>
+   <span>Dự án</span>
+  </div>
+  <div class="mnav-item" onclick="nav('finance',this)" data-page="finance">
+   <i data-lucide="wallet" class="ic-20"></i>
+   <span>Thu chi</span>
+  </div>
+  <div class="mnav-item" onclick="openModal('mobileMoreSheet')">
+   <i data-lucide="layout-grid" class="ic-20"></i>
+   <span>Thêm</span>
+  </div>
  </div>
 </nav>
+
+<!-- MOBILE MORE BOTTOM SHEET -->
+<div class="overlay" id="mobileMoreSheet" onclick="if(event.target===this)closeModal('mobileMoreSheet')">
+ <div class="modal" style="max-width:440px; padding:0;">
+  <div class="mh" style="padding:16px 20px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+   <h3 style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;"><i data-lucide="grid" class="ic-18"></i> Tất cả tính năng</h3>
+   <button class="mclose" onclick="closeModal('mobileMoreSheet')">✕</button>
+  </div>
+  <div class="mb-body" style="padding:16px 18px 24px;">
+   <div class="more-sheet-grid">
+    <div class="more-sheet-item" onclick="nav('overview'); closeModal('mobileMoreSheet');">
+     <div class="more-sheet-icon" style="background:rgba(124,77,255,0.12); color:var(--accent);"><i data-lucide="layout-dashboard" class="ic-20"></i></div>
+     <span>Tổng quan</span>
+    </div>
+    <div class="more-sheet-item" onclick="nav('schedule'); closeModal('mobileMoreSheet');">
+     <div class="more-sheet-icon" style="background:rgba(0,229,255,0.12); color:var(--accent-cyan);"><i data-lucide="calendar-range" class="ic-20"></i></div>
+     <span>Lịch tuần</span>
+    </div>
+    <div class="more-sheet-item" onclick="nav('todos'); closeModal('mobileMoreSheet');">
+     <div class="more-sheet-icon" style="background:rgba(0,230,118,0.12); color:var(--success);"><i data-lucide="check-square" class="ic-20"></i></div>
+     <span>Việc cần</span>
+    </div>
+    <div class="more-sheet-item" onclick="nav('stats'); closeModal('mobileMoreSheet');">
+     <div class="more-sheet-icon" style="background:rgba(255,171,64,0.12); color:var(--warning);"><i data-lucide="bar-chart-3" class="ic-20"></i></div>
+     <span>Thống kê</span>
+    </div>
+    <div class="more-sheet-item" onclick="nav('notes'); closeModal('mobileMoreSheet');">
+     <div class="more-sheet-icon" style="background:rgba(255,107,157,0.12); color:var(--pink);"><i data-lucide="sticky-note" class="ic-20"></i></div>
+     <span>Ghi chú</span>
+    </div>
+    <div class="more-sheet-item" onclick="nav('habits'); closeModal('mobileMoreSheet');">
+     <div class="more-sheet-icon" style="background:rgba(255,82,82,0.12); color:var(--danger);"><i data-lucide="flame" class="ic-20"></i></div>
+     <span>Thói quen</span>
+    </div>
+    <div class="more-sheet-item" onclick="nav('goals'); closeModal('mobileMoreSheet');">
+     <div class="more-sheet-icon" style="background:rgba(124,77,255,0.12); color:var(--accent);"><i data-lucide="target" class="ic-20"></i></div>
+     <span>Mục tiêu</span>
+    </div>
+    <div class="more-sheet-item" onclick="nav('journal'); closeModal('mobileMoreSheet');">
+     <div class="more-sheet-icon" style="background:rgba(0,229,255,0.12); color:var(--accent-cyan);"><i data-lucide="book-open" class="ic-20"></i></div>
+     <span>Nhật ký</span>
+    </div>
+    <div class="more-sheet-item" onclick="nav('pomodoro'); closeModal('mobileMoreSheet');">
+     <div class="more-sheet-icon" style="background:rgba(255,82,82,0.12); color:var(--danger);"><i data-lucide="timer" class="ic-20"></i></div>
+     <span>Pomodoro</span>
+    </div>
+    <div class="more-sheet-item" onclick="nav('vocab'); closeModal('mobileMoreSheet');">
+     <div class="more-sheet-icon" style="background:rgba(0,230,118,0.12); color:var(--success);"><i data-lucide="languages" class="ic-20"></i></div>
+     <span>Từ vựng</span>
+    </div>
+    <div class="more-sheet-item" onclick="openSettings(); closeModal('mobileMoreSheet');">
+     <div class="more-sheet-icon" style="background:rgba(255,255,255,0.08); color:var(--text-hi);"><i data-lucide="settings" class="ic-20"></i></div>
+     <span>Cài đặt</span>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
 </div><!-- /appShell -->
 
 <!-- ════ MODALS ════ -->
@@ -1132,18 +1246,18 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 
-<script src="js/workspace.js?v=1787504032483"></script>
-<script src="js/projViews.js?v=1787504032483"></script>
-<script src="js/main.js?v=1787504418981"></script>
-<script src="js/modules/todos.js?v=1787504032483"></script>
-<script src="js/modules/notes.js?v=1787504032483"></script>
-<script src="js/modules/habits.js?v=1787504032483"></script>
-<script src="js/modules/goals.js?v=1787504032483"></script>
-<script src="js/modules/journal.js?v=1787504032483"></script>
-<script src="js/modules/pomodoro.js?v=1787504032483"></script>
-<script src="js/modules/vocab.js?v=1787504032483"></script>
-<script src="js/modules/mocktests.js?v=1787504032483"></script>
-<script src="js/modules/cmd.js?v=1787504032483"></script>
+<script src="js/workspace.js?v=1787590053930"></script>
+<script src="js/projViews.js?v=1787590053930"></script>
+<script src="js/main.js?v=1787590053930"></script>
+<script src="js/modules/todos.js?v=1787590053930"></script>
+<script src="js/modules/notes.js?v=1787590053930"></script>
+<script src="js/modules/habits.js?v=1787590053930"></script>
+<script src="js/modules/goals.js?v=1787590053930"></script>
+<script src="js/modules/journal.js?v=1787590053930"></script>
+<script src="js/modules/pomodoro.js?v=1787590053930"></script>
+<script src="js/modules/vocab.js?v=1787590053930"></script>
+<script src="js/modules/mocktests.js?v=1787590053930"></script>
+<script src="js/modules/cmd.js?v=1787590053930"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1197,6 +1311,6 @@ window.getCurrentUser = () => currentUser;
   </div>
  </div>
 </div>
-<script src="js/modules/export.js?v=3"></script>
+<script src="js/modules/export.js?v=1787590053930"></script>
 </body>
 </html>
