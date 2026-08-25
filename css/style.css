@@ -973,8 +973,9 @@ body::before {
    scroll-snap-align: center !important;
  }
  
- /* Finance Data-First Layout on Mobile */
- #p-finance { display: flex !important; flex-direction: column !important; }
+ /* Finance Data-First Layout on Mobile (Only when active) */
+ #p-finance.active { display: flex !important; flex-direction: column !important; }
+ #p-finance:not(.active) { display: none !important; }
  #p-finance .page-toolbar { order: 1 !important; }
  #p-finance #finKpi { order: 2 !important; }
  #p-finance .grid-2 { order: 3 !important; }
