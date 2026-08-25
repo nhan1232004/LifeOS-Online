@@ -261,17 +261,48 @@ async function installApp() {
 
 const PAGE_TITLES={today:'Hôm nay',overview:'Dashboard',calendar:'Lịch tháng',schedule:'Lịch tuần',projects:'Dự án',todos:'Việc cần làm',finance:'Thu chi',stats:'Thống kê',notes:'Ghi chú',habits:'Thói quen',goals:'Mục tiêu',journal:'Nhật ký',pomodoro:'Pomodoro',vocab:'Từ vựng',mocktests:'Mock Tests'};
 
-function nav(pg,el){
- document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
- document.querySelectorAll('.sb-item,.mnav-item').forEach(i=>i.classList.remove('active'));
- document.getElementById('p-'+pg).classList.add('active');
+function nav(pg, el){
+ document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+ document.querySelectorAll('.sb-item, .mnav-item').forEach(i => i.classList.remove('active'));
+ 
+ const pageEl = document.getElementById('p-' + pg);
+ if (pageEl) pageEl.classList.add('active');
+ 
  // activate matching sidebar + mobile nav items
- document.querySelectorAll('.sb-item').forEach(i=>{if(i.getAttribute('onclick')&&i.getAttribute('onclick').includes(`'${pg}'`))i.classList.add('active');});
- document.querySelectorAll('.mnav-item').forEach(i=>{if(i.dataset.page===pg)i.classList.add('active');});
- document.getElementById('topTitle').textContent=PAGE_TITLES[pg]||pg;
+ document.querySelectorAll('.sb-item').forEach(i => {
+   if (i.getAttribute('onclick') && i.getAttribute('onclick').includes(`'${pg}'`)) i.classList.add('active');
+ });
+ document.querySelectorAll('.mnav-item').forEach(i => {
+   if (i.dataset.page === pg) i.classList.add('active');
+ });
+ 
+ const topTitleEl = document.getElementById('topTitle');
+ if (topTitleEl) topTitleEl.textContent = PAGE_TITLES[pg] || pg;
+ 
  closeMobileSidebar();
- const renders={overview:renderOverview,calendar:renderCal,schedule:renderWeek,projects:()=>{renderProjSelector();renderKanbanBoard();},todos:renderTodos,finance:()=>{renderFinKpi();renderFinTables();},stats:renderStats,notes:renderNotes,habits:renderHabits,goals:renderGoals,journal:renderJournal,pomodoro:renderPomodoro};
- setTimeout(()=>renders[pg]&&renders[pg](),30);
+ 
+ const renders = {
+   today: typeof renderToday === 'function' ? renderToday : null,
+   overview: typeof renderOverview === 'function' ? renderOverview : null,
+   calendar: typeof renderCal === 'function' ? renderCal : null,
+   schedule: typeof renderWeek === 'function' ? renderWeek : null,
+   projects: () => { if (typeof renderProjSelector === 'function') renderProjSelector(); if (typeof renderKanbanBoard === 'function') renderKanbanBoard(); },
+   todos: typeof renderTodos === 'function' ? renderTodos : null,
+   finance: () => { if (typeof renderFinKpi === 'function') renderFinKpi(); if (typeof renderFinTables === 'function') renderFinTables(); },
+   stats: typeof renderStats === 'function' ? renderStats : null,
+   notes: typeof renderNotes === 'function' ? renderNotes : null,
+   habits: typeof renderHabits === 'function' ? renderHabits : null,
+   goals: typeof renderGoals === 'function' ? renderGoals : null,
+   journal: typeof renderJournal === 'function' ? renderJournal : null,
+   pomodoro: typeof renderPomodoro === 'function' ? renderPomodoro : null,
+   vocab: typeof renderVocab === 'function' ? renderVocab : null,
+   mocktests: typeof renderMockTests === 'function' ? renderMockTests : null
+ };
+ 
+ setTimeout(() => {
+   if (renders[pg]) renders[pg]();
+   if (window.lucide) window.lucide.createIcons();
+ }, 30);
 }
 
 /* ────────────────────────────────────────────────────────
@@ -1978,3 +2009,72 @@ document.addEventListener('keydown', (e) => {
     if (typeof toggleCmdPalette === 'function') toggleCmdPalette();
   }
 });
+
+
+/* ────────────────────────────────────────────────────────
+  QUICK FINANCE MODAL HANDLERS
+──────────────────────────────────────────────────────── */
+window.openQuickFinanceModal = function(type = 'exp') {
+  const d = document.getElementById('qfExpDate');
+  if (d) d.value = today();
+  const di = document.getElementById('qfIncDate');
+  if (di) di.value = today();
+  switchQuickFinType(type);
+  openModal('mQuickFin');
+};
+
+window.switchQuickFinType = function(type) {
+  const tabExp = document.getElementById('qfTabExp');
+  const tabInc = document.getElementById('qfTabInc');
+  const fExp = document.getElementById('qfExpForm');
+  const fInc = document.getElementById('qfIncForm');
+  
+  if (type === 'exp') {
+    if (tabExp) tabExp.classList.add('active');
+    if (tabInc) tabInc.classList.remove('active');
+    if (fExp) fExp.style.display = 'block';
+    if (fInc) fInc.style.display = 'none';
+  } else {
+    if (tabExp) tabExp.classList.remove('active');
+    if (tabInc) tabInc.classList.add('active');
+    if (fExp) fExp.style.display = 'none';
+    if (fInc) fInc.style.display = 'block';
+  }
+};
+
+window.saveQuickExpense = async function() {
+  const amt = parseFloat(document.getElementById('qfExpAmt').value);
+  if (!amt || amt <= 0) { toast('Nhập số tiền hợp lệ!', 'error'); return; }
+  const cat = document.getElementById('qfExpCat').value;
+  const date = document.getElementById('qfExpDate').value || today();
+  const pay = document.getElementById('qfExpPay').value;
+  const note = document.getElementById('qfExpNote').value;
+  
+  const list = [...(window.DB.expense || [])];
+  list.unshift({ id: uid(), cat, amt, date, pay, note });
+  await persist('expense', list);
+  
+  document.getElementById('qfExpAmt').value = '';
+  document.getElementById('qfExpNote').value = '';
+  closeModal('mQuickFin');
+  toast('Đã ghi nhận khoản chi ' + fmt(amt) + ' ₫!', 'success');
+  if (window.renderAll) window.renderAll();
+};
+
+window.saveQuickIncome = async function() {
+  const amt = parseFloat(document.getElementById('qfIncAmt').value);
+  if (!amt || amt <= 0) { toast('Nhập số tiền hợp lệ!', 'error'); return; }
+  const src = document.getElementById('qfIncSrc').value;
+  const date = document.getElementById('qfIncDate').value || today();
+  const note = document.getElementById('qfIncNote').value;
+  
+  const list = [...(window.DB.income || [])];
+  list.unshift({ id: uid(), src, amt, date, note });
+  await persist('income', list);
+  
+  document.getElementById('qfIncAmt').value = '';
+  document.getElementById('qfIncNote').value = '';
+  closeModal('mQuickFin');
+  toast('Đã ghi nhận khoản thu ' + fmt(amt) + ' ₫!', 'success');
+  if (window.renderAll) window.renderAll();
+};
