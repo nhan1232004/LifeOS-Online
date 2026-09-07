@@ -71,6 +71,10 @@ No complex `npm install` or build steps required. Run directly in your browser:
    ```
 2. Open `index.html` directly in any web browser (or use the **Live Server** extension in VS Code).
 
+### Firebase security rollout
+
+Before deploying `firestore.rules`, migrate existing shared projects so they have `ownerUid` and `memberUids`. From `functions/`, configure `GOOGLE_APPLICATION_CREDENTIALS`, run `npm install`, inspect with `npm run migrate:projects`, then explicitly apply with `npm run migrate:projects -- --apply`. Deploy the rules and callable function with the Firebase CLI afterwards. This order keeps existing project members able to access their data.
+
 ---
 
 ## 📁 Directory Structure

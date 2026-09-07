@@ -50,24 +50,23 @@ window.importAllData = function(event) {
     reader.onload = async function(e) {
         try {
             const parsed = JSON.parse(e.target.result);
-            if (typeof parsed !== 'object' || parsed === null) throw new Error('File không hợp lệ');
+            if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) throw new Error('File không hợp lệ');
 
             const collections = ['events', 'todos', 'projects', 'proj_tasks', 'income', 'expense', 'notes', 'habits', 'goals', 'journal', 'vocab', 'mocktests'];
-            let restoredCount = 0;
-
-            collections.forEach(col => {
-                if (Array.isArray(parsed[col])) {
-                    window.DB[col] = parsed[col];
-                    if (typeof persist === 'function') persist(col, window.DB[col]);
-                    restoredCount++;
-                }
-            });
+            const pending = collections.filter(col => Array.isArray(parsed[col]));
+            const restoredCount = pending.length;
 
             if (restoredCount === 0) {
                 toast('File không chứa dữ liệu LifeOS hợp lệ!', 'error');
                 return;
             }
 
+            // Persist each collection before changing in-memory state. This avoids a
+            // partial import that looks successful when a network write fails.
+            const nextDb = { ...(window.DB || {}) };
+            pending.forEach(col => { nextDb[col] = parsed[col].filter(x => x && typeof x === 'object'); });
+            for (const col of pending) await window.persist(col, nextDb[col]);
+            window.DB = nextDb;
             if (window.renderAll) window.renderAll();
             toast('Khôi phục dữ liệu thành công!', 'success');
             closeSettings();
@@ -84,14 +83,15 @@ window.exportFinanceCSV = function() {
     const income = (window.DB && window.DB.income) || [];
     const expense = (window.DB && window.DB.expense) || (window.DB && window.DB.expenses) || [];
     
+    const csv = window.LifeOSData?.csvCell || (value => `"${String(value ?? '').replace(/"/g, '""')}"`);
     let csvContent = "Type,Date,Amount,Category/Source,Payment Method,Note\n";
     
     income.forEach(i => {
-        csvContent += `Income,${i.date || ''},${i.amt || 0},"${i.src || ''}","", "${i.note || ''}"\n`;
+        csvContent += [csv('Income'), csv(i.date), csv(Number(i.amt) || 0), csv(i.src), csv(''), csv(i.note)].join(',') + '\n';
     });
     
     expense.forEach(e => {
-        csvContent += `Expense,${e.date || ''},${e.amt || 0},"${e.cat || ''}","${e.pay || ''}","${e.note || ''}"\n`;
+        csvContent += [csv('Expense'), csv(e.date), csv(Number(e.amt) || 0), csv(e.cat), csv(e.pay), csv(e.note)].join(',') + '\n';
     });
     
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });

@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" id="meta-theme-color" content="#07070f">
 <title>LifeOS – Quản lý cuộc sống</title>
 <script>
@@ -19,12 +19,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- Editor.js & Plugins -->
-<script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/@editorjs/header@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/@editorjs/list@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/@editorjs/checklist@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/@editorjs/quote@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/@editorjs/code@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@2.30.8"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/header@2.8.8"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/list@2.0.8"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/checklist@1.6.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/quote@2.6.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/code@2.9.3"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -33,6 +33,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, deleteDoc, orderBy, limit, addDoc, serverTimestamp }
  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 const firebaseConfig = {
  apiKey: "AIzaSyDOv1gI7x-9ljsrabTCH6qnsmXtteEtMO0",
@@ -45,8 +46,8 @@ const firebaseConfig = {
 };
 
 window.DEMO_MODE = false;
-let app, auth, db, currentUser = null; window.currentUser = null;
-if (!window.DEMO_MODE) { app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); }
+let app, auth, db, functions, currentUser = null; window.currentUser = null;
+if (!window.DEMO_MODE) { app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); functions = getFunctions(app); }
 
 window.signInGoogle = async () => {
  if (window.DEMO_MODE) { enterDemoMode(); return; }
@@ -62,11 +63,12 @@ if (!window.DEMO_MODE) {
 } else { showLogin(); }
 
 const LOCAL_KEY = 'lifeos_v4';
-function demoLoad() { try { const d = localStorage.getItem(LOCAL_KEY); if(d) return JSON.parse(d); } catch{} return buildDefault(); }
-function demoSave(data) { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); }
+function demoLoad() { try { const d = localStorage.getItem(LOCAL_KEY); if(d) { const parsed=JSON.parse(d); return window.LifeOSData?.normalize(parsed) || parsed; } } catch{} return buildDefault(); }
+function demoSave(data) { localStorage.setItem(LOCAL_KEY, JSON.stringify(window.LifeOSData?.normalize(data) || data)); }
 function buildDefault() {
- const t = new Date().toISOString().split('T')[0];
- const off = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0]; };
+ const localDate = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+ const t = localDate(new Date());
+ const off = n => { const d = new Date(); d.setDate(d.getDate() + n); return localDate(d); };
  return {
   events: [
    { id: 'e1', title: 'Họp chiến lược sản phẩm Q3', dateStart: t, dateEnd: t, timeStart: '09:00', timeEnd: '10:30', type: 'work', desc: 'Đánh giá tiến độ ra mắt tính năng AI và Mobile App' },
@@ -183,8 +185,7 @@ function listenSharedData() {
  if (unsubTasks) unsubTasks();
 
  try {
-  const userIdentifier = currentUser.email || currentUser.uid || "unknown";
-  const qProj = query(collection(db, 'shared_projects'), where('members', 'array-contains', userIdentifier));
+  const qProj = query(collection(db, 'shared_projects'), where('memberUids', 'array-contains', currentUser.uid));
   unsubProjects = onSnapshot(qProj, snap => {
    const projs = [];
    snap.forEach(d => projs.push({id: d.id, ...d.data()}));
@@ -195,7 +196,7 @@ function listenSharedData() {
    toast("Lỗi Nhóm (Projects): " + err.message + ". Vui lòng cập nhật Rules!", "error");
   });
 
-  const qTask = query(collection(db, 'shared_tasks'), where('members', 'array-contains', userIdentifier));
+  const qTask = query(collection(db, 'shared_tasks'), where('memberUids', 'array-contains', currentUser.uid));
   unsubTasks = onSnapshot(qTask, snap => {
    const tasks = [];
    snap.forEach(d => tasks.push({id: d.id, ...d.data()}));
@@ -212,6 +213,10 @@ function listenSharedData() {
 
 window.DB = {events:[],todos:[],projects:[],proj_tasks:[],income:[],expense:[],notes:[],habits:[],goals:[],journal:[],vocab:[],mocktests:[]};
 window.fbListen = fbListen; window.fbSaveAll = fbSaveAll; window.getDoc = getDoc; window.db = db; window.setDoc = setDoc; window.deleteDoc = deleteDoc; window.doc = doc; window.collection = collection; window.query = query; window.orderBy = orderBy; window.limit = limit; window.addDoc = addDoc; window.serverTimestamp = serverTimestamp; window.onSnapshot = onSnapshot;
+window.sendProjectInvite = async (projectId, email) => {
+ if (window.DEMO_MODE || !functions) return;
+ return httpsCallable(functions, 'inviteProjectMember')({ projectId, email: String(email).trim().toLowerCase() });
+};
 
 async function showApp(user) {
  document.getElementById('loginScreen').style.display='none';
@@ -1193,7 +1198,7 @@ window.getCurrentUser = () => currentUser;
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
-<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/lucide@0.468.0"></script>
 <script>
   lucide.createIcons();
   const observer = new MutationObserver(() => {
@@ -1268,7 +1273,8 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 
-<script src="js/workspace.js?v=1787649391759"></script>
+<script src="js/data.js?v=2"></script>
+<script src="js/workspace.js?v=2"></script>
 <script src="js/projViews.js?v=1787649391759"></script>
 <script src="js/main.js?v=1787649391759"></script>
 <script src="js/modules/todos.js?v=1787649391759"></script>

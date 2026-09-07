@@ -2,7 +2,7 @@
 /* ────────────────────────────────────────────────────────
   UTILS
 ──────────────────────────────────────────────────────── */
-const toLocalDateStr = (d = new Date()) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+const toLocalDateStr = (d = new Date()) => window.LifeOSData?.localDate(d) || new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 const today = () => toLocalDateStr();
 const dayOff = n => { const d=new Date(); d.setDate(d.getDate()+n); return toLocalDateStr(d); };
 const fmt  = n => { if(!n)return'0'; if(n>=1e9)return(n/1e9).toFixed(2)+'B'; if(n>=1e6)return(n/1e6).toFixed(1)+'M'; if(n>=1000)return Math.round(n/1000)+'K'; return n.toLocaleString('vi-VN'); };
@@ -32,7 +32,11 @@ function toast(msg, type='info'){
  const e = document.createElement('div');
  e.className = `toast t-${type}`;
  const icons = { success: '✓', error: '⚠️', info: 'ℹ️' };
- e.innerHTML = `<span style="margin-right:6px; font-weight:700;">${icons[type]||'•'}</span><span style="flex:1">${msg}</span>`;
+ e.setAttribute('role', type === 'error' ? 'alert' : 'status');
+ e.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+ const icon = document.createElement('span'); icon.style.cssText='margin-right:6px;font-weight:700;'; icon.textContent=icons[type]||'•';
+ const text = document.createElement('span'); text.style.flex='1'; text.textContent=String(msg);
+ e.append(icon, text);
  w.appendChild(e);
  
  setTimeout(() => {
@@ -208,10 +212,20 @@ async function persist(col,items){
  const dot=document.querySelector('.sync-dot');
  if(lbl) lbl.textContent='Đang lưu...';
  if(dot) dot.style.background='var(--amber)';
- await window.fbSaveAll(col,items);
- if(lbl) lbl.textContent='Đã đồng bộ';
- if(dot) dot.style.background='var(--green)';
+ try {
+  const clean = Array.isArray(items) ? items.filter(x => x && typeof x === 'object') : [];
+  await window.fbSaveAll(col,clean);
+  if (window.DB) window.DB[col] = clean;
+  if(lbl) lbl.textContent='Đã đồng bộ';
+  if(dot) dot.style.background='var(--green)';
+ } catch (error) {
+  if(lbl) lbl.textContent='Không thể đồng bộ';
+  if(dot) dot.style.background='var(--red)';
+  toast('Không thể lưu dữ liệu. Vui lòng thử lại.', 'error');
+  throw error;
+ }
 }
+window.persist = persist;
 
 /* ────────────────────────────────────────────────────────
   SIDEBAR / MOBILE NAV
@@ -310,18 +324,29 @@ function nav(pg, el){
 ──────────────────────────────────────────────────────── */
 function openModal(id){
  const m=document.getElementById(id);
+ if (!m) return;
+ m.dataset.lastFocus = document.activeElement?.id || '';
+ m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true');
  m.classList.remove('closing');
  m.style.display='flex';
- requestAnimationFrame(()=>m.classList.add('open'));
+ requestAnimationFrame(()=>{m.classList.add('open');m.querySelector('input,select,textarea,button')?.focus();});
 }
 function closeModal(id){
  const m=document.getElementById(id);
+ if (!m) return;
  m.classList.add('closing');
  setTimeout(()=>{
   m.classList.remove('open','closing');
   m.style.display='none';
+  document.getElementById(m.dataset.lastFocus || '')?.focus();
  }, 250);
 }
+
+document.addEventListener('keydown', e => {
+ if (e.key !== 'Escape') return;
+ const modal = [...document.querySelectorAll('.overlay')].find(m => m.style.display === 'flex' || m.classList.contains('open'));
+ if (modal) closeModal(modal.id);
+});
 
 document.querySelectorAll('.overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
@@ -390,15 +415,16 @@ window.renderProjMembersUI = function() {
  list.innerHTML = currentProjMembers.map(email => {
   const isMe = email === userIdentifier;
   const name = currentProjMemberNames[email] || '';
+  const safeEmail = window.LifeOSData.escapeHtml(email);
   return `
    <div style="display:flex; gap:8px; align-items:center; background:var(--bg3); padding:8px; border-radius:6px;">
-    <div style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; color:var(--text2);" title="${email}">
-     ${email} ${isMe ? '(Bạn)' : ''}
+    <div style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; color:var(--text2);" title="${window.LifeOSData.escapeAttr(email)}">
+     ${safeEmail} ${isMe ? '(Bạn)' : ''}
     </div>
-    <input type="text" placeholder="Biệt danh..." value="${name}" 
-        onchange="window.updateProjMemberName('${email}', this.value)"
+    <input type="text" placeholder="Biệt danh..." value="${window.LifeOSData.escapeAttr(name)}" data-member-email="${window.LifeOSData.escapeAttr(email)}"
+        onchange="window.updateProjMemberName(this.dataset.memberEmail, this.value)"
         style="width:100px; padding:4px 8px; font-size:13px;">
-    ${!isMe ? `<button type="button" onclick="window.removeProjMemberUI('${email}')" style="background:transparent; color:var(--red); border:none; cursor:pointer;">✖</button>` : `<div style="width:20px;"></div>`}
+    ${!isMe ? `<button type="button" data-member-email="${window.LifeOSData.escapeAttr(email)}" onclick="window.removeProjMemberUI(this.dataset.memberEmail)" aria-label="Xóa thành viên" style="background:transparent; color:var(--red); border:none; cursor:pointer;">✖</button>` : `<div style="width:20px;"></div>`}
    </div>
   `;
  }).join('');
@@ -413,8 +439,6 @@ window.addProjMemberUI = function() {
  }
  input.value = '';
  window.renderProjMembersUI();
- window.currentProjSubtasks = p.subtasks ? JSON.parse(JSON.stringify(p.subtasks)) : [];
- if(window.renderProjSubtasksUI) window.renderProjSubtasksUI();
 };
 
 window.removeProjMemberUI = function(email) {
@@ -501,6 +525,8 @@ async function saveProj(){
   
   const p={
    id:editId||uid(),
+   ownerUid: editId ? ((window.DB.projects || []).find(x => x.id === editId)?.ownerUid || window.currentUser?.uid) : window.currentUser?.uid,
+   memberUids: editId ? ((window.DB.projects || []).find(x => x.id === editId)?.memberUids || [window.currentUser?.uid].filter(Boolean)) : [window.currentUser?.uid].filter(Boolean),
    name,
    status:document.getElementById('projStatus').value,
    priority:document.getElementById('projPri').value,
@@ -532,6 +558,12 @@ async function saveProj(){
   if(btn) btn.disabled = true;
   try {
    await window.setDoc(window.doc(window.db, 'shared_projects', p.id), p);
+   // The callable function resolves an email to a UID server-side. Email strings
+   // in `members` remain display metadata and are never used for authorization.
+   await Promise.all(currentProjMembers.filter(email => email !== userIdentifier).map(async email => {
+     try { await window.sendProjectInvite?.(p.id, email); }
+     catch (inviteError) { console.warn('Invite could not be sent', inviteError); }
+   }));
    currentProjId = p.id;
    closeModal('mProj'); 
    toast('Đã lưu dự án!','success');
@@ -837,9 +869,10 @@ window.sendProjMessage = async function() {
  const userIdentifier = window.currentUser?.email || window.currentUser?.uid || "unknown";
  input.value = '';
  try {
-  await window.addDoc(window.collection(window.db, 'shared_projects', currentProjId, 'messages'), {
+ await window.addDoc(window.collection(window.db, 'shared_projects', currentProjId, 'messages'), {
    text,
    sender: userIdentifier,
+   userId: window.currentUser.uid,
    timestamp: window.serverTimestamp()
   });
  } catch(e) {
@@ -862,25 +895,10 @@ async function sendInvite() {
   return;
  }
 
- const list = window.DB.projects || [];
- const p = list.find(x => x.id === currentProjId);
+ const p = (window.DB.projects || []).find(x => x.id === currentProjId);
  if(p) {
-  const p2 = {...p};
-  if(!p2.members) p2.members = [window.window.currentUser.email];
-  else if(typeof p2.members === 'string') p2.members = p2.members.split(',').map(s=>s.trim()).filter(s=>s);
-  if(!p2.members.includes(email)) p2.members.push(email);
-  
   try {
-   await window.setDoc(window.doc(window.db, 'shared_projects', p2.id), p2);
-   
-   const pTasks = (window.DB.proj_tasks || []).filter(t => t.projId === currentProjId);
-   for(const t of pTasks) {
-    if(!t.members) t.members = [window.currentUser.email];
-    if(!t.members.includes(email)) {
-     t.members.push(email);
-     await window.setDoc(window.doc(window.db, 'shared_tasks', t.id), t);
-    }
-   }
+   await window.sendProjectInvite(p.id, email);
    toast(`Đã thêm ${email} vào dự án!`, 'success');
   } catch(e) {
    toast('Lỗi khi mời thành viên: ' + e.message, 'error');
@@ -926,7 +944,7 @@ function renderPTaskComments(comments) {
   el.innerHTML = '<i>Chưa có bình luận nào.</i>';
   return;
  }
- el.innerHTML = comments.map(c => `<div style="margin-bottom:8px;"><b>${c.user}:</b> ${c.text} <span style="font-size:10px;opacity:0.6">(${c.date})</span></div>`).join('');
+ el.innerHTML = comments.map(c => `<div style="margin-bottom:8px;"><b>${window.LifeOSData.escapeHtml(c.user)}:</b> ${window.LifeOSData.escapeHtml(c.text)} <span style="font-size:10px;opacity:0.6">(${window.LifeOSData.escapeHtml(c.date)})</span></div>`).join('');
  el.scrollTop = el.scrollHeight;
 }
 
@@ -965,11 +983,7 @@ async function saveProjTask() {
  }
  
  const p = (window.DB.projects || []).find(x => x.id === pId);
- let mems = [window.currentUser.email];
- if(p && p.members) {
-   mems = typeof p.members === 'string' ? p.members.split(',').map(s=>s.trim()).filter(s=>s) : p.members;
- }
- t.members = mems;
+ t.memberUids = p?.memberUids || [window.currentUser.uid];
 
  const btn = document.getElementById('btnSavePTask');
  if(btn) btn.disabled = true;
@@ -1727,11 +1741,7 @@ window.addEventListener('resize',()=>Object.values(charts).forEach(c=>{try{c.res
 
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
- navigator.serviceWorker.getRegistrations().then(function(registrations) {
-  for(let registration of registrations) {
-   registration.unregister();
-  }
- });
+ window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1900,8 +1910,8 @@ window.renderProjGantt = function(projId) {
         return {
             id: t.id,
             name: t.text || 'Nhiệm vụ',
-            start: s.toISOString().split('T')[0],
-            end: e.toISOString().split('T')[0],
+            start: toLocalDateStr(s),
+            end: toLocalDateStr(e),
             progress: progress,
             custom_class: 'gantt-' + (t.status === 'Hoàn thành' ? 'done' : (t.status === 'Đang làm' ? 'doing' : 'todo'))
         };
@@ -1934,7 +1944,7 @@ window.generateAIDigest = async function() {
         }
         if (!digestData) {
             const now = new Date();
-            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const sevenDaysAgo = toLocalDateStr(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
             const todos = (window.DB.todos || []).filter(t => t.done && t.date >= sevenDaysAgo);
             const exps = (window.DB.expense || []).filter(e => e.date >= sevenDaysAgo);
             const totalExp = exps.reduce((sum, e) => sum + (Number(e.amt) || 0), 0);

@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "node --check js/data.js && node --check js/main.js && node --check js/modules/export.js && node --check functions/index.js"
+  },
   "dependencies": {
     "jsdom": "^29.1.1",
     "playwright": "^1.61.1"

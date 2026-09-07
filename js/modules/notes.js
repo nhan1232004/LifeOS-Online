@@ -78,7 +78,7 @@ async function openNote(id) {
    });
    
    if (backlinks.length > 0) {
-    blList.innerHTML = backlinks.map(n => `<a href="javascript:void(0)" onclick="closeModal('mNote'); setTimeout(()=>openNote('${n.id}'), 300)" style="color:var(--text-accent); text-decoration:none; font-size:13px"><i data-lucide="file-text" style="width:12px;height:12px"></i> ${n.title || 'Không tiêu đề'}</a>`).join('');
+    blList.innerHTML = backlinks.map(n => `<button type="button" onclick="closeModal('mNote'); setTimeout(()=>openNote('${window.LifeOSData.escapeAttr(n.id)}'), 300)" style="color:var(--text-accent);text-decoration:none;font-size:13px;background:none;border:0;padding:0;text-align:left"><i data-lucide="file-text" style="width:12px;height:12px"></i> ${window.LifeOSData.escapeHtml(n.title || 'Không tiêu đề')}</button>`).join('');
     blContainer.style.display = 'block';
     if(window.lucide) window.lucide.createIcons();
    } else {
@@ -167,9 +167,9 @@ function renderNotes() {
   !q || (n.title || '').toLowerCase().includes(q) || getNotePreview(n.body).toLowerCase().includes(q)
  );
  grid.innerHTML = notes.length ? notes.map(n => `
-  <div class="note-card" style="border-top-color:${n.color}" onclick="openNote('${n.id}')">
-   <button class="nc-del" onclick="event.stopPropagation();delNote('${n.id}')">✕</button>
-   <div class="nc-title">${n.title || 'Không tiêu đề'}</div>
+  <div class="note-card" role="button" tabindex="0" style="border-top-color:${window.LifeOSData.escapeAttr(n.color || '#7c4dff')}" onclick="openNote('${window.LifeOSData.escapeAttr(n.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNote('${window.LifeOSData.escapeAttr(n.id)}')}">
+   <button class="nc-del" aria-label="Xóa ghi chú" onclick="event.stopPropagation();delNote('${window.LifeOSData.escapeAttr(n.id)}')">✕</button>
+   <div class="nc-title">${window.LifeOSData.escapeHtml(n.title || 'Không tiêu đề')}</div>
    <div class="nc-body">${getNotePreview(n.body).substring(0, 100).replace(/</g,'&lt;')}</div>
    <div class="nc-date">${fmtDate(n.date)}</div>
   </div>

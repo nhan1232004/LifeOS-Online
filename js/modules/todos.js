@@ -52,7 +52,7 @@ async function toggleTodo(id){
    else if (list[i].recurrence === 'weekly') nextDate.setDate(nextDate.getDate() + 7);
    else if (list[i].recurrence === 'monthly') nextDate.setMonth(nextDate.getMonth() + 1);
    
-   const nextDateStr = nextDate.toISOString().split('T')[0];
+   const nextDateStr = window.LifeOSData?.localDate(nextDate) || nextDate.toISOString().split('T')[0];
    
    const nextTodo = {
      ...list[i],
@@ -143,16 +143,16 @@ function renderTodoList(list) {
  const pl={high:'Cao',mid:'TB',low:'Thấp'};
  el.innerHTML=list.map(t=>`
  <div class="todo-item">
-  <div class="todo-cb" onclick="toggleTodo('${t.id}')" style="border-color:${t.done?'var(--green)':'var(--text3)'};background:${t.done?'var(--green)':'transparent'}">
+  <div class="todo-cb" role="checkbox" tabindex="0" aria-checked="${Boolean(t.done)}" onclick="toggleTodo('${window.LifeOSData.escapeAttr(t.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTodo('${window.LifeOSData.escapeAttr(t.id)}')}" style="border-color:${t.done?'var(--green)':'var(--text3)'};background:${t.done?'var(--green)':'transparent'}">
    ${t.done?'<span style="color:#000;font-size:10px;font-weight:800">✓</span>':''}
   </div>
   <div style="flex:1;min-width:0">
-   <div class="todo-txt" style="${t.done?'text-decoration:line-through;color:var(--text3)':''}">${t.text}</div>
+   <div class="todo-txt" style="${t.done?'text-decoration:line-through;color:var(--text3)':''}">${window.LifeOSData.escapeHtml(t.text)}</div>
    ${t.date?'<div class="todo-meta"> ' + fmtDate(t.date) + '</div>':''}
   </div>
   <span style="font-size:10px;padding:2px 7px;border-radius:8px;background:${PRI_C[t.priority]+'22'};color:${PRI_C[t.priority]};font-weight:700;flex-shrink:0">${pl[t.priority]||'TB'}</span>
-  <button class="btn btn-sm" style="padding:3px 7px;flex-shrink:0" onclick="editTodo('${t.id}')"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
-  <button class="btn btn-sm btn-r" style="padding:3px 7px;flex-shrink:0" onclick="delTodo('${t.id}')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+  <button class="btn btn-sm" aria-label="Sửa việc" style="padding:3px 7px;flex-shrink:0" onclick="editTodo('${window.LifeOSData.escapeAttr(t.id)}')"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
+  <button class="btn btn-sm btn-r" aria-label="Xóa việc" style="padding:3px 7px;flex-shrink:0" onclick="delTodo('${window.LifeOSData.escapeAttr(t.id)}')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
  </div>`).join('');
  if(window.lucide) lucide.createIcons();
 }
