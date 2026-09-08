@@ -750,9 +750,133 @@ async function saveVocab() {
 async function delVocab(id) {
  if (!confirm('Xóa từ vựng này?')) return;
  window.DB.vocab = (window.DB.vocab || []).filter(x => x.id !== id);
+ selectedVocabIds.delete(id);
  await persist('vocab', window.DB.vocab);
  renderVocab();
  toast('Đã xóa', 'info');
+}
+
+// ── Batch Selection State & Handlers ──
+let isVocabSelectMode = false;
+let selectedVocabIds = new Set();
+
+function getVisibleVocabIds() {
+ const q = (document.getElementById('vocabSearch')?.value || '').toLowerCase();
+ const allVocs = window.DB.vocab || [];
+ return allVocs
+  .filter(v => !q || v.word.toLowerCase().includes(q) || v.mean.toLowerCase().includes(q))
+  .map(v => v.id);
+}
+
+function toggleVocabSelectMode() {
+ isVocabSelectMode = !isVocabSelectMode;
+ if (!isVocabSelectMode) {
+  selectedVocabIds.clear();
+ }
+ syncVocabSelectModeUI();
+ renderVocab();
+}
+
+function exitVocabSelectMode() {
+ isVocabSelectMode = false;
+ selectedVocabIds.clear();
+ syncVocabSelectModeUI();
+ renderVocab();
+}
+
+function syncVocabSelectModeUI() {
+ const btn = document.getElementById('btnVocabSelectMode');
+ const txt = document.getElementById('txtVocabSelectMode');
+ const bar = document.getElementById('vocabBatchBar');
+ if (btn) {
+  if (isVocabSelectMode) {
+   btn.classList.add('btn-p');
+   btn.classList.remove('btn-outline');
+   if (txt) txt.textContent = 'Hủy chọn';
+  } else {
+   btn.classList.remove('btn-p');
+   btn.classList.add('btn-outline');
+   if (txt) txt.textContent = 'Chọn nhiều';
+  }
+ }
+ if (bar) {
+  bar.style.display = isVocabSelectMode ? 'flex' : 'none';
+ }
+ updateVocabBatchBar();
+}
+
+function updateVocabBatchBar() {
+ const count = selectedVocabIds.size;
+ const badge = document.getElementById('vocabSelectedBadge');
+ if (badge) badge.textContent = `Đã chọn: ${count} từ`;
+
+ const btnDel = document.getElementById('btnBatchDeleteVocab');
+ const txtDel = document.getElementById('txtBatchDelete');
+ if (btnDel) btnDel.disabled = (count === 0);
+ if (txtDel) txtDel.textContent = `Xóa đã chọn (${count})`;
+
+ const chkAll = document.getElementById('vocabSelectAllChk');
+ if (chkAll) {
+  const visibleIds = getVisibleVocabIds();
+  if (visibleIds.length > 0 && visibleIds.every(id => selectedVocabIds.has(id))) {
+   chkAll.checked = true;
+   chkAll.indeterminate = false;
+  } else if (visibleIds.some(id => selectedVocabIds.has(id))) {
+   chkAll.checked = false;
+   chkAll.indeterminate = true;
+  } else {
+   chkAll.checked = false;
+   chkAll.indeterminate = false;
+  }
+ }
+}
+
+function toggleVocabCardSelection(id, forceState) {
+ if (typeof forceState === 'boolean') {
+  if (forceState) selectedVocabIds.add(id);
+  else selectedVocabIds.delete(id);
+ } else {
+  if (selectedVocabIds.has(id)) selectedVocabIds.delete(id);
+  else selectedVocabIds.add(id);
+ }
+ const card = document.querySelector(`.vocab-card[data-id="${id}"]`);
+ const chk = document.querySelector(`.vc-select-chk[data-id="${id}"]`);
+ const isSelected = selectedVocabIds.has(id);
+ if (card) {
+  if (isSelected) card.classList.add('is-selected');
+  else card.classList.remove('is-selected');
+ }
+ if (chk) {
+  chk.checked = isSelected;
+ }
+ updateVocabBatchBar();
+}
+
+function toggleSelectAllVocab(checked) {
+ const visibleIds = getVisibleVocabIds();
+ if (checked) {
+  visibleIds.forEach(id => selectedVocabIds.add(id));
+ } else {
+  visibleIds.forEach(id => selectedVocabIds.delete(id));
+ }
+ renderVocab();
+ updateVocabBatchBar();
+}
+
+async function batchDeleteVocab() {
+ const count = selectedVocabIds.size;
+ if (count === 0) {
+  toast('Vui lòng chọn ít nhất một từ vựng để xóa', 'info');
+  return;
+ }
+ if (!confirm(`Bạn có chắc chắn muốn xóa ${count} từ vựng đã chọn? Thao tác này không thể hoàn tác.`)) return;
+
+ window.DB.vocab = (window.DB.vocab || []).filter(v => !selectedVocabIds.has(v.id));
+ await persist('vocab', window.DB.vocab);
+ selectedVocabIds.clear();
+ toast(`Đã xóa thành công ${count} từ vựng!`, 'success');
+ renderVocab();
+ updateVocabBatchBar();
 }
 
 function renderVocab() {
@@ -779,18 +903,28 @@ function renderVocab() {
    </div>
   </div>`;
   if (window.lucide) window.lucide.createIcons();
+  updateVocabBatchBar();
   return;
  }
 
- c.innerHTML = vocs.map(v => `
-  <div class="vocab-card" onclick="openVocab('${v.id}')">
+ c.innerHTML = vocs.map(v => {
+  const isSelected = selectedVocabIds.has(v.id);
+  const cardClass = `vocab-card${isVocabSelectMode ? ' select-mode' : ''}${isSelected ? ' is-selected' : ''}`;
+  const cardClick = isVocabSelectMode ? `toggleVocabCardSelection('${v.id}')` : `openVocab('${v.id}')`;
+  const chkHtml = isVocabSelectMode ? `
+   <input type="checkbox" class="vc-select-chk" data-id="${v.id}" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleVocabCardSelection('${v.id}', this.checked)" title="Chọn từ">
+  ` : '';
+
+  return `
+  <div class="${cardClass}" data-id="${v.id}" onclick="${cardClick}">
+   ${chkHtml}
    <div class="vc-top">
     <div class="vc-word">${v.word}</div>
     <div class="vc-type">(${v.type || 'n'})</div>
    </div>
    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
     <div class="vc-pron">${v.pron || ''}</div>
-    <button class="btn-audio" onclick="event.stopPropagation(); speakWord('${v.word}')" title="Nghe phát âm" style="width:24px; height:24px;">
+    <button class="btn-audio" onclick="event.stopPropagation(); speakWord('${(v.word || '').replace(/'/g, "\\'")}')" title="Nghe phát âm" style="width:24px; height:24px;">
      <i data-lucide="volume-2" style="width:12px;height:12px;"></i>
     </button>
    </div>
@@ -802,9 +936,11 @@ function renderVocab() {
     </button>
    </div>
   </div>
- `).join('');
+ `;
+ }).join('');
 
  if (window.lucide) window.lucide.createIcons();
+ updateVocabBatchBar();
 }
 
 document.getElementById('vocabSearch')?.addEventListener('input', renderVocab);
@@ -862,3 +998,8 @@ window.reviewVocab = reviewVocab;
 window.nextVocab = nextVocab;
 window.prevVocab = prevVocab;
 window.endReviewVocab = endReviewVocab;
+window.toggleVocabSelectMode = toggleVocabSelectMode;
+window.exitVocabSelectMode = exitVocabSelectMode;
+window.toggleVocabCardSelection = toggleVocabCardSelection;
+window.toggleSelectAllVocab = toggleSelectAllVocab;
+window.batchDeleteVocab = batchDeleteVocab;

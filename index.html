@@ -287,7 +287,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1788894626427">
+<link rel="stylesheet" href="css/style.css?v=1788895013965">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -848,6 +848,9 @@ window.getCurrentUser = () => currentUser;
     <div class="page-toolbar" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:16px;">
      <div class="ct" style="display:flex;align-items:center;gap:8px"><i data-lucide="languages" class="ic-18" style="color:var(--accent-cyan)"></i> <span style="font-weight:700">Từ vựng (Flashcards)</span></div>
      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-sm btn-outline" id="btnVocabSelectMode" onclick="toggleVocabSelectMode()" style="display:inline-flex; align-items:center; gap:6px;">
+       <i data-lucide="check-square" class="ic-14"></i> <span id="txtVocabSelectMode">Chọn nhiều</span>
+      </button>
       <button class="btn btn-sm btn-outline" onclick="openImportVocabModal()" style="display:inline-flex; align-items:center; gap:6px; border-color:var(--glass-b); background:var(--surface);">
        <i data-lucide="file-up" class="ic-14" style="color:var(--accent-cyan)"></i> <span>Nhập từ File (PDF / Word)</span>
       </button>
@@ -863,6 +866,22 @@ window.getCurrentUser = () => currentUser;
      <input id="vocabSearch" placeholder="🔍 Tìm kiếm từ vựng hoặc nghĩa..." style="flex:1" class="inp">
      <span class="badge" id="vocabCountBadge" style="font-size:12px; padding:6px 14px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-weight:600; color:var(--accent-light);">0 từ</span>
     </div>
+
+    <!-- BATCH ACTION BAR -->
+    <div id="vocabBatchBar" class="vocab-batch-bar" style="display:none;">
+     <div style="display:flex; align-items:center; gap:10px;">
+      <input type="checkbox" id="vocabSelectAllChk" onchange="toggleSelectAllVocab(this.checked)" style="width:16px; height:16px; cursor:pointer; accent-color:var(--accent);">
+      <label for="vocabSelectAllChk" style="font-size:13px; font-weight:600; cursor:pointer; margin:0;">Chọn tất cả</label>
+      <span class="badge" id="vocabSelectedBadge" style="background:rgba(124,77,255,0.15); color:var(--accent-light); font-size:11.5px; padding:2px 8px; border-radius:12px;">Đã chọn: 0 từ</span>
+     </div>
+     <div style="display:flex; align-items:center; gap:8px;">
+      <button class="btn btn-sm btn-d" id="btnBatchDeleteVocab" onclick="batchDeleteVocab()" disabled style="display:inline-flex; align-items:center; gap:6px;">
+       <i data-lucide="trash-2" class="ic-14"></i> <span id="txtBatchDelete">Xóa đã chọn (0)</span>
+      </button>
+      <button class="btn btn-sm btn-outline" onclick="exitVocabSelectMode()">Thoát</button>
+     </div>
+    </div>
+
     <div id="vocabGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px"></div>
    </div>
    </div> <!-- /.content -->
@@ -1384,18 +1403,18 @@ window.getCurrentUser = () => currentUser;
  }
 </script>
 <script src="js/data.js?v=2"></script>
-<script src="js/workspace.js?v=1788894626427"></script>
-<script src="js/projViews.js?v=1788894626427"></script>
-<script src="js/main.js?v=1788894626427"></script>
-<script src="js/modules/todos.js?v=1788894626427"></script>
-<script src="js/modules/notes.js?v=1788894626427"></script>
-<script src="js/modules/habits.js?v=1788894626427"></script>
-<script src="js/modules/goals.js?v=1788894626427"></script>
-<script src="js/modules/journal.js?v=1788894626427"></script>
-<script src="js/modules/pomodoro.js?v=1788894626427"></script>
-<script src="js/modules/vocab.js?v=1788894626427"></script>
-<script src="js/modules/mocktests.js?v=1788894626427"></script>
-<script src="js/modules/cmd.js?v=1788894626427"></script>
+<script src="js/workspace.js?v=1788895013965"></script>
+<script src="js/projViews.js?v=1788895013965"></script>
+<script src="js/main.js?v=1788895013965"></script>
+<script src="js/modules/todos.js?v=1788895013965"></script>
+<script src="js/modules/notes.js?v=1788895013965"></script>
+<script src="js/modules/habits.js?v=1788895013965"></script>
+<script src="js/modules/goals.js?v=1788895013965"></script>
+<script src="js/modules/journal.js?v=1788895013965"></script>
+<script src="js/modules/pomodoro.js?v=1788895013965"></script>
+<script src="js/modules/vocab.js?v=1788895013965"></script>
+<script src="js/modules/mocktests.js?v=1788895013965"></script>
+<script src="js/modules/cmd.js?v=1788895013965"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1580,7 +1599,7 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 <script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
-<script src="js/modules/export.js?v=1788894626427"></script>
+<script src="js/modules/export.js?v=1788895013965"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">
