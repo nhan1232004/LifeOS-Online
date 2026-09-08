@@ -1,5 +1,6 @@
 /* ════════════════════════════════════════════════════════════
    VOCAB FLASHCARDS & DOCUMENT EXTRACTOR (PDF / DOCX / TEXT)
+   Specifically optimized for IELTS books, vocabulary lists, and reading passages
 ════════════════════════════════════════════════════════════ */
 
 // ── Text-to-Speech Pronunciation ──
@@ -11,7 +12,9 @@ window.speakWord = function(word) {
  }
  try {
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(word.trim());
+  // Strip trailing notes or parentheticals before pronouncing
+  const cleanWord = word.replace(/\s*\([^)]*\)/g, '').replace(/\s*\+.*$/g, '').trim();
+  const utter = new SpeechSynthesisUtterance(cleanWord);
   utter.lang = 'en-US';
   utter.rate = 0.88;
   window.speechSynthesis.speak(utter);
@@ -22,11 +25,13 @@ window.speakWord = function(word) {
 
 // ── State for Import Modal ──
 let currentImportFile = null;
+let currentPdfDoc = null;
 let importedVocabList = [];
 
 // ── Modal & Tab Handlers ──
 window.openImportVocabModal = function() {
  currentImportFile = null;
+ currentPdfDoc = null;
  importedVocabList = [];
  const dropName = document.getElementById('vocabFileSelectedName');
  if (dropName) { dropName.textContent = ''; dropName.style.display = 'none'; }
@@ -34,6 +39,8 @@ window.openImportVocabModal = function() {
  if (pasteArea) pasteArea.value = '';
  const fileInp = document.getElementById('vocabFileInput');
  if (fileInp) fileInp.value = '';
+ const pdfRow = document.getElementById('viPdfPageRangeRow');
+ if (pdfRow) pdfRow.style.display = 'none';
  
  document.getElementById('viPreviewWrap').style.display = 'none';
  document.getElementById('viLoading').style.display = 'none';
@@ -63,64 +70,200 @@ window.switchVocabImportTab = function(tab) {
  }
 };
 
-window.handleVocabFileSelect = function(input) {
- if (input.files && input.files[0]) {
-  setImportFile(input.files[0]);
+window.togglePdfScanAll = function(checked) {
+ const startInp = document.getElementById('viPdfPageStart');
+ const endInp = document.getElementById('viPdfPageEnd');
+ if (startInp && endInp && currentPdfDoc) {
+  if (checked) {
+   startInp.value = 1;
+   endInp.value = currentPdfDoc.numPages;
+   startInp.disabled = true;
+   endInp.disabled = true;
+  } else {
+   startInp.disabled = false;
+   endInp.disabled = false;
+   endInp.value = Math.min(currentPdfDoc.numPages, 30);
+  }
  }
 };
 
-window.handleVocabFileDrop = function(e) {
+window.handleVocabFileSelect = async function(input) {
+ if (input.files && input.files[0]) {
+  await setImportFile(input.files[0]);
+ }
+};
+
+window.handleVocabFileDrop = async function(e) {
  e.preventDefault();
  const dz = document.getElementById('vocabDropzone');
  if (dz) dz.classList.remove('drag-over');
  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
-  setImportFile(e.dataTransfer.files[0]);
+  await setImportFile(e.dataTransfer.files[0]);
  }
 };
 
-function setImportFile(file) {
+async function setImportFile(file) {
  currentImportFile = file;
+ currentPdfDoc = null;
  const nameEl = document.getElementById('vocabFileSelectedName');
+ const pdfRow = document.getElementById('viPdfPageRangeRow');
+ const totalPagesEl = document.getElementById('viPdfTotalPages');
+ const endInp = document.getElementById('viPdfPageEnd');
+ const startInp = document.getElementById('viPdfPageStart');
+
+ const sizeKb = Math.round(file.size / 1024);
  if (nameEl) {
-  const sizeKb = Math.round(file.size / 1024);
   nameEl.textContent = `✓ Đã chọn: ${file.name} (${sizeKb} KB)`;
   nameEl.style.display = 'block';
  }
- toast('Đã chọn: ' + file.name, 'success');
-}
 
-// ── File Readers ──
-async function readUploadedFileText(file) {
  const ext = file.name.split('.').pop().toLowerCase();
- 
- if (ext === 'docx') {
-  if (!window.mammoth) throw new Error('Thư viện Mammoth chưa tải xong. Vui lòng thử lại.');
-  const arrayBuffer = await file.arrayBuffer();
-  const res = await window.mammoth.extractRawText({ arrayBuffer });
-  return res.value || '';
- } 
- else if (ext === 'pdf') {
-  if (!window.pdfjsLib) throw new Error('Thư viện PDF.js chưa tải xong. Vui lòng thử lại.');
-  const arrayBuffer = await file.arrayBuffer();
-  const loadingTask = window.pdfjsLib.getDocument({ data: arrayBuffer });
-  const pdf = await loadingTask.promise;
-  let fullText = '';
-  const maxPages = Math.min(pdf.numPages, 40);
-  for (let i = 1; i <= maxPages; i++) {
-   const page = await pdf.getPage(i);
-   const textContent = await page.getTextContent();
-   const pageText = textContent.items.map(item => item.str).join(' ');
-   fullText += pageText + '\n';
+ if (ext === 'pdf' && window.pdfjsLib) {
+  try {
+   const arrayBuffer = await file.arrayBuffer();
+   currentPdfDoc = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+   if (pdfRow) pdfRow.style.display = 'flex';
+   if (totalPagesEl) totalPagesEl.textContent = `(Tổng cộng ${currentPdfDoc.numPages} trang)`;
+   if (startInp) startInp.value = 1;
+   if (endInp) endInp.value = Math.min(currentPdfDoc.numPages, 35);
+  } catch (err) {
+   console.warn('[LifeOS Vocab] Pre-reading PDF metadata failed:', err);
   }
-  return fullText;
+ } else {
+  if (pdfRow) pdfRow.style.display = 'none';
  }
- else {
-  // Plain text / CSV
-  return await file.text();
- }
+
+ toast('Đã tải lên: ' + file.name, 'success');
 }
 
-// ── Built-in Academic Vocabulary Knowledge Base (for high-quality offline extraction) ──
+// ── Line-Preserving PDF Extractor ──
+async function readPdfTextWithLineBreaks(pdfDoc, startPage, endPage, onProgress) {
+ let fullText = '';
+ 
+ for (let p = startPage; p <= endPage; p++) {
+  if (typeof onProgress === 'function') {
+   onProgress(p, startPage, endPage);
+  }
+  const page = await pdfDoc.getPage(p);
+  const textContent = await page.getTextContent();
+  
+  let pageLines = [];
+  let currentLine = '';
+  let lastY = null;
+
+  // Group items by vertical position to preserve true line breaks
+  for (const item of textContent.items) {
+   const y = item.transform[5];
+   if (lastY !== null && Math.abs(y - lastY) > 4) {
+    if (currentLine.trim()) pageLines.push(currentLine.trim());
+    currentLine = '';
+   } else if (currentLine.length > 0 && !currentLine.endsWith(' ') && !currentLine.endsWith('-')) {
+    currentLine += ' ';
+   }
+   currentLine += item.str;
+   lastY = y;
+  }
+  if (currentLine.trim()) pageLines.push(currentLine.trim());
+
+  fullText += pageLines.join('\n') + '\n\n';
+ }
+ return fullText;
+}
+
+// ── Word .docx Reader ──
+async function readDocxFileText(file) {
+ if (!window.mammoth) throw new Error('Thư viện Mammoth chưa sẵn sàng.');
+ const arrayBuffer = await file.arrayBuffer();
+ const res = await window.mammoth.extractRawText({ arrayBuffer });
+ return res.value || '';
+}
+
+// ── Map Grammar Parts of Speech to standard abbreviations ──
+function mapPartOfSpeech(rawType) {
+ if (!rawType) return 'n';
+ const t = rawType.toLowerCase().trim();
+ if (t.includes('noun') || t === 'n') return 'n';
+ if (t.includes('verb') || t === 'v') return 'v';
+ if (t.includes('adj') || t.includes('adjective')) return 'adj';
+ if (t.includes('adv') || t.includes('adverb')) return 'adv';
+ if (t.includes('idiom') || t.includes('phrase') || t.includes('clause') || t.includes('linking') || t === 'phr') return 'phr';
+ return 'phr';
+}
+
+// ── Comprehensive Regex Parser for Vietnamese IELTS Books & Lists ──
+function parseStructuredVocabList(content) {
+ const lines = content.split(/\r?\n/);
+ const items = [];
+ const seenWords = new Set();
+ let currentItem = null;
+
+ for (let i = 0; i < lines.length; i++) {
+  const line = lines[i].trim();
+  if (!line) continue;
+
+  // Handle English definition / example line: "ENG: ..."
+  if (/^ENG\s*:\s*/i.test(line) && currentItem) {
+   const engDef = line.replace(/^ENG\s*:\s*/i, '').trim();
+   currentItem.ex = engDef;
+   continue;
+  }
+
+  // Matches patterns:
+  // - on the outskirts of something (prepositional phrase): ở ngoại ô
+  // - facilitate something (verb): tạo điều kiện thuận lợi
+  // - located + adv./prep. (adj): tọa lạc, ở
+  // - born and bred (idiom): sinh ra và lớn lên
+  // • resilient (adj) : kiên cường
+  // word - meaning
+  // word : meaning
+  const entryMatch = line.match(/^[-•*–—]?\s*([a-zA-Z0-9\s\/'\+\.\,\(\)~…\-’‘]+?)\s*(?:\(([^)]+)\))?\s*[:–—=]\s*(.+)$/);
+  if (entryMatch) {
+   let rawWord = entryMatch[1].trim().replace(/^[-•*–—]\s*/, '').trim();
+   const rawType = entryMatch[2] ? entryMatch[2].trim() : '';
+   let mean = entryMatch[3].trim();
+   
+   const lowerWord = rawWord.toLowerCase();
+   // Skip metadata headers
+   if (
+    lowerWord.startsWith('câu hỏi') ||
+    lowerWord.startsWith('giải thích') ||
+    lowerWord.startsWith('mục lục') ||
+    lowerWord.startsWith('lời mở đầu') ||
+    lowerWord.startsWith('http') ||
+    lowerWord.startsWith('trang') ||
+    lowerWord.startsWith('ielts thanh loan') ||
+    /^\d+\./.test(rawWord)
+   ) {
+    continue;
+   }
+
+   if (rawWord.length >= 2 && mean.length >= 1 && !seenWords.has(lowerWord)) {
+    seenWords.add(lowerWord);
+    currentItem = {
+     word: rawWord,
+     type: mapPartOfSpeech(rawType),
+     pron: '',
+     mean: mean,
+     ex: '',
+     selected: true
+    };
+    items.push(currentItem);
+    continue;
+   }
+  }
+
+  // Multiline continuation of English definition / example
+  if (currentItem && currentItem.ex && !line.startsWith('-') && !line.startsWith('•') && !line.startsWith('Giải thích') && !line.startsWith('Câu hỏi')) {
+   if (!line.includes(':') || line.startsWith('(')) {
+    currentItem.ex += ' ' + line;
+   }
+  }
+ }
+
+ return items;
+}
+
+// ── Built-in Academic Vocabulary Knowledge Base ──
 const BUILTIN_VOCAB_DICT = {
  'resilient': { type: 'adj', pron: '/rɪˈzɪl.jənt/', mean: 'kiên cường, có khả năng phục hồi nhanh' },
  'streamline': { type: 'v', pron: '/ˈstriːm.laɪn/', mean: 'hợp lý hóa, tối ưu hóa quy trình' },
@@ -152,12 +295,12 @@ const BUILTIN_VOCAB_DICT = {
  'deteriorate': { type: 'v', pron: '/dɪˈtɪə.ri.ə.reɪt/', mean: 'suy giảm, trở nên tồi tệ hơn' },
  'predominant': { type: 'adj', pron: '/prɪˈdɒm.ɪ.nənt/', mean: 'chiếm ưu thế, chủ đạo' },
  'imperative': { type: 'adj', pron: '/ɪmˈper.ə.tɪv/', mean: 'cấp bách, bắt buộc phải có' }
- };
+};
 
-// ── Extraction Logic ──
+// ── Main Extraction Pipeline ──
 window.runVocabExtraction = async function() {
  const mode = document.getElementById('viMode')?.value || 'smart';
- const limit = parseInt(document.getElementById('viLimit')?.value || 15);
+ const limit = parseInt(document.getElementById('viLimit')?.value || 25);
  const isFileTab = document.getElementById('viTabFile')?.classList.contains('active');
 
  let text = '';
@@ -174,38 +317,65 @@ window.runVocabExtraction = async function() {
     return;
    }
    if (loadEl) loadEl.style.display = 'block';
-   if (loadTxt) loadTxt.textContent = `Đang đọc nội dung từ file "${currentImportFile.name}"...`;
-   text = await readUploadedFileText(currentImportFile);
+
+   const ext = currentImportFile.name.split('.').pop().toLowerCase();
+   if (ext === 'pdf') {
+    if (!currentPdfDoc) {
+     const arrayBuffer = await currentImportFile.arrayBuffer();
+     currentPdfDoc = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    }
+    const startP = Math.max(1, parseInt(document.getElementById('viPdfPageStart')?.value || 1));
+    const endP = Math.min(currentPdfDoc.numPages, parseInt(document.getElementById('viPdfPageEnd')?.value || currentPdfDoc.numPages));
+
+    text = await readPdfTextWithLineBreaks(currentPdfDoc, startP, endP, (cur, s, e) => {
+     if (loadTxt) loadTxt.textContent = `Đang quét trang ${cur} / ${e} của file PDF...`;
+    });
+   } else if (ext === 'docx') {
+    if (loadTxt) loadTxt.textContent = 'Đang đọc nội dung file Word (.docx)...';
+    text = await readDocxFileText(currentImportFile);
+   } else {
+    if (loadTxt) loadTxt.textContent = 'Đang đọc file văn bản...';
+    text = await currentImportFile.text();
+   }
   } else {
    text = (document.getElementById('vocabPasteText')?.value || '').trim();
    if (!text) {
-    toast('Vui lòng dán đoạn văn bản hoặc danh sách từ vào ô!', 'error');
+    toast('Vui lòng dán nội dung văn bản hoặc danh sách từ vào ô!', 'error');
     return;
    }
    if (loadEl) loadEl.style.display = 'block';
-   if (loadTxt) loadTxt.textContent = 'Đang phân tích đoạn văn bản...';
+   if (loadTxt) loadTxt.textContent = 'Đang phân tích văn bản...';
   }
 
   if (!text || text.trim().length < 5) {
    throw new Error('Tài liệu không chứa đủ nội dung văn bản để trích xuất.');
   }
 
-  if (loadTxt) loadTxt.textContent = 'Đang trích xuất từ vựng, phiên âm và dịch nghĩa tiếng Việt...';
+  if (loadTxt) loadTxt.textContent = 'Đang trích xuất từ vựng, phân loại và dịch nghĩa...';
 
-  let items = [];
-  if (mode === 'smart') {
-   items = await extractVocabSmart(text, limit);
+  // 1. First priority: Check if text contains structured book lists like "Giải thích từ vựng:"
+  let items = parseStructuredVocabList(text);
+
+  // 2. If structured parser found words, limit to requested amount (or take all if within reason)
+  if (items.length > 0) {
+   if (items.length > limit) {
+    items = items.slice(0, limit);
+   }
   } else {
-   items = extractVocabPattern(text, limit);
+   // 3. Fallback to AI smart extraction or academic dictionary scanner
+   if (mode === 'smart') {
+    items = await extractVocabSmart(text, limit);
+   } else {
+    items = extractVocabPatternFallback(text, limit);
+   }
   }
 
   if (!items || !items.length) {
-   // Fallback to pattern extraction
-   items = extractVocabPattern(text, limit);
+   items = extractVocabPatternFallback(text, limit);
   }
 
   if (!items.length) {
-   throw new Error('Không nhận diện được từ vựng nào từ văn bản. Hãy thử dán dạng "Word - Meaning" hoặc chọn đoạn văn dài hơn.');
+   throw new Error('Không nhận diện được từ vựng nào. Nếu tài liệu là PDF dạng scan ảnh, hãy copy text dán vào tab "Dán văn bản trực tiếp".');
   }
 
   importedVocabList = items;
@@ -214,7 +384,7 @@ window.runVocabExtraction = async function() {
   if (loadEl) loadEl.style.display = 'none';
   if (previewWrap) previewWrap.style.display = 'block';
   if (btnConfirm) btnConfirm.style.display = 'inline-flex';
-  toast(`Đã trích xuất thành công ${items.length} từ vựng!`, 'success');
+  toast(`🎉 Đã trích xuất thành công ${items.length} từ vựng!`, 'success');
 
  } catch (err) {
   if (loadEl) loadEl.style.display = 'none';
@@ -226,14 +396,12 @@ window.runVocabExtraction = async function() {
 // ── Smart AI Extractor ──
 async function extractVocabSmart(rawText, limit) {
  const apiKey = localStorage.getItem('lifeos_gemini_key') || (window.AI_CONFIG && window.AI_CONFIG.geminiKey) || '';
- 
- // Slice reasonable amount of text to avoid huge token payloads
- const textSnippet = rawText.slice(0, 8000);
+ const textSnippet = rawText.slice(0, 7500);
 
  if (apiKey && apiKey.trim().length > 10) {
   try {
-   const prompt = `You are an expert English lexicographer. Analyze the following text and extract up to ${limit} academic, advanced, or high-value vocabulary words/phrases (B2, C1, C2 level or domain terminology).
-For each word/phrase, provide:
+   const prompt = `You are an expert English lexicographer. Analyze the following text and extract up to ${limit} key vocabulary words, idioms, collocations, or academic expressions.
+For each item, provide:
 - "word": English word/phrase in lower case
 - "type": part of speech, strictly one of: "n", "v", "adj", "adv", "phr"
 - "pron": standard IPA pronunciation, e.g. /ɪnˈvaɪ.rən.mənt/
@@ -258,7 +426,7 @@ ${textSnippet}`;
    if (res.ok) {
     const data = await res.json();
     const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const cleanJson = txt.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const cleanJson = txt.split('```json').join('').split('```').join('').trim();
     const parsed = JSON.parse(cleanJson);
     if (Array.isArray(parsed) && parsed.length > 0) {
      return parsed.map(item => ({
@@ -272,72 +440,44 @@ ${textSnippet}`;
     }
    }
   } catch (aiErr) {
-   console.warn('[LifeOS Vocab AI] Gemini API call failed, falling back to local extractor:', aiErr);
+   console.warn('[LifeOS Vocab AI] Gemini API call failed, falling back:', aiErr);
   }
  }
 
- // If no Gemini key or AI call failed, use intelligent heuristic local extractor
- return extractVocabPattern(rawText, limit);
+ return extractVocabPatternFallback(rawText, limit);
 }
 
-// ── Offline Pattern & Heuristic Extractor ──
-function extractVocabPattern(text, limit = 20) {
+// ── Fallback Tokenizer & Dictionary Scanner ──
+function extractVocabPatternFallback(text, limit = 20) {
  const results = [];
  const seen = new Set();
- const lines = text.split(/[\r\n]+/);
+ const words = text.match(/\b[a-zA-Z]{4,20}\b/g) || [];
 
- // Pattern 1: Structured lines like "word - meaning" or "word : meaning" or "word | meaning"
- const separatorRegex = /^([a-zA-Z\s\-']{2,30})\s*(?:[-:–|]|\t)\s*(\/[^\/]+\/)?\s*(?:\((n|v|adj|adv|phr)\))?\s*[:–-]?\s*(.+)$/i;
- 
- for (const line of lines) {
-  const trimmed = line.trim();
-  if (!trimmed || trimmed.length < 4) continue;
-  
-  const m = trimmed.match(separatorRegex);
-  if (m) {
-   const word = m[1].trim().toLowerCase();
-   if (word && !seen.has(word) && word.length >= 2) {
-    seen.add(word);
-    const pron = m[2] ? m[2].trim() : (BUILTIN_VOCAB_DICT[word]?.pron || '');
-    const type = m[3] ? m[3].toLowerCase() : (BUILTIN_VOCAB_DICT[word]?.type || 'n');
-    const mean = m[4].trim();
-    results.push({ word, type, pron, mean, ex: '', selected: true });
-    if (results.length >= limit) break;
-   }
-  }
- }
-
- // Pattern 2: Scan text against knowledge base or academic word tokens
- if (results.length < limit) {
-  // Tokenize text into words
-  const words = text.match(/\b[a-zA-Z]{4,20}\b/g) || [];
-  for (const rawW of words) {
-   const w = rawW.toLowerCase();
-   if (!seen.has(w) && BUILTIN_VOCAB_DICT[w]) {
-    seen.add(w);
-    const info = BUILTIN_VOCAB_DICT[w];
-    
-    // Find an example sentence containing this word in the text
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-    let foundEx = '';
-    for (const sent of sentences) {
-     if (new RegExp(`\\b${w}\\b`, 'i').test(sent) && sent.trim().length <= 150) {
-      foundEx = sent.trim();
-      break;
-     }
+ for (const rawW of words) {
+  const w = rawW.toLowerCase();
+  if (!seen.has(w) && BUILTIN_VOCAB_DICT[w]) {
+   seen.add(w);
+   const info = BUILTIN_VOCAB_DICT[w];
+   
+   const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+   let foundEx = '';
+   for (const sent of sentences) {
+    if (new RegExp(`\\b${w}\\b`, 'i').test(sent) && sent.trim().length <= 150) {
+     foundEx = sent.trim();
+     break;
     }
-
-    results.push({
-     word: w,
-     type: info.type || 'n',
-     pron: info.pron || '',
-     mean: info.mean || '',
-     ex: foundEx || `We need to study ${w} carefully.`,
-     selected: true
-    });
-
-    if (results.length >= limit) break;
    }
+
+   results.push({
+    word: w,
+    type: info.type || 'n',
+    pron: info.pron || '',
+    mean: info.mean || '',
+    ex: foundEx || `We need to study ${w} carefully.`,
+    selected: true
+   });
+
+   if (results.length >= limit) break;
   }
  }
 
@@ -442,8 +582,6 @@ window.confirmImportVocab = async function() {
  }
 
  if (!window.DB.vocab) window.DB.vocab = [];
- 
- // Prepend new words so they appear first
  window.DB.vocab = [...toAdd, ...window.DB.vocab];
  await persist('vocab', window.DB.vocab);
  

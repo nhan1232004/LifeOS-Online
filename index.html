@@ -265,7 +265,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1788891698149">
+<link rel="stylesheet" href="css/style.css?v=1788892662655">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -1354,18 +1354,18 @@ window.getCurrentUser = () => currentUser;
  }
 </script>
 <script src="js/data.js?v=2"></script>
-<script src="js/workspace.js?v=1788891698149"></script>
-<script src="js/projViews.js?v=1788891698149"></script>
-<script src="js/main.js?v=1788891698149"></script>
-<script src="js/modules/todos.js?v=1788891698149"></script>
-<script src="js/modules/notes.js?v=1788891698149"></script>
-<script src="js/modules/habits.js?v=1788891698149"></script>
-<script src="js/modules/goals.js?v=1788891698149"></script>
-<script src="js/modules/journal.js?v=1788891698149"></script>
-<script src="js/modules/pomodoro.js?v=1788891698149"></script>
-<script src="js/modules/vocab.js?v=1788891698149"></script>
-<script src="js/modules/mocktests.js?v=1788891698149"></script>
-<script src="js/modules/cmd.js?v=1788891698149"></script>
+<script src="js/workspace.js?v=1788892662655"></script>
+<script src="js/projViews.js?v=1788892662655"></script>
+<script src="js/main.js?v=1788892662655"></script>
+<script src="js/modules/todos.js?v=1788892662655"></script>
+<script src="js/modules/notes.js?v=1788892662655"></script>
+<script src="js/modules/habits.js?v=1788892662655"></script>
+<script src="js/modules/goals.js?v=1788892662655"></script>
+<script src="js/modules/journal.js?v=1788892662655"></script>
+<script src="js/modules/pomodoro.js?v=1788892662655"></script>
+<script src="js/modules/vocab.js?v=1788892662655"></script>
+<script src="js/modules/mocktests.js?v=1788892662655"></script>
+<script src="js/modules/cmd.js?v=1788892662655"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1423,6 +1423,19 @@ window.getCurrentUser = () => currentUser;
      <div style="font-size:12px; color:var(--text-mid);">Hỗ trợ: PDF (.pdf), Word (.docx), Văn bản (.txt, .csv)</div>
      <div id="vocabFileSelectedName" style="margin-top:8px; font-weight:600; font-size:12.5px; color:var(--success); display:none;"></div>
      <input type="file" id="vocabFileInput" accept=".pdf,.docx,.txt,.csv" style="display:none" onchange="handleVocabFileSelect(this)">
+    </div>
+    <!-- PDF Page Range Options -->
+    <div id="viPdfPageRangeRow" style="display:none; align-items:center; gap:8px; margin-top:10px; background:var(--surface2); padding:10px 14px; border-radius:8px; flex-wrap:wrap;">
+     <i data-lucide="layers" class="ic-14" style="color:var(--accent-cyan)"></i>
+     <span style="font-size:12px; font-weight:600; color:var(--text-hi);">Phạm vi trang PDF:</span>
+     <span style="font-size:12px; color:var(--text-mid);">Từ trang</span>
+     <input type="number" id="viPdfPageStart" class="inp" value="1" min="1" style="width:65px; padding:4px 8px; font-size:12px; text-align:center;">
+     <span style="font-size:12px; color:var(--text-mid);">đến trang</span>
+     <input type="number" id="viPdfPageEnd" class="inp" value="30" min="1" style="width:65px; padding:4px 8px; font-size:12px; text-align:center;">
+     <label style="display:inline-flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; margin-left:8px; color:var(--text-mid);">
+      <input type="checkbox" id="viPdfScanAll" onchange="togglePdfScanAll(this.checked)" style="accent-color:var(--accent); cursor:pointer;"> Quét toàn bộ sách
+     </label>
+     <span id="viPdfTotalPages" style="font-size:11.5px; color:var(--accent-light); margin-left:auto; font-weight:600;"></span>
     </div>
    </div>
 
@@ -1536,7 +1549,7 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 <script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
-<script src="js/modules/export.js?v=1788891698149"></script>
+<script src="js/modules/export.js?v=1788892662655"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">
