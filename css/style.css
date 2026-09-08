@@ -2111,3 +2111,63 @@ body {
     margin-top: 4px;
   }
 }
+
+/* ════════════════════════════════════════
+   VOCAB FILE IMPORT & AUDIO STYLES
+════════════════════════════════════════ */
+.file-dropzone {
+  border: 2px dashed var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.file-dropzone:hover, .file-dropzone.drag-over {
+  border-color: var(--accent);
+  background: rgba(124, 77, 255, 0.06);
+  transform: scale(1.01);
+}
+.btn-audio {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--accent-light);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--t);
+  padding: 0;
+}
+.btn-audio:hover {
+  background: var(--accent);
+  color: #fff !important;
+  border-color: var(--accent);
+  transform: scale(1.08);
+}
+.vocab-card .vc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+.vocab-card .vc-actions {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  gap: 6px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.vocab-card:hover .vc-actions {
+  opacity: 1;
+}

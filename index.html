@@ -265,7 +265,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1788891100453">
+<link rel="stylesheet" href="css/style.css?v=1788891698149">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -815,15 +815,25 @@ window.getCurrentUser = () => currentUser;
 
    <!-- ▸ VOCAB FLASHCARDS -->
    <div class="page" id="p-vocab">
-    <div class="sec-hdr">
-     <div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="languages" style="width:16px;height:16px"></i> Từ vựng (Flashcards)</div>
-     <button class="btn btn-sm btn-p" onclick="openVocab()"><i data-lucide="plus" style="width:14px;height:14px;margin-right:4px"></i> Thêm từ mới</button>
+    <div class="page-toolbar" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:16px;">
+     <div class="ct" style="display:flex;align-items:center;gap:8px"><i data-lucide="languages" class="ic-18" style="color:var(--accent-cyan)"></i> <span style="font-weight:700">Từ vựng (Flashcards)</span></div>
+     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-sm btn-outline" onclick="openImportVocabModal()" style="display:inline-flex; align-items:center; gap:6px; border-color:var(--glass-b); background:var(--surface);">
+       <i data-lucide="file-up" class="ic-14" style="color:var(--accent-cyan)"></i> <span>Nhập từ File (PDF / Word)</span>
+      </button>
+      <button class="btn btn-sm" onclick="reviewVocab()" style="display:inline-flex; align-items:center; gap:6px;">
+       <span>🃏 Ôn tập (Lật thẻ)</span>
+      </button>
+      <button class="btn btn-sm btn-p" onclick="openVocab()" style="display:inline-flex; align-items:center; gap:6px;">
+       <i data-lucide="plus" class="ic-14"></i> <span>Thêm từ</span>
+      </button>
+     </div>
     </div>
-    <div style="margin-bottom:16px;display:flex;gap:10px">
-     <input id="vocabSearch" placeholder="Tìm kiếm từ vựng..." style="flex:1">
-     <button class="btn btn-sm" onclick="reviewVocab()">🃏 Ôn tập (Lật thẻ)</button>
+    <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;">
+     <input id="vocabSearch" placeholder="🔍 Tìm kiếm từ vựng hoặc nghĩa..." style="flex:1" class="inp">
+     <span class="badge" id="vocabCountBadge" style="font-size:12px; padding:6px 14px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-weight:600; color:var(--accent-light);">0 từ</span>
     </div>
-    <div id="vocabGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px"></div>
+    <div id="vocabGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px"></div>
    </div>
    </div> <!-- /.content -->
   </main> <!-- /.main -->
@@ -1234,7 +1244,10 @@ window.getCurrentUser = () => currentUser;
     <div class="flashcard-container" onclick="this.classList.toggle('flipped')">
      <div class="flashcard">
       <div class="fc-front">
-       <div id="rvWord" style="font-size:28px;font-weight:800;color:var(--accent)">Environment</div>
+       <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+        <div id="rvWord" style="font-size:28px;font-weight:800;color:var(--accent)">Environment</div>
+        <button class="icon-btn" onclick="event.stopPropagation(); speakWord(document.getElementById('rvWord').textContent)" title="Nghe phát âm" style="background:var(--surface2); width:32px; height:32px;"><i data-lucide="volume-2" class="ic-16"></i></button>
+       </div>
        <div id="rvPron" style="color:var(--text3);margin-top:8px">/ɪnˈvaɪ.rən.mənt/</div>
        <div id="rvType" style="margin-top:8px;font-size:12px;background:var(--bg-hover);padding:2px 8px;border-radius:4px;display:inline-block">(n)</div>
        <div style="position:absolute;bottom:20px;width:100%;text-align:center;color:var(--text3);font-size:12px">Bấm để lật thẻ</div>
@@ -1332,19 +1345,27 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 
+<!-- PDF & Word Document Parsers (Client-side) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+ if (window.pdfjsLib) {
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+ }
+</script>
 <script src="js/data.js?v=2"></script>
-<script src="js/workspace.js?v=1788891100453"></script>
-<script src="js/projViews.js?v=1788891100453"></script>
-<script src="js/main.js?v=1788891100453"></script>
-<script src="js/modules/todos.js?v=1788891100453"></script>
-<script src="js/modules/notes.js?v=1788891100453"></script>
-<script src="js/modules/habits.js?v=1788891100453"></script>
-<script src="js/modules/goals.js?v=1788891100453"></script>
-<script src="js/modules/journal.js?v=1788891100453"></script>
-<script src="js/modules/pomodoro.js?v=1788891100453"></script>
-<script src="js/modules/vocab.js?v=1788891100453"></script>
-<script src="js/modules/mocktests.js?v=1788891100453"></script>
-<script src="js/modules/cmd.js?v=1788891100453"></script>
+<script src="js/workspace.js?v=1788891698149"></script>
+<script src="js/projViews.js?v=1788891698149"></script>
+<script src="js/main.js?v=1788891698149"></script>
+<script src="js/modules/todos.js?v=1788891698149"></script>
+<script src="js/modules/notes.js?v=1788891698149"></script>
+<script src="js/modules/habits.js?v=1788891698149"></script>
+<script src="js/modules/goals.js?v=1788891698149"></script>
+<script src="js/modules/journal.js?v=1788891698149"></script>
+<script src="js/modules/pomodoro.js?v=1788891698149"></script>
+<script src="js/modules/vocab.js?v=1788891698149"></script>
+<script src="js/modules/mocktests.js?v=1788891698149"></script>
+<script src="js/modules/cmd.js?v=1788891698149"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1374,6 +1395,112 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 
+
+
+<!-- VOCAB IMPORT MODAL (PDF / WORD / TEXT) -->
+<div class="overlay" id="mImportVocab" onclick="if(event.target===this)closeModal('mImportVocab')">
+ <div class="modal" style="max-width:760px; max-height:90vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+  <div class="mh" style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+   <h3 style="display:flex; align-items:center; gap:8px; margin:0; font-size:16px;">
+    <i data-lucide="file-text" style="width:18px;height:18px; color:var(--accent);"></i>
+    <span>Trích xuất Từ vựng từ Tài liệu (PDF / Word)</span>
+   </h3>
+   <button class="mclose" onclick="closeModal('mImportVocab')">✕</button>
+  </div>
+  
+  <div class="mb-body" style="padding:20px; overflow-y:auto; flex:1;">
+   <!-- Tab Switcher: File vs Paste -->
+   <div class="segmented-control" style="margin-bottom:16px; width:100%;">
+    <button id="viTabFile" class="seg-btn active" onclick="switchVocabImportTab('file')">📁 Tải File (PDF / Word / TXT)</button>
+    <button id="viTabPaste" class="seg-btn" onclick="switchVocabImportTab('paste')">📝 Dán đoạn văn bản trực tiếp</button>
+   </div>
+
+   <!-- SECTION 1: Input source -->
+   <div id="viSecFile">
+    <div class="file-dropzone" id="vocabDropzone" onclick="document.getElementById('vocabFileInput').click()" ondragover="event.preventDefault(); this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleVocabFileDrop(event)">
+     <i data-lucide="cloud-upload" style="width:36px; height:36px; color:var(--accent-cyan); margin-bottom:8px;"></i>
+     <div style="font-weight:700; font-size:14px; margin-bottom:4px; color:var(--text-hi);">Nhấn để chọn file hoặc Kéo &amp; Thả vào đây</div>
+     <div style="font-size:12px; color:var(--text-mid);">Hỗ trợ: PDF (.pdf), Word (.docx), Văn bản (.txt, .csv)</div>
+     <div id="vocabFileSelectedName" style="margin-top:8px; font-weight:600; font-size:12.5px; color:var(--success); display:none;"></div>
+     <input type="file" id="vocabFileInput" accept=".pdf,.docx,.txt,.csv" style="display:none" onchange="handleVocabFileSelect(this)">
+    </div>
+   </div>
+
+   <div id="viSecPaste" style="display:none;">
+    <div class="fg">
+     <label>Nội dung bài viết / danh sách từ</label>
+     <textarea id="vocabPasteText" style="min-height:120px; font-size:13px; line-height:1.5;" class="inp" placeholder="Dán bài báo tiếng Anh, danh sách từ 'word - meaning', hoặc nội dung giáo trình vào đây..."></textarea>
+    </div>
+   </div>
+
+   <!-- SECTION 2: Options -->
+   <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin:16px 0; display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:8px;">
+     <label style="font-size:12px; font-weight:600; color:var(--text-mid); margin:0;">Chế độ:</label>
+     <select id="viMode" class="inp" style="padding:5px 10px; font-size:12px; border-radius:6px; width:auto;">
+      <option value="smart">🤖 Trích xuất AI Thông minh (Từ khó, IPA, Nghĩa, Ví dụ)</option>
+      <option value="pattern">⚡ Quét danh sách có sẵn (Word - Meaning, Word : Nghĩa)</option>
+     </select>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+     <label style="font-size:12px; font-weight:600; color:var(--text-mid); margin:0;">Số lượng từ:</label>
+     <select id="viLimit" class="inp" style="padding:5px 10px; font-size:12px; border-radius:6px; width:auto;">
+      <option value="15" selected>15 từ quan trọng</option>
+      <option value="25">25 từ</option>
+      <option value="40">40 từ</option>
+      <option value="60">60 từ</option>
+     </select>
+     <button class="btn btn-p btn-sm" id="btnRunExtract" onclick="runVocabExtraction()" style="padding:6px 14px; font-weight:700;">
+      <i data-lucide="sparkles" style="width:14px;height:14px;margin-right:4px;"></i> Bắt đầu quét
+     </button>
+    </div>
+   </div>
+
+   <!-- Loading Indicator -->
+   <div id="viLoading" style="display:none; text-align:center; padding:30px 10px;">
+    <div class="spinner" style="display:inline-block; width:28px; height:28px; border:3px solid var(--accent); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
+    <div id="viLoadingText" style="margin-top:10px; font-size:13px; font-weight:600; color:var(--text-hi);">Đang đọc file và trích xuất từ vựng...</div>
+    <div style="font-size:11.5px; color:var(--text-low); margin-top:4px;">Hệ thống đang phân tích ngữ cảnh và dịch nghĩa tiếng Việt</div>
+   </div>
+
+   <!-- SECTION 3: Preview & Selection Grid -->
+   <div id="viPreviewWrap" style="display:none; margin-top:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+     <div style="display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" id="viCheckAll" checked onchange="toggleSelectAllImportVocab(this.checked)" style="cursor:pointer; width:16px; height:16px; accent-color:var(--accent);">
+      <label for="viCheckAll" style="font-size:13px; font-weight:700; margin:0; cursor:pointer;">Chọn tất cả</label>
+      <span class="badge" id="viSelectedCount" style="font-size:11.5px; background:var(--surface2); color:var(--accent-light); font-weight:600; padding:2px 8px; border-radius:12px;">Đã chọn: 0</span>
+     </div>
+     <div style="font-size:11px; color:var(--text-mid);">* Bạn có thể chỉnh sửa trực tiếp nội dung ở bảng dưới</div>
+    </div>
+
+    <div style="max-height:280px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; background:var(--bg1);">
+     <table class="tbl" style="margin:0; font-size:12.5px;">
+      <thead>
+       <tr style="position:sticky; top:0; background:var(--surface); z-index:2;">
+        <th style="width:36px; text-align:center;">#</th>
+        <th style="width:130px;">Từ vựng</th>
+        <th style="width:65px;">Loại</th>
+        <th style="width:120px;">Phiên âm</th>
+        <th>Nghĩa tiếng Việt</th>
+        <th>Câu ví dụ</th>
+        <th style="width:40px; text-align:center;">🔊</th>
+       </tr>
+      </thead>
+      <tbody id="viPreviewTbody"></tbody>
+     </table>
+    </div>
+   </div>
+  </div>
+
+  <div class="form-actions" style="padding:14px 20px; border-top:1px solid var(--border); margin:0; background:var(--surface); display:flex; justify-content:flex-end; gap:10px;">
+   <button class="btn" onclick="closeModal('mImportVocab')">Hủy</button>
+   <button class="btn btn-p" id="btnConfirmImport" onclick="confirmImportVocab()" style="display:none; font-weight:700;">
+    <i data-lucide="check" style="width:14px;height:14px;margin-right:4px;"></i> Thêm từ đã chọn vào Bộ Thẻ
+   </button>
+  </div>
+ </div>
+</div>
 
 <!-- SETTINGS MODAL -->
 <div class="overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
@@ -1409,7 +1536,7 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 <script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
-<script src="js/modules/export.js?v=1788891100453"></script>
+<script src="js/modules/export.js?v=1788891698149"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">
