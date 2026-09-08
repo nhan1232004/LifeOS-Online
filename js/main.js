@@ -525,113 +525,131 @@ function openProjDetail(id){
 }
 async function saveProj(){
  try {
-  const name=document.getElementById('projName').value.trim();
-  if(!name){toast('Nhập tên dự án!','error');return;}
-  const editId=document.getElementById('projId').value;
+  const name = document.getElementById('projName').value.trim();
+  if(!name){ toast('Nhập tên dự án!', 'error'); return; }
+  const editId = document.getElementById('projId').value;
   const userIdentifier = window.currentUser?.email || window.currentUser?.uid || "unknown";
   if (!currentProjMembers.includes(userIdentifier)) currentProjMembers.push(userIdentifier);
   
-  const p={
-   id:editId||uid(),
+  const p = {
+   id: editId || uid(),
    ownerUid: editId ? ((window.DB.projects || []).find(x => x.id === editId)?.ownerUid || window.currentUser?.uid) : window.currentUser?.uid,
    memberUids: editId ? ((window.DB.projects || []).find(x => x.id === editId)?.memberUids || [window.currentUser?.uid].filter(Boolean)) : [window.currentUser?.uid].filter(Boolean),
    name,
-   status:document.getElementById('projStatus').value,
-   priority:document.getElementById('projPri').value,
-   budget:parseFloat(document.getElementById('projBudget').value)||0,
-   due:document.getElementById('projDue').value,
-   tags:document.getElementById('projTags').value.split(',').map(t=>t.trim()).filter(Boolean),
-   desc:document.getElementById('projDesc').value,
-   progress:parseInt(document.getElementById('projProgress').value)||0,
+   status: document.getElementById('projStatus').value,
+   priority: document.getElementById('projPri').value || 'mid',
+   budget: parseFloat(document.getElementById('projBudget').value) || 0,
+   due: document.getElementById('projDue').value || '',
+   tags: document.getElementById('projTags').value.split(',').map(t=>t.trim()).filter(Boolean),
+   desc: document.getElementById('projDesc').value || '',
+   progress: parseInt(document.getElementById('projProgress').value) || 0,
    members: currentProjMembers,
    memberNames: currentProjMemberNames,
-   timeline:document.getElementById('projTimeline').value,
-   evaluation:document.getElementById('projEval').value
+   timeline: document.getElementById('projTimeline').value || '',
+   evaluation: document.getElementById('projEval').value || ''
   };
   
-  if (window.DEMO_MODE) {
-   const list=[...(window.DB.projects||[])];
-   if(editId){const i=list.findIndex(x=>x.id===editId);if(i>=0)list[i]=p;else list.push(p);}
-   else list.push(p);
-   window.DB.projects = list;
-   await persist('projects',list);
-   currentProjId = p.id;
-   closeModal('mProj'); toast('Đã lưu dự án (Demo)!','success');
-   renderProjSelector();
-   renderKanbanBoard();
-   return;
+  // 1. Immediately update in-memory DB
+  const list = [...(window.DB.projects || [])];
+  if(editId) {
+   const i = list.findIndex(x => x.id === editId);
+   if(i >= 0) list[i] = p; else list.unshift(p);
+  } else {
+   list.unshift(p);
+  }
+  window.DB.projects = list;
+  currentProjId = p.id;
+  
+  // 2. Persist to primary storage (localStorage in Demo, users/{uid}/data/projects in Firebase)
+  await persist('projects', list);
+  
+  // 3. Sync to shared_projects if Firebase is available
+  if (!window.DEMO_MODE && window.db && window.setDoc && window.doc) {
+   try {
+    await window.setDoc(window.doc(window.db, 'shared_projects', p.id), p);
+    await Promise.all(currentProjMembers.filter(email => email !== userIdentifier).map(async email => {
+      try { await window.sendProjectInvite?.(p.id, email); }
+      catch (inviteError) { console.warn('Invite could not be sent', inviteError); }
+    }));
+   } catch(syncErr) {
+    console.warn('[LifeOS] Firestore shared_projects sync warning (saved locally & personal db):', syncErr.message);
+   }
   }
   
-  const btn = document.getElementById('btnSaveProj');
-  if(btn) btn.disabled = true;
-  try {
-   await window.setDoc(window.doc(window.db, 'shared_projects', p.id), p);
-   // The callable function resolves an email to a UID server-side. Email strings
-   // in `members` remain display metadata and are never used for authorization.
-   await Promise.all(currentProjMembers.filter(email => email !== userIdentifier).map(async email => {
-     try { await window.sendProjectInvite?.(p.id, email); }
-     catch (inviteError) { console.warn('Invite could not be sent', inviteError); }
-   }));
-   currentProjId = p.id;
-   closeModal('mProj'); 
-   toast('Đã lưu dự án!','success');
-  } catch(e) {
-   console.error(e);
-   toast('Lỗi Firebase (Hãy cập nhật Rules): ' + e.message, 'error');
-  } finally {
-   if(btn) btn.disabled = false;
+  closeModal('mProj');
+  toast('Đã lưu dự án thành công!', 'success');
+  
+  // 4. Update UI immediately
+  if (typeof currentProjView !== 'undefined' && currentProjView === 'all') {
+   currentProjView = 'board';
+   const btnA = document.getElementById('btnViewAll');
+   const btnB = document.getElementById('btnViewBoard');
+   if(btnA) btnA.className = 'seg-btn';
+   if(btnB) btnB.className = 'seg-btn active';
   }
+  renderProjSelector();
+  const sel = document.getElementById('projSelector');
+  if(sel) sel.value = p.id;
+  renderKanbanBoard();
+  if (typeof updateBadges === 'function') updateBadges();
  } catch(globalErr) {
-  alert("LỖI JS NGHIÊM TRỌNG: " + globalErr.message);
+  console.error("LỖI saveProj:", globalErr);
+  toast("Lỗi khi lưu dự án: " + globalErr.message, "error");
  }
 }
 
 function editCurrentProj() {
- if (currentProjId) editProj(currentProjId);
+ if (currentProjId && currentProjId !== '__all__') editProj(currentProjId);
 }
 
-async function moveProj(id,status){
- if (window.DEMO_MODE) {
-  const list=[...(window.DB.projects||[])];
-  const i=list.findIndex(x=>x.id===id); if(i<0)return;
-  list[i] = {...list[i],status};
-  window.DB.projects = list;
-  await persist('projects',list);
-  return;
- }
+async function moveProj(id, status){
+ const list = [...(window.DB.projects || [])];
+ const i = list.findIndex(x => x.id === id);
+ if(i < 0) return;
+ list[i] = { ...list[i], status };
+ window.DB.projects = list;
+ await persist('projects', list);
+ renderProjSelector();
+ renderKanbanBoard();
 
- const p = (window.DB.projects||[]).find(x=>x.id===id);
- if(!p) return;
- const newP = {...p, status};
- try {
-  await window.setDoc(window.doc(window.db, 'shared_projects', newP.id), newP);
- } catch(e) {
-  toast('Lỗi Firebase: ' + e.message, 'error');
+ if (!window.DEMO_MODE && window.db && window.setDoc && window.doc) {
+  try {
+   await window.setDoc(window.doc(window.db, 'shared_projects', id), list[i]);
+  } catch(e) {
+   console.warn('[LifeOS] Firestore shared_projects move warning:', e.message);
+  }
  }
 }
 
 async function delProj(id){
- if (window.DEMO_MODE) {
-  const newProjs = (window.DB.projects||[]).filter(x=>x.id!==id);
-  window.DB.projects = newProjs;
-  await persist('projects', newProjs);
-  const remainingTasks = (window.DB.proj_tasks || []).filter(t => t.projId !== id);
-  window.DB.proj_tasks = remainingTasks;
-  await persist('proj_tasks', remainingTasks);
-  toast('Đã xoá','info');
-  return;
+ const newProjs = (window.DB.projects || []).filter(x => x.id !== id);
+ window.DB.projects = newProjs;
+ await persist('projects', newProjs);
+ const remainingTasks = (window.DB.proj_tasks || []).filter(t => t.projId !== id);
+ window.DB.proj_tasks = remainingTasks;
+ await persist('proj_tasks', remainingTasks);
+
+ if (!window.DEMO_MODE && window.db && window.deleteDoc && window.doc) {
+  try {
+   await window.deleteDoc(window.doc(window.db, 'shared_projects', id));
+   const pTasks = (window.DB.proj_tasks || []).filter(t => t.projId === id);
+   for(const t of pTasks) {
+    try { await window.deleteDoc(window.doc(window.db, 'shared_tasks', t.id)); } catch(e){}
+   }
+  } catch(e) {
+   console.warn('[LifeOS] Firestore shared_projects delete warning:', e.message);
+  }
  }
 
- try {
-  await window.deleteDoc(window.doc(window.db, 'shared_projects', id));
-  const pTasks = (window.DB.proj_tasks || []).filter(t => t.projId === id);
-  for(const t of pTasks) {
-   await window.deleteDoc(window.doc(window.db, 'shared_tasks', t.id));
-  }
-  toast('Đã xoá','info');
- } catch(e) {
-  toast('Lỗi Firebase (Quyền xóa): ' + e.message, 'error');
+ if (currentProjId === id) {
+  currentProjId = newProjs.length > 0 ? newProjs[0].id : '__all__';
+  const sel = document.getElementById('projSelector');
+  if(sel) sel.value = currentProjId;
  }
+ renderProjSelector();
+ renderKanbanBoard();
+ if (typeof updateBadges === 'function') updateBadges();
+ toast('Đã xoá dự án!', 'info');
 }
 
 async function delProjAction() {
@@ -640,35 +658,208 @@ async function delProjAction() {
  if(id) {
   await delProj(id);
   closeModal('mProj');
-  if(currentProjId === id) {
-    currentProjId = '';
-    const sel = document.getElementById('projSelector');
-    if(sel) sel.value = '';
-    renderKanbanBoard();
-  }
  }
 }
-let currentProjId = '';
 
+var currentProjId = window.currentProjId = '';
+
+window.handleProjSelectorChange = function(val) {
+ if (!val || val === '__all__') {
+  currentProjId = '__all__';
+  if (typeof switchProjView === 'function') switchProjView('all');
+  else renderKanbanBoard();
+ } else {
+  currentProjId = val;
+  if (typeof currentProjView !== 'undefined' && currentProjView === 'all') {
+   if (typeof switchProjView === 'function') switchProjView('board');
+   else renderKanbanBoard();
+  } else {
+   renderKanbanBoard();
+  }
+ }
+};
 
 function renderProjSelector() {
  const sel = document.getElementById('projSelector');
  if(!sel) return;
  const projs = window.DB.projects || [];
- sel.innerHTML = '<option value="">-- Chọn dự án --</option>' + projs.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+ let html = `<option value="__all__">📁 Tất cả dự án (${projs.length})</option>`;
+ if (projs.length > 0) {
+  html += '<option disabled>───────────────</option>';
+  html += projs.map(p => `<option value="${p.id}">${window.LifeOSData?.escapeAttr(p.name) || p.name} (${p.status || 'Chưa làm'})</option>`).join('');
+ }
+ sel.innerHTML = html;
+
  if (currentProjId && projs.find(x => x.id === currentProjId)) {
   sel.value = currentProjId;
+ } else if (typeof currentProjView !== 'undefined' && currentProjView === 'all') {
+  currentProjId = '__all__';
+  sel.value = '__all__';
  } else if (projs.length > 0) {
   currentProjId = projs[0].id;
   sel.value = currentProjId;
  } else {
-  currentProjId = '';
+  currentProjId = '__all__';
+  sel.value = '__all__';
  }
 }
 
+function renderProjHeaderBanner(p) {
+ const banner = document.getElementById('projHeaderBanner');
+ if(!banner) return;
+ if(!p) { banner.style.display = 'none'; banner.innerHTML = ''; return; }
+ banner.style.display = 'block';
+ 
+ const prog = p.progress !== undefined ? p.progress : (p.status==='Hoàn thành'?100:p.status==='Đang làm'?50:0);
+ const progColor = prog === 100 ? 'var(--green)' : prog > 0 ? 'var(--accent)' : 'var(--text3)';
+ const sb = {'Backlog':'bk','Cần làm':'ba','Đang làm':'bw','Hoàn thành':'bs'}[p.status]||'bk';
+ const priText = {'high':'Ưu tiên: Cao','mid':'Ưu tiên: TB','low':'Ưu tiên: Thấp'}[p.priority||'mid']||'Ưu tiên: TB';
+ const priClass = (p.priority||'mid') === 'high' ? 'b-red' : (p.priority||'mid') === 'low' ? 'b-green' : 'b-orange';
+ 
+ const allTasks = window.DB.proj_tasks || [];
+ const pTasks = allTasks.filter(t => t.projId === p.id);
+ const doneTasks = pTasks.filter(t => t.status === 'Hoàn thành').length;
+ const tagsHtml = (p.tags||[]).map(t => `<span class="proj-banner-tag">${window.LifeOSData?.escapeAttr(t)||t}</span>`).join('');
+ 
+ banner.innerHTML = `
+  <div class="proj-banner-card">
+   <div class="proj-banner-top">
+    <div class="proj-banner-title-wrap">
+     <div class="proj-banner-badges">
+      <span class="badge ${sb}">${p.status||'Chưa làm'}</span>
+      <span class="badge ${priClass}">${priText}</span>
+      ${tagsHtml}
+     </div>
+     <h2 class="proj-banner-title">${window.LifeOSData?.escapeAttr(p.name)||p.name}</h2>
+     ${p.desc ? `<p class="proj-banner-desc">${window.LifeOSData?.escapeAttr(p.desc)||p.desc}</p>` : ''}
+    </div>
+    <div class="proj-banner-actions">
+     <button class="btn btn-sm btn-outline" onclick="openProjDetail('${p.id}')" title="Xem đầy đủ hồ sơ dự án">
+      <i data-lucide="info" class="ic-14"></i> Chi tiết
+     </button>
+     <button class="btn btn-sm btn-outline" onclick="editProj('${p.id}')" title="Chỉnh sửa thông tin">
+      <i data-lucide="edit-3" class="ic-14"></i> Sửa
+     </button>
+     <button class="btn btn-sm btn-p" onclick="openProjTaskModal()" title="Thêm việc mới">
+      <i data-lucide="plus" class="ic-14"></i> Thêm việc
+     </button>
+    </div>
+   </div>
+   
+   <div class="proj-banner-metrics">
+    <div class="proj-metric-item">
+     <span class="proj-metric-lbl">Tiến độ</span>
+     <div class="proj-metric-val">
+      <div class="prog" style="width:120px;height:8px;background:var(--glass-b);border-radius:99px;overflow:hidden;margin-right:8px;">
+       <div class="prog-fill" style="width:${prog}%;background:${progColor};height:100%;border-radius:99px;transition:width 0.3s"></div>
+      </div>
+      <span style="font-weight:700;color:var(--text-hi);font-size:13px;">${prog}%</span>
+     </div>
+    </div>
+    
+    <div class="proj-metric-item">
+     <span class="proj-metric-lbl">Nhiệm vụ</span>
+     <span class="proj-metric-val" style="font-weight:600;font-size:13px;color:var(--text-hi);">
+      ${doneTasks}/${pTasks.length} việc (${pTasks.length ? Math.round((doneTasks/pTasks.length)*100) : 0}%)
+     </span>
+    </div>
+
+    ${p.due ? `
+    <div class="proj-metric-item">
+     <span class="proj-metric-lbl">Hạn chót</span>
+     <span class="proj-metric-val" style="font-size:13px;color:${p.due < today() ? 'var(--red)' : 'var(--text-hi)'};font-weight:600;">
+      <i data-lucide="calendar" class="ic-14" style="margin-right:4px;vertical-align:-2px"></i> ${fmtDate(p.due)}
+     </span>
+    </div>` : ''}
+
+    ${p.budget ? `
+    <div class="proj-metric-item">
+     <span class="proj-metric-lbl">Ngân sách</span>
+     <span class="proj-metric-val" style="font-size:13px;color:var(--text-hi);font-weight:600;">
+      <i data-lucide="wallet" class="ic-14" style="margin-right:4px;vertical-align:-2px"></i> ${fmt(p.budget)} ₫
+     </span>
+    </div>` : ''}
+   </div>
+  </div>
+ `;
+ if (window.lucide) window.lucide.createIcons();
+}
+
+function renderProjGrid() {
+ const container = document.getElementById('projGridView');
+ if(!container) return;
+ const projs = window.DB.projects || [];
+ const allTasks = window.DB.proj_tasks || [];
+ 
+ let cardsHtml = `
+  <div class="proj-card proj-card-create" onclick="openProjModal()">
+   <div class="proj-card-create-icon">
+    <i data-lucide="folder-plus" style="width:28px;height:28px"></i>
+   </div>
+   <div style="font-weight:700;font-size:15px;margin-top:10px;color:var(--text-hi)">Tạo dự án mới</div>
+   <div style="font-size:12px;color:var(--text-mid);margin-top:4px">Thêm dự án để theo dõi tiến độ & công việc</div>
+  </div>
+ `;
+ 
+ projs.forEach(p => {
+  const pTasks = allTasks.filter(t => t.projId === p.id);
+  const doneTasks = pTasks.filter(t => t.status === 'Hoàn thành').length;
+  const prog = p.progress !== undefined ? p.progress : (p.status==='Hoàn thành'?100:p.status==='Đang làm'?50:0);
+  const progColor = prog === 100 ? 'var(--green)' : prog > 0 ? 'var(--accent)' : 'var(--text3)';
+  const sb = {'Backlog':'bk','Cần làm':'ba','Đang làm':'bw','Hoàn thành':'bs'}[p.status]||'bk';
+  const tagsHtml = (p.tags||[]).slice(0, 3).map(t => `<span class="badge bp" style="font-size:10px;padding:2px 6px;">${window.LifeOSData?.escapeAttr(t)||t}</span>`).join('');
+  
+  cardsHtml += `
+   <div class="proj-card" onclick="selectProjAndOpen('${p.id}')">
+    <div class="proj-card-header">
+     <span class="badge ${sb}">${p.status||'Chưa làm'}</span>
+     <div style="display:flex;gap:4px;" onclick="event.stopPropagation()">
+      <button class="btn btn-sm icon-btn-tool" onclick="editProj('${p.id}')" title="Sửa dự án" style="padding:4px"><i data-lucide="edit-3" class="ic-14"></i></button>
+      <button class="btn btn-sm icon-btn-tool" onclick="openProjDetail('${p.id}')" title="Xem chi tiết" style="padding:4px"><i data-lucide="eye" class="ic-14"></i></button>
+     </div>
+    </div>
+    <div class="proj-card-body">
+     <h3 class="proj-card-title">${window.LifeOSData?.escapeAttr(p.name)||p.name}</h3>
+     ${p.desc ? `<p class="proj-card-desc">${window.LifeOSData?.escapeAttr(p.desc)||p.desc}</p>` : ''}
+     ${tagsHtml ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${tagsHtml}</div>` : ''}
+    </div>
+    <div class="proj-card-footer">
+     <div style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-mid);margin-bottom:4px">
+       <span>Tiến độ</span>
+       <span style="font-weight:700;color:var(--text-hi)">${prog}%</span>
+      </div>
+      <div class="prog" style="height:6px;background:var(--glass-b);border-radius:99px;overflow:hidden">
+       <div class="prog-fill" style="width:${prog}%;background:${progColor};height:100%;border-radius:99px"></div>
+      </div>
+     </div>
+     <div class="proj-card-meta">
+      <span style="font-size:11.5px;color:var(--text-mid)"><i data-lucide="check-square" class="ic-12" style="margin-right:2px"></i> ${doneTasks}/${pTasks.length} việc</span>
+      ${p.due ? `<span style="font-size:11.5px;color:${p.due<today()?'var(--red)':'var(--text-mid)'}"><i data-lucide="calendar" class="ic-12" style="margin-right:2px"></i> ${fmtDate(p.due)}</span>` : ''}
+     </div>
+    </div>
+   </div>
+  `;
+ });
+ 
+ container.innerHTML = `<div class="proj-cards-grid">${cardsHtml}</div>`;
+ if (window.lucide) window.lucide.createIcons();
+}
+
+window.selectProjAndOpen = function(id) {
+ currentProjId = id;
+ const sel = document.getElementById('projSelector');
+ if(sel) sel.value = id;
+ if(typeof switchProjView === 'function') {
+  switchProjView('board');
+ } else {
+  renderKanbanBoard();
+ }
+};
+
 function renderKanbanBoard() {
  const sel = document.getElementById('projSelector');
- if(sel) currentProjId = sel.value;
+ if(sel && sel.value) currentProjId = sel.value;
  const btnAdd = document.getElementById('btnAddPTask');
  const btnInvite = document.getElementById('btnInvite');
  const btnChat = document.getElementById('btnProjChat');
@@ -679,21 +870,49 @@ function renderKanbanBoard() {
  const chatPanel = document.getElementById('projChatPanel');
  const viewSwitcher = document.getElementById('projViewSwitcher');
  const btnNotes = document.getElementById('btnProjNotes');
+ const gridView = document.getElementById('projGridView');
+ const banner = document.getElementById('projHeaderBanner');
 
- if (!currentProjId) {
+ const projs = window.DB.projects || [];
+ const isAllView = (typeof currentProjView !== 'undefined' && currentProjView === 'all') || currentProjId === '__all__' || (!currentProjId && projs.length === 0);
+
+ if (isAllView) {
   if(btnAdd) btnAdd.style.display = 'none';
   if(btnInvite) btnInvite.style.display = 'none';
   if(btnChat) btnChat.style.display = 'none';
   if(btnEdit) btnEdit.style.display = 'none';
   if(board) board.style.display = 'none';
   if(listView) listView.style.display = 'none';
-  if(empty) empty.style.display = 'block';
+  const ganttView = document.getElementById('projGanttView');
+  if(ganttView) ganttView.style.display = 'none';
+  if(empty) empty.style.display = 'none';
   if(chatPanel) chatPanel.style.display = 'none';
-  if(viewSwitcher) viewSwitcher.style.display = 'none';
+  if(viewSwitcher) viewSwitcher.style.display = 'flex';
   if(btnNotes) btnNotes.style.display = 'none';
+  if(banner) { banner.style.display = 'none'; banner.innerHTML = ''; }
+  if(gridView) gridView.style.display = 'block';
   if(window.stopChatListener) window.stopChatListener();
+  renderProjGrid();
   return;
  }
+
+ // If a project ID is selected or defaulting to first project
+ if (!currentProjId && projs.length > 0) {
+  currentProjId = projs[0].id;
+  if(sel) sel.value = currentProjId;
+ }
+
+ const currentProj = projs.find(x => x.id === currentProjId);
+ if (!currentProj) {
+  currentProjId = '__all__';
+  if(sel) sel.value = '__all__';
+  if(typeof switchProjView === 'function') switchProjView('all');
+  else renderKanbanBoard();
+  return;
+ }
+
+ if(gridView) gridView.style.display = 'none';
+ renderProjHeaderBanner(currentProj);
 
  if(btnAdd) btnAdd.style.display = 'inline-block';
  if(btnInvite) btnInvite.style.display = 'inline-block';
@@ -737,7 +956,6 @@ function renderKanbanBoard() {
    col.innerHTML = tasks.map(t => {
     let memHtml = '';
     if (t.members && t.members.length) {
-     const currentProj = (window.DB.projects||[]).find(x=>x.id===currentProjId);
      const pNames = currentProj?.memberNames || {};
      memHtml = t.members.map(m => {
       const n = pNames[m] || m.split('@')[0];
@@ -753,7 +971,7 @@ function renderKanbanBoard() {
       ${t.comments && t.comments.length ? `<div style="font-size:10px;color:var(--text3);"><i data-lucide="message-circle" style="width:12px;height:12px"></i> ${t.comments.length}</div>` : ''}
      </div>
     </div>
-   `}).join('');
+   `;}).join('');
   }
  });
  
@@ -763,7 +981,6 @@ function renderKanbanBoard() {
   pTasks.forEach(t => {
    let memHtml = '';
    if (t.members && t.members.length) {
-    const currentProj = (window.DB.projects||[]).find(x=>x.id===currentProjId);
     const pNames = currentProj?.memberNames || {};
     memHtml = t.members.map(m => {
      const n = pNames[m] || m.split('@')[0];
@@ -792,27 +1009,22 @@ async function kDrop(ev, status) {
  ev.preventDefault();
  const id = ev.dataTransfer.getData("text/plain");
  if(!id) return;
- 
- if(window.DEMO_MODE) {
-  const list = [...(window.DB.proj_tasks || [])];
-  const idx = list.findIndex(x => x.id === id);
-  if (idx < 0) return;
-  list[idx] = { ...list[idx], status };
-  window.DB.proj_tasks = list;
-  await persist('proj_tasks', list);
-  renderKanbanBoard();
-  return;
- }
 
- const list = window.DB.proj_tasks || [];
+ const list = [...(window.DB.proj_tasks || [])];
  const idx = list.findIndex(x => x.id === id);
  if (idx < 0) return;
  const t = { ...list[idx], status };
- 
- try {
-  await window.setDoc(window.doc(window.db, 'shared_tasks', t.id), t);
- } catch(e) {
-  toast('Lỗi Firebase kéo thả: ' + e.message, 'error');
+ list[idx] = t;
+ window.DB.proj_tasks = list;
+ await persist('proj_tasks', list);
+ renderKanbanBoard();
+
+ if (!window.DEMO_MODE && window.db && window.setDoc && window.doc) {
+  try {
+   await window.setDoc(window.doc(window.db, 'shared_tasks', t.id), t);
+  } catch(e) {
+   console.warn('[LifeOS] Firestore shared_tasks kDrop warning:', e.message);
+  }
  }
 }
 
@@ -960,71 +1172,66 @@ async function saveProjTask() {
  const text = document.getElementById('ptaskName').value.trim();
  if(!text) { toast('Vui lòng nhập tên!','error'); return; }
  const id = document.getElementById('ptaskId').value;
- const pId = document.getElementById('ptaskProjId').value;
+ const pId = document.getElementById('ptaskProjId').value || currentProjId;
  const status = document.getElementById('ptaskStatus').value;
  const pri = document.getElementById('ptaskPri').value;
  const desc = document.getElementById('ptaskDesc').innerHTML;
  const start = document.getElementById('ptaskStart').value;
  const due = document.getElementById('ptaskDue').value;
  
+ const list = [...(window.DB.proj_tasks || [])];
  let t;
  if(id) {
-  const list = window.DB.proj_tasks || [];
   const idx = list.findIndex(x => x.id === id);
   if(idx >= 0) t = {...list[idx], text, status, priority: pri, desc, start, due};
   else t = {id: uid(), projId: pId, text, status, priority: pri, desc, start, due, comments: []};
+  if(idx >= 0) list[idx] = t; else list.push(t);
  } else {
-  t = {id: uid(), projId: pId, text, status, priority: pri, desc, comments: []};
+  t = {id: uid(), projId: pId, text, status, priority: pri, desc, start, due, comments: []};
+  list.push(t);
  }
 
- if (window.DEMO_MODE) {
-  const list = [...(window.DB.proj_tasks || [])];
-  if(id) {
-   const idx = list.findIndex(x => x.id === id);
-   if(idx>=0) list[idx] = t;
-  } else list.push(t);
-  window.DB.proj_tasks = list;
-  await persist('proj_tasks', list);
-  closeModal('mProjTask'); toast('Đã lưu nhiệm vụ (Demo)!','success');
-  renderKanbanBoard();
-  return;
- }
- 
  const p = (window.DB.projects || []).find(x => x.id === pId);
- t.memberUids = p?.memberUids || [window.currentUser.uid];
+ const uidUser = window.currentUser?.uid || 'user';
+ t.memberUids = p?.memberUids || [uidUser];
 
- const btn = document.getElementById('btnSavePTask');
- if(btn) btn.disabled = true;
- try {
-  await window.setDoc(window.doc(window.db, 'shared_tasks', t.id), t);
-  closeModal('mProjTask'); 
-  toast('Đã lưu nhiệm vụ!','success');
- } catch(e) {
-  toast('Lỗi Firebase (Hãy cập nhật Rules): ' + e.message, 'error');
- } finally {
-  if(btn) btn.disabled = false;
+ window.DB.proj_tasks = list;
+ await persist('proj_tasks', list);
+ closeModal('mProjTask');
+ toast('Đã lưu nhiệm vụ!','success');
+ renderKanbanBoard();
+
+ if (!window.DEMO_MODE && window.db && window.setDoc && window.doc) {
+  const btn = document.getElementById('btnSavePTask');
+  if(btn) btn.disabled = true;
+  try {
+   await window.setDoc(window.doc(window.db, 'shared_tasks', t.id), t);
+  } catch(e) {
+   console.warn('[LifeOS] Firestore shared_tasks sync warning:', e.message);
+  } finally {
+   if(btn) btn.disabled = false;
+  }
  }
 }
 
 async function deleteProjTask() {
  if(!confirm('Bạn có chắc chắn muốn xóa nhiệm vụ này?')) return;
  const id = document.getElementById('ptaskId').value;
+ if(!id) return;
 
- if (window.DEMO_MODE) {
-  const list = (window.DB.proj_tasks || []).filter(x => x.id !== id);
-  window.DB.proj_tasks = list;
-  await persist('proj_tasks', list);
-  closeModal('mProjTask'); toast('Đã xóa nhiệm vụ (Demo)!','info');
-  renderKanbanBoard();
-  return;
- }
+ const list = (window.DB.proj_tasks || []).filter(x => x.id !== id);
+ window.DB.proj_tasks = list;
+ await persist('proj_tasks', list);
+ closeModal('mProjTask');
+ toast('Đã xóa nhiệm vụ!','info');
+ renderKanbanBoard();
 
- try {
-  await window.deleteDoc(window.doc(window.db, 'shared_tasks', id));
-  closeModal('mProjTask'); 
-  toast('Đã xóa nhiệm vụ!','info');
- } catch(e) {
-  toast('Lỗi xóa: ' + e.message, 'error');
+ if (!window.DEMO_MODE && window.db && window.deleteDoc && window.doc) {
+  try {
+   await window.deleteDoc(window.doc(window.db, 'shared_tasks', id));
+  } catch(e) {
+   console.warn('[LifeOS] Firestore shared_tasks delete warning:', e.message);
+  }
  }
 }
 

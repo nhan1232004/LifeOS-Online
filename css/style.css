@@ -2171,3 +2171,223 @@ body {
 .vocab-card:hover .vc-actions {
   opacity: 1;
 }
+
+/* ═══════════════════════════════════════════════════════════
+  PROJECTS ENHANCEMENTS — BANNER & GRID CARDS
+═══════════════════════════════════════════════════════════ */
+.proj-header-banner {
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.proj-banner-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 22px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+}
+
+.proj-banner-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.proj-banner-title-wrap {
+  flex: 1;
+  min-width: 240px;
+}
+
+.proj-banner-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.proj-banner-tag {
+  background: rgba(124, 77, 255, 0.12);
+  color: var(--accent-light);
+  border: 1px solid rgba(124, 77, 255, 0.25);
+  border-radius: var(--r-full);
+  font-size: 11px;
+  padding: 2px 9px;
+  font-weight: 500;
+}
+
+.proj-banner-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-hi);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.3px;
+  line-height: 1.3;
+}
+
+.proj-banner-desc {
+  font-size: 13px;
+  color: var(--text-mid);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 750px;
+}
+
+.proj-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.proj-banner-metrics {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.proj-metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.proj-metric-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-low);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.proj-metric-val {
+  display: flex;
+  align-items: center;
+  font-size: 13.5px;
+  color: var(--text-hi);
+}
+
+/* ── All Projects Grid ── */
+.proj-grid-view {
+  width: 100%;
+}
+
+.proj-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.proj-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: var(--t);
+  position: relative;
+  min-height: 200px;
+}
+
+.proj-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(124, 77, 255, 0.4);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.proj-card-create {
+  border: 2px dashed var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 200px;
+  cursor: pointer;
+  transition: var(--t);
+}
+
+.proj-card-create:hover {
+  border-color: var(--accent);
+  background: rgba(124, 77, 255, 0.06);
+  transform: translateY(-3px);
+}
+
+.proj-card-create-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(124, 77, 255, 0.12);
+  color: var(--accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.proj-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.proj-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-hi);
+  margin: 0 0 6px 0;
+  line-height: 1.35;
+}
+
+.proj-card-desc {
+  font-size: 12.5px;
+  color: var(--text-mid);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.45;
+}
+
+.proj-card-footer {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.proj-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .proj-banner-card {
+    padding: 14px 16px;
+  }
+  .proj-banner-title {
+    font-size: 17px;
+  }
+  .proj-banner-metrics {
+    gap: 16px;
+  }
+  .proj-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -2,20 +2,26 @@ let currentProjView = 'board';
 
 function switchProjView(v) {
  currentProjView = v;
+ const btnA = document.getElementById('btnViewAll');
  const btnB = document.getElementById('btnViewBoard');
  const btnL = document.getElementById('btnViewList');
  const btnG = document.getElementById('btnViewGantt');
- if(btnB) {
-  btnB.className = 'seg-btn ' + (v==='board'?'active':'');
-  
- }
- if(btnL) {
-  btnL.className = 'seg-btn ' + (v==='list'?'active':'');
-  
- }
- if(btnG) {
-  btnG.className = 'seg-btn ' + (v==='gantt'?'active':'');
-  
+ if(btnA) btnA.className = 'seg-btn ' + (v==='all'?'active':'');
+ if(btnB) btnB.className = 'seg-btn ' + (v==='board'?'active':'');
+ if(btnL) btnL.className = 'seg-btn ' + (v==='list'?'active':'');
+ if(btnG) btnG.className = 'seg-btn ' + (v==='gantt'?'active':'');
+ 
+ if (v === 'all') {
+  currentProjId = '__all__';
+  const sel = document.getElementById('projSelector');
+  if(sel) sel.value = '__all__';
+ } else if (currentProjId === '__all__' || !currentProjId) {
+  const projs = window.DB.projects || [];
+  if (projs.length > 0) {
+   currentProjId = projs[0].id;
+   const sel = document.getElementById('projSelector');
+   if(sel) sel.value = currentProjId;
+  }
  }
  renderKanbanBoard();
 }

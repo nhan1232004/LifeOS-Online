@@ -197,23 +197,27 @@ function listenSharedData() {
   unsubProjects = onSnapshot(qProj, snap => {
    const projs = [];
    snap.forEach(d => projs.push({id: d.id, ...d.data()}));
-   window.DB.projects = projs;
+   const map = new Map();
+   (window.DB.projects || []).forEach(p => map.set(p.id, p));
+   projs.forEach(p => map.set(p.id, p));
+   window.DB.projects = Array.from(map.values());
    if(window.renderAll) window.renderAll();
-   }, err => {
-    console.warn("[LifeOS] Firestore shared_projects:", err.code || err.message);
-    window.DB.projects = window.DB.projects || [];
-   });
+  }, err => {
+   console.warn("[LifeOS] Firestore shared_projects:", err.code || err.message);
+  });
 
   const qTask = query(collection(db, 'shared_tasks'), where('memberUids', 'array-contains', currentUser.uid));
   unsubTasks = onSnapshot(qTask, snap => {
    const tasks = [];
    snap.forEach(d => tasks.push({id: d.id, ...d.data()}));
-   window.DB.proj_tasks = tasks;
+   const map = new Map();
+   (window.DB.proj_tasks || []).forEach(t => map.set(t.id, t));
+   tasks.forEach(t => map.set(t.id, t));
+   window.DB.proj_tasks = Array.from(map.values());
    if(window.renderAll) window.renderAll();
   }, err => {
-    console.warn("[LifeOS] Firestore shared_tasks:", err.code || err.message);
-    window.DB.proj_tasks = window.DB.proj_tasks || [];
-   });
+   console.warn("[LifeOS] Firestore shared_tasks:", err.code || err.message);
+  });
  } catch(e) {
   console.warn("[LifeOS] listenSharedData init error:", e.message);
  }
@@ -246,6 +250,24 @@ async function showApp(user) {
   ['events','todos','income','expense','notes','habits','goals','journal','vocab'].forEach(col => {
    fbListen(col, items => { window.DB[col]=items; window.renderAll&&window.renderAll(); });
   });
+  fbListen('projects', items => {
+   if (Array.isArray(items) && items.length > 0) {
+    const map = new Map();
+    (window.DB.projects || []).forEach(p => map.set(p.id, p));
+    items.forEach(p => map.set(p.id, p));
+    window.DB.projects = Array.from(map.values());
+    if (window.renderAll) window.renderAll();
+   }
+  });
+  fbListen('proj_tasks', items => {
+   if (Array.isArray(items) && items.length > 0) {
+    const map = new Map();
+    (window.DB.proj_tasks || []).forEach(t => map.set(t.id, t));
+    items.forEach(t => map.set(t.id, t));
+    window.DB.proj_tasks = Array.from(map.values());
+    if (window.renderAll) window.renderAll();
+   }
+  });
   listenSharedData();
  }
  
@@ -265,7 +287,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1788892662655">
+<link rel="stylesheet" href="css/style.css?v=1788894031607">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -540,14 +562,15 @@ window.getCurrentUser = () => currentUser;
    <div class="page" id="p-projects">
     <div class="page-toolbar proj-toolbar-wrap">
      <div class="proj-tb-row1">
-      <select id="projSelector" class="inp proj-select-inp" onchange="renderKanbanBoard()">
-       <option value="">-- Chọn dự án --</option>
+      <select id="projSelector" class="inp proj-select-inp" onchange="handleProjSelectorChange(this.value)">
+       <option value="__all__">📁 Tất cả dự án</option>
       </select>
       <button class="btn btn-sm btn-outline" onclick="openProjModal()" title="Tạo dự án mới"><i data-lucide="folder-plus" class="ic-14"></i> <span class="hide-mobile">Dự án mới</span></button>
       <button class="btn btn-p btn-sm" onclick="openProjTaskModal()" id="btnAddPTask" style="display:none" title="Thêm việc"><i data-lucide="plus" class="ic-14"></i> Task</button>
      </div>
      <div class="proj-tb-row2">
-      <div id="projViewSwitcher" class="segmented-control" style="display:none;">
+      <div id="projViewSwitcher" class="segmented-control">
+       <button id="btnViewAll" class="seg-btn" onclick="switchProjView('all')"><i data-lucide="layout-grid" class="ic-14"></i> <span>Tất cả</span></button>
        <button id="btnViewBoard" class="seg-btn active" onclick="switchProjView('board')"><i data-lucide="kanban" class="ic-14"></i> <span>Bảng</span></button>
        <button id="btnViewList" class="seg-btn" onclick="switchProjView('list')"><i data-lucide="list" class="ic-14"></i> <span>Danh sách</span></button>
        <button id="btnViewGantt" class="seg-btn" onclick="switchProjView('gantt')"><i data-lucide="calendar-range" class="ic-14"></i> <span>Gantt</span></button>
@@ -560,6 +583,13 @@ window.getCurrentUser = () => currentUser;
       </div>
      </div>
     </div>
+
+    <!-- ACTIVE PROJECT HEADER BANNER -->
+    <div id="projHeaderBanner" class="proj-header-banner" style="display:none;"></div>
+
+    <!-- ALL PROJECTS GRID VIEW -->
+    <div id="projGridView" class="proj-grid-view" style="display:none; flex:1; overflow-y:auto; padding:16px 0;"></div>
+
     <div style="position:relative; flex:1; display:flex; overflow:hidden;">
     <div class="kanban" id="kanbanBoard" style="display:none; flex:1; overflow-x:auto;">
      <div class="kcol k-backlog" data-status="Khởi tạo" ondragover="kDragOver(event)" ondrop="kDrop(event, 'Khởi tạo')">
@@ -1354,18 +1384,18 @@ window.getCurrentUser = () => currentUser;
  }
 </script>
 <script src="js/data.js?v=2"></script>
-<script src="js/workspace.js?v=1788892662655"></script>
-<script src="js/projViews.js?v=1788892662655"></script>
-<script src="js/main.js?v=1788892662655"></script>
-<script src="js/modules/todos.js?v=1788892662655"></script>
-<script src="js/modules/notes.js?v=1788892662655"></script>
-<script src="js/modules/habits.js?v=1788892662655"></script>
-<script src="js/modules/goals.js?v=1788892662655"></script>
-<script src="js/modules/journal.js?v=1788892662655"></script>
-<script src="js/modules/pomodoro.js?v=1788892662655"></script>
-<script src="js/modules/vocab.js?v=1788892662655"></script>
-<script src="js/modules/mocktests.js?v=1788892662655"></script>
-<script src="js/modules/cmd.js?v=1788892662655"></script>
+<script src="js/workspace.js?v=1788894031607"></script>
+<script src="js/projViews.js?v=1788894031607"></script>
+<script src="js/main.js?v=1788894031607"></script>
+<script src="js/modules/todos.js?v=1788894031607"></script>
+<script src="js/modules/notes.js?v=1788894031607"></script>
+<script src="js/modules/habits.js?v=1788894031607"></script>
+<script src="js/modules/goals.js?v=1788894031607"></script>
+<script src="js/modules/journal.js?v=1788894031607"></script>
+<script src="js/modules/pomodoro.js?v=1788894031607"></script>
+<script src="js/modules/vocab.js?v=1788894031607"></script>
+<script src="js/modules/mocktests.js?v=1788894031607"></script>
+<script src="js/modules/cmd.js?v=1788894031607"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1549,7 +1579,7 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 <script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
-<script src="js/modules/export.js?v=1788892662655"></script>
+<script src="js/modules/export.js?v=1788894031607"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">
