@@ -1570,57 +1570,360 @@ function exportReport() {
  toast('Đã tải báo cáo Word xuống!','success');
 }
 
+
+/* ────────────────────────────────────────────────────────
+  FINANCIAL STATS (MULTI-PERIOD: DAY / WEEK / MONTH / YEAR / ALL)
+──────────────────────────────────────────────────────── */
+let currentStatsPeriod = 'month';
+let currentStatsSub = 'thisMonth';
+
+window.setStatsPeriod = function(period, el) {
+ currentStatsPeriod = period;
+ document.querySelectorAll('#statsPeriodTabs .seg-btn').forEach(b => b.classList.remove('active'));
+ if (el) el.classList.add('active');
+
+ const subEl = document.getElementById('statsSubRange');
+ if (!subEl) return;
+
+ const y = new Date().getFullYear();
+ const m = new Date().getMonth() + 1;
+
+ const optionsMap = {
+  day: [
+   { v: 'today', t: 'Hôm nay' },
+   { v: 'yesterday', t: 'Hôm qua' },
+   { v: 'last7days', t: '7 ngày qua' },
+   { v: 'last14days', t: '14 ngày qua' },
+   { v: 'last30days', t: '30 ngày qua' }
+  ],
+  week: [
+   { v: 'thisWeek', t: 'Tuần này' },
+   { v: 'lastWeek', t: 'Tuần trước' },
+   { v: 'last4weeks', t: '4 tuần qua' },
+   { v: 'last8weeks', t: '8 tuần qua' }
+  ],
+  month: [
+   { v: 'thisMonth', t: 'Tháng này' },
+   { v: 'lastMonth', t: 'Tháng trước' },
+   { v: 'last3months', t: '3 tháng qua (Quý)' },
+   { v: 'last6months', t: '6 tháng qua' },
+   { v: 'last12months', t: '12 tháng qua' }
+  ],
+  year: [
+   { v: 'thisYear', t: 'Năm nay (' + y + ')' },
+   { v: 'lastYear', t: 'Năm trước (' + (y - 1) + ')' }
+  ],
+  all: [
+   { v: 'all', t: 'Toàn bộ thời gian' }
+  ]
+ };
+
+ const list = optionsMap[period] || optionsMap.month;
+ subEl.innerHTML = list.map((opt, i) => `<option value="${opt.v}" ${i === 0 ? 'selected' : ''}>${opt.t}</option>`).join('');
+ renderStats();
+};
+
+function getStatsDateInterval() {
+ const period = currentStatsPeriod || 'month';
+ const sub = document.getElementById('statsSubRange')?.value || 'thisMonth';
+ const now = new Date();
+ const localStr = d => toLocalDateStr(d);
+ 
+ let start, end, label, step;
+ 
+ if (period === 'day') {
+  if (sub === 'today') {
+   start = end = localStr(now);
+   label = 'Hôm nay (' + fmtDate(start) + ')';
+   step = 'day';
+  } else if (sub === 'yesterday') {
+   const y = new Date(now); y.setDate(y.getDate() - 1);
+   start = end = localStr(y);
+   label = 'Hôm qua (' + fmtDate(start) + ')';
+   step = 'day';
+  } else if (sub === 'last7days') {
+   const d = new Date(now); d.setDate(d.getDate() - 6);
+   start = localStr(d); end = localStr(now);
+   label = '7 ngày qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'day';
+  } else if (sub === 'last14days') {
+   const d = new Date(now); d.setDate(d.getDate() - 13);
+   start = localStr(d); end = localStr(now);
+   label = '14 ngày qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'day';
+  } else {
+   const d = new Date(now); d.setDate(d.getDate() - 29);
+   start = localStr(d); end = localStr(now);
+   label = '30 ngày qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'day';
+  }
+ } else if (period === 'week') {
+  const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dayOfWeek - 1));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  if (sub === 'thisWeek') {
+   start = localStr(monday); end = localStr(sunday);
+   label = 'Tuần này (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'day';
+  } else if (sub === 'lastWeek') {
+   const lastMon = new Date(monday); lastMon.setDate(lastMon.getDate() - 7);
+   const lastSun = new Date(lastMon); lastSun.setDate(lastMon.getDate() + 6);
+   start = localStr(lastMon); end = localStr(lastSun);
+   label = 'Tuần trước (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'day';
+  } else if (sub === 'last8weeks') {
+   const d = new Date(now); d.setDate(d.getDate() - 55);
+   start = localStr(d); end = localStr(now);
+   label = '8 tuần qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'week';
+  } else {
+   const d = new Date(now); d.setDate(d.getDate() - 27);
+   start = localStr(d); end = localStr(now);
+   label = '4 tuần qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'week';
+  }
+ } else if (period === 'month') {
+  const y = now.getFullYear(), m = now.getMonth();
+  if (sub === 'thisMonth') {
+   start = localStr(new Date(y, m, 1));
+   end = localStr(new Date(y, m + 1, 0));
+   label = 'Tháng ' + (m + 1) + '/' + y;
+   step = 'day';
+  } else if (sub === 'lastMonth') {
+   start = localStr(new Date(y, m - 1, 1));
+   end = localStr(new Date(y, m, 0));
+   const lastMDate = new Date(y, m - 1, 1);
+   label = 'Tháng ' + (lastMDate.getMonth() + 1) + '/' + lastMDate.getFullYear();
+   step = 'day';
+  } else if (sub === 'last3months') {
+   start = localStr(new Date(y, m - 2, 1));
+   end = localStr(new Date(y, m + 1, 0));
+   label = '3 tháng qua (Quý)';
+   step = 'month';
+  } else if (sub === 'last6months') {
+   start = localStr(new Date(y, m - 5, 1));
+   end = localStr(new Date(y, m + 1, 0));
+   label = '6 tháng qua';
+   step = 'month';
+  } else {
+   start = localStr(new Date(y - 1, m + 1, 1));
+   end = localStr(new Date(y, m + 1, 0));
+   label = '12 tháng qua';
+   step = 'month';
+  }
+ } else if (period === 'year') {
+  const y = now.getFullYear();
+  if (sub === 'lastYear') {
+   start = (y - 1) + '-01-01'; end = (y - 1) + '-12-31';
+   label = 'Năm ' + (y - 1);
+   step = 'month';
+  } else {
+   start = y + '-01-01'; end = y + '-12-31';
+   label = 'Năm ' + y;
+   step = 'month';
+  }
+ } else {
+  start = '1970-01-01'; end = '2099-12-31';
+  label = 'Toàn bộ thời gian';
+  step = 'month';
+ }
+ 
+ return { start, end, label, step, period };
+}
+
 function renderStats(){
- const days=parseInt(document.getElementById('statsRange')?.value||30);
- dc('stL');dc('stD');dc('stC');
+ const interval = getStatsDateInterval();
+ const { start, end, label, step } = interval;
+
+ // Update labels in UI
+ const rangeLbl = document.getElementById('statsDateRangeLabel');
+ if (rangeLbl) rangeLbl.textContent = label;
+ const badgeEl = document.getElementById('stLineRangeBadge');
+ if (badgeEl) badgeEl.textContent = `${fmtDate(start)} – ${fmtDate(end)}`;
+
+ dc('stL'); dc('stD'); dc('stC');
  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
  const t1 = isLight ? '#4a5568' : '#9090b0';
  const t2 = isLight ? '#718096' : '#50507a';
  
- const ctxL=document.getElementById('stLineC'); if(ctxL){
-  const pts=Math.min(days,14),step=Math.ceil(days/pts);
-  const labels=[],incD=[],expD=[];
-  for(let i=pts-1;i>=0;i--){
-   const d=dayOff(-i*step);
-   const dt=new Date(d+'T00:00:00');
-   labels.push(`${dt.getDate()}/${dt.getMonth()+1}`);   let ia=0,ea=0;
-   for(let s=0;s<step;s++){const dd=dayOff(-i*step+s);ia+=(window.DB.income||[]).filter(x=>x.date===dd).reduce((a,x)=>a+x.amt,0);ea+=(window.DB.expense||[]).filter(x=>x.date===dd).reduce((a,x)=>a+x.amt,0);}
-   incD.push(+(ia/1e6).toFixed(2)); expD.push(+(ea/1e6).toFixed(2));
+ // Filter datasets strictly by selected interval
+ const filteredInc = (window.DB.income || []).filter(x => x.date >= start && x.date <= end);
+ const filteredExp = (window.DB.expense || []).filter(x => x.date >= start && x.date <= end);
+
+ const totalInc = filteredInc.reduce((a, b) => a + (b.amt || 0), 0);
+ const totalExp = filteredExp.reduce((a, b) => a + (b.amt || 0), 0);
+ const balance = totalInc - totalExp;
+ const savRate = totalInc > 0 ? ((balance / totalInc) * 100).toFixed(1) : 0;
+
+ // 1. Line Chart: Trend of Income & Expense
+ const ctxL = document.getElementById('stLineC');
+ if (ctxL) {
+  let labels = [], incD = [], expD = [];
+
+  if (step === 'day') {
+   // Generate day-by-day buckets
+   const sDate = new Date(start + 'T00:00:00');
+   const eDate = new Date(end + 'T00:00:00');
+   const diffDays = Math.max(1, Math.round((eDate - sDate) / (1000 * 60 * 60 * 24)) + 1);
+   
+   // If too many days, sample or step
+   const pts = Math.min(diffDays, 14);
+   const dayStep = Math.max(1, Math.ceil(diffDays / pts));
+   
+   for (let i = 0; i < diffDays; i += dayStep) {
+    const cur = new Date(sDate);
+    cur.setDate(cur.getDate() + i);
+    const dStr = toLocalDateStr(cur);
+    labels.push(`${cur.getDate()}/${cur.getMonth() + 1}`);
+    
+    // Sum for this sub-bucket
+    let ia = 0, ea = 0;
+    for (let s = 0; s < dayStep; s++) {
+     const subD = new Date(cur); subD.setDate(subD.getDate() + s);
+     const subStr = toLocalDateStr(subD);
+     ia += filteredInc.filter(x => x.date === subStr).reduce((a, x) => a + x.amt, 0);
+     ea += filteredExp.filter(x => x.date === subStr).reduce((a, x) => a + x.amt, 0);
+    }
+    incD.push(+(ia / 1e6).toFixed(2));
+    expD.push(+(ea / 1e6).toFixed(2));
+   }
+  } else if (step === 'week') {
+   // 4 or 8 weeks
+   const nWeeks = interval.period === 'week' && document.getElementById('statsSubRange')?.value === 'last8weeks' ? 8 : 4;
+   for (let w = nWeeks - 1; w >= 0; w--) {
+    labels.push('Tuần -' + w);
+    const wStart = dayOff(-w * 7 - 6);
+    const wEnd = dayOff(-w * 7);
+    const ia = filteredInc.filter(x => x.date >= wStart && x.date <= wEnd).reduce((a, x) => a + x.amt, 0);
+    const ea = filteredExp.filter(x => x.date >= wStart && x.date <= wEnd).reduce((a, x) => a + x.amt, 0);
+    incD.push(+(ia / 1e6).toFixed(2));
+    expD.push(+(ea / 1e6).toFixed(2));
+   }
+  } else {
+   // Monthly buckets
+   const mMap = {};
+   filteredInc.forEach(x => { const m = (x.date || '').slice(0, 7); mMap[m] = true; });
+   filteredExp.forEach(x => { const m = (x.date || '').slice(0, 7); mMap[m] = true; });
+   const mKeys = Object.keys(mMap).sort();
+   
+   if (mKeys.length === 0) {
+    labels = ['Kỳ này']; incD = [0]; expD = [0];
+   } else {
+    labels = mKeys.map(k => {
+     const parts = k.split('-');
+     return 'T' + parseInt(parts[1]) + (parts[0] !== new Date().getFullYear().toString() ? '/' + parts[0].slice(2) : '');
+    });
+    incD = mKeys.map(k => +(filteredInc.filter(x => (x.date || '').startsWith(k)).reduce((a, x) => a + x.amt, 0) / 1e6).toFixed(2));
+    expD = mKeys.map(k => +(filteredExp.filter(x => (x.date || '').startsWith(k)).reduce((a, x) => a + x.amt, 0) / 1e6).toFixed(2));
+   }
   }
-  const optL = getCO(); optL.scales.y.ticks.callback = v=>v+'M';
-  charts['stL']=new Chart(ctxL,{type:'line',data:{labels,datasets:[{label:'Thu nhập',data:incD,borderColor:'#00e676',backgroundColor:'rgba(0,230,118,.1)',tension:.4,fill:true,pointRadius:3},{label:'Chi tiêu',data:expD,borderColor:'#ff5252',backgroundColor:'rgba(255,82,82,.1)',tension:.4,fill:true,pointRadius:3}]},options:optL});
+
+  const optL = getCO();
+  optL.scales.y.ticks.callback = v => v + 'M';
+  charts['stL'] = new Chart(ctxL, {
+   type: 'line',
+   data: {
+    labels,
+    datasets: [
+     { label: 'Thu nhập', data: incD, borderColor: '#00e676', backgroundColor: 'rgba(0,230,118,.1)', tension: .4, fill: true, pointRadius: 3 },
+     { label: 'Chi tiêu', data: expD, borderColor: '#ff5252', backgroundColor: 'rgba(255,82,82,.1)', tension: .4, fill: true, pointRadius: 3 }
+    ]
+   },
+   options: optL
+  });
  }
- const ctxD=document.getElementById('stDonutC'); if(ctxD){
-  const cm={}; (window.DB.expense||[]).forEach(e=>{const c=e.cat.replace(/^\S+\s/,'');cm[c]=(cm[c]||0)+e.amt;});
-  const cats=Object.keys(cm),vals=cats.map(c=>cm[c]);
-  const cols=['#7c4dff','#00e5ff','#ff6b9d','#00e676','#ffab40','#ff5252','#ce93d8','#80cbc4','#ffd740'];
+
+ // 2. Donut Chart: Expense Breakdown (Strictly Filtered)
+ const ctxD = document.getElementById('stDonutC');
+ const totalBadge = document.getElementById('stDonutTotalBadge');
+ if (totalBadge) totalBadge.textContent = 'Tổng: ' + fmt(totalExp) + ' ₫';
+
+ if (ctxD) {
+  const cm = {};
+  filteredExp.forEach(e => {
+   const c = (e.cat || 'Khác').replace(/^\S+\s/, '');
+   cm[c] = (cm[c] || 0) + (e.amt || 0);
+  });
+  const cats = Object.keys(cm);
+  const vals = cats.map(c => cm[c]);
+  const cols = ['#7c4dff', '#00e5ff', '#ff6b9d', '#00e676', '#ffab40', '#ff5252', '#ce93d8', '#80cbc4', '#ffd740'];
   const bdColor = isLight ? '#ffffff' : '#0e0e1c';
-  charts['stD']=new Chart(ctxD,{type:'doughnut',data:{labels:cats,datasets:[{data:vals,backgroundColor:cols,borderColor:bdColor,borderWidth:2,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'right',labels:{color:t1,font:{size:10},padding:8,boxWidth:12}}}}});
+
+  if (vals.length === 0) {
+   charts['stD'] = new Chart(ctxD, {
+    type: 'doughnut',
+    data: { labels: ['Chưa có chi tiêu'], datasets: [{ data: [1], backgroundColor: ['var(--surface2)'], borderColor: bdColor, borderWidth: 1 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
+   });
+  } else {
+   charts['stD'] = new Chart(ctxD, {
+    type: 'doughnut',
+    data: { labels: cats, datasets: [{ data: vals, backgroundColor: cols, borderColor: bdColor, borderWidth: 2, hoverOffset: 8 }] },
+    options: {
+     responsive: true,
+     maintainAspectRatio: false,
+     cutout: '65%',
+     plugins: { legend: { position: 'right', labels: { color: t1, font: { size: 11 }, padding: 8, boxWidth: 12 } } }
+    }
+   });
+  }
  }
- const ctxC=document.getElementById('stCatC'); if(ctxC){
-  const cm={}; (window.DB.expense||[]).forEach(e=>{cm[e.cat]=(cm[e.cat]||0)+e.amt;});
-  const sorted=Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const optC = getCO(); optC.indexAxis = 'y'; optC.plugins.legend.display = false; optC.scales.x.ticks.callback = v=>v+'M'; optC.scales.y.grid.display = false;
-  charts['stC']=new Chart(ctxC,{type:'bar',data:{labels:sorted.map(x=>x[0]),datasets:[{data:sorted.map(x=>x[1]/1e6),backgroundColor:['#7c4dff','#00e5ff','#ff6b9d','#00e676','#ffab40','#ff5252','#ce93d8','#80cbc4'].map(c=>c+'cc'),borderRadius:4}]},options:optC});
+
+ // 3. Bar Chart: Categories by Spend (Strictly Filtered)
+ const ctxC = document.getElementById('stCatC');
+ if (ctxC) {
+  const cm = {};
+  filteredExp.forEach(e => { cm[e.cat] = (cm[e.cat] || 0) + (e.amt || 0); });
+  const sorted = Object.entries(cm).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const optC = getCO();
+  optC.indexAxis = 'y';
+  optC.plugins.legend.display = false;
+  optC.scales.x.ticks.callback = v => v + 'M';
+  optC.scales.y.grid.display = false;
+
+  charts['stC'] = new Chart(ctxC, {
+   type: 'bar',
+   data: {
+    labels: sorted.length ? sorted.map(x => x[0]) : ['Không có chi tiêu'],
+    datasets: [{
+     data: sorted.length ? sorted.map(x => +(x[1] / 1e6).toFixed(2)) : [0],
+     backgroundColor: ['#7c4dff', '#00e5ff', '#ff6b9d', '#00e676', '#ffab40', '#ff5252', '#ce93d8', '#80cbc4'].map(c => c + 'cc'),
+     borderRadius: 4
+    }]
+   },
+   options: optC
+  });
  }
- const fs=document.getElementById('finSum'); if(fs){
-  const k=computeFin();
-  fs.innerHTML=`<div style="display:flex;flex-direction:column;gap:12px">
+
+ // 4. Financial Summary Card (Strictly Filtered)
+ const fs = document.getElementById('finSum');
+ if (fs) {
+  const sDate = new Date(start + 'T00:00:00');
+  const eDate = new Date(end + 'T00:00:00');
+  const nDays = Math.max(1, Math.round((eDate - sDate) / (1000 * 60 * 60 * 24)) + 1);
+  const avgExpPerDay = Math.round(totalExp / nDays);
+  const maxExp = filteredExp.length ? Math.max(...filteredExp.map(x => x.amt || 0)) : 0;
+
+  fs.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px">
   ${[
-   {l:'Tổng thu nhập',v:fmtFull(k.totalInc)+' ₫',c:'var(--green)'},
-   {l:'Tổng chi tiêu',v:fmtFull(k.totalExp)+' ₫',c:'var(--red)'},
-   {l:'Số dư',v:(k.balance<0?'−':'')+fmtFull(Math.abs(k.balance))+' ₫',c:k.balance>=0?'var(--cyan)':'var(--red)'},
-   {l:'Tỷ lệ tiết kiệm',v:k.savRate+'%',c:'var(--purple)'},
-   {l:'Giao dịch thu nhập',v:(window.DB.income||[]).length,c:'var(--text1)'},
-   {l:'Giao dịch chi tiêu',v:(window.DB.expense||[]).length,c:'var(--text1)'},
-   {l:'Chi tiêu TB/giao dịch',v:(window.DB.expense||[]).length?fmt(Math.round(k.totalExp/(window.DB.expense||[]).length))+' ₫':'—',c:'var(--amber)'},
-  ].map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--glass-b)">
+   { l: 'Tổng thu nhập kỳ này', v: fmtFull(totalInc) + ' ₫', c: 'var(--green)' },
+   { l: 'Tổng chi tiêu kỳ này', v: fmtFull(totalExp) + ' ₫', c: 'var(--red)' },
+   { l: 'Số dư ròng trong kỳ', v: (balance < 0 ? '−' : '+') + fmtFull(Math.abs(balance)) + ' ₫', c: balance >= 0 ? 'var(--cyan)' : 'var(--red)' },
+   { l: 'Tỷ lệ tiết kiệm', v: savRate + '%', c: 'var(--purple)' },
+   { l: 'Chi tiêu trung bình/ngày', v: fmt(avgExpPerDay) + ' ₫', c: 'var(--amber)' },
+   { l: 'Giao dịch chi cao nhất', v: maxExp > 0 ? fmt(maxExp) + ' ₫' : '—', c: 'var(--text1)' },
+   { l: 'Số giao dịch ghi nhận', v: `Thu: ${filteredInc.length} • Chi: ${filteredExp.length}`, c: 'var(--text1)' },
+  ].map(r => `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1px solid var(--glass-b)">
    <span style="font-size:13px;color:var(--text2)">${r.l}</span>
    <span style="font-size:13.5px;font-weight:700;color:${r.c}">${r.v}</span>
   </div>`).join('')}
   </div>`;
  }
 }
+window.renderStats = renderStats;
 
 /* ────────────────────────────────────────────────────────
   renderAll – called by Firebase listeners
@@ -1635,7 +1938,19 @@ function renderToday() {
   else if (hr >= 18 || hr < 5) greeting = 'Chào buổi tối 🌙';
 
   const td = today();
-  const allTodayTodos = (window.DB.todos || []).filter(x => x.date === td || x.date === '');
+  // Unified Today Filter: due today, no date specified, or overdue pending
+  const allTodayTodos = (window.DB.todos || []).filter(x => 
+    x.date === td || (!x.date && !x.done) || (!x.done && x.date && x.date < td)
+  );
+  // Sort: overdue first, then high priority, then undone first
+  allTodayTodos.sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    const aOverdue = !a.done && a.date && a.date < td;
+    const bOverdue = !b.done && b.date && b.date < td;
+    if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
+    const priWeight = { high: 3, mid: 2, low: 1 };
+    return (priWeight[b.priority] || 2) - (priWeight[a.priority] || 2);
+  });
   const doneCount = allTodayTodos.filter(x => x.done).length;
   const totalCount = allTodayTodos.length;
   const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
@@ -1654,23 +1969,35 @@ function renderToday() {
     </div>`;
   }
 
-  // 1. Render Todos
-  const todos = allTodayTodos.filter(x => !x.done);
+  // 1. Render Todos (Unified & Interactive)
   const todoEl = document.getElementById('todayTodoList');
   if (todoEl) {
-    if (!todos.length) {
+    if (!allTodayTodos.length) {
       todoEl.innerHTML = `<div class="empty-state" style="padding:24px 16px; margin:0;">
         <div class="empty-state-icon" style="width:38px;height:38px;"><i data-lucide="check-circle" class="ic-18"></i></div>
-        <div class="empty-state-title" style="font-size:13.5px;">Tất cả đã hoàn thành!</div>
-        <div class="empty-state-desc" style="font-size:11.5px; margin-bottom:10px;">Không còn việc nào tồn đọng trong ngày.</div>
-        <button class="btn btn-p btn-sm" onclick="openTodoModal()"><i data-lucide="plus" class="ic-14"></i> Thêm việc</button>
+        <div class="empty-state-title" style="font-size:13.5px;">Không có việc nào hôm nay!</div>
+        <div class="empty-state-desc" style="font-size:11.5px; margin-bottom:10px;">Thêm công việc cần xử lý để không bỏ lỡ.</div>
+        <button class="btn btn-p btn-sm" onclick="openTodoModal()"><i data-lucide="plus" class="ic-14"></i> Thêm việc mới</button>
       </div>`;
     } else {
-      todoEl.innerHTML = todos.map(t => `<div class="todo-item" style="padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; gap:12px; transition:var(--t);">
-        <input type="checkbox" onchange="toggleTodo('${t.id}')" style="width:17px;height:17px;cursor:pointer;accent-color:var(--accent);">
-        <span style="flex:1; font-size:13.5px; ${t.priority==='high'?'color:var(--danger);font-weight:600':''} ${t.priority==='low'?'color:var(--text-low)':''} ">${t.text}</span>
-        <button class="icon-btn" onclick="editTodo('${t.id}')"><i data-lucide="edit-2" class="ic-14"></i></button>
-      </div>`).join('');
+      todoEl.innerHTML = allTodayTodos.map(t => {
+        const isOverdue = !t.done && t.date && t.date < td;
+        const pl = { high: 'Cao', mid: 'TB', low: 'Thấp' };
+        return `<div class="todo-item" style="padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; gap:12px; transition:var(--t); margin-bottom:8px; ${t.done ? 'opacity:0.6;' : ''}">
+          <div class="todo-cb" role="checkbox" aria-checked="${Boolean(t.done)}" onclick="toggleTodo('${t.id}')" style="width:20px; height:20px; border-radius:6px; border:2px solid ${t.done ? 'var(--green)' : 'var(--text3)'}; background:${t.done ? 'var(--green)' : 'transparent'}; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">
+            ${t.done ? '<span style="color:#000;font-size:11px;font-weight:900">✓</span>' : ''}
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:13.5px; font-weight:500; ${t.done ? 'text-decoration:line-through; color:var(--text-low);' : 'color:var(--text-hi);'} ${isOverdue ? 'color:var(--danger);font-weight:600;' : ''}">${t.text}</div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:2px;">
+              ${isOverdue ? '<span style="color:var(--danger); font-size:10.5px; font-weight:700; background:rgba(255,82,82,0.12); padding:1px 5px; border-radius:3px;">⚠️ Quá hạn</span>' : ''}
+              ${t.priority === 'high' ? '<span style="color:var(--danger); font-size:10.5px; font-weight:600;">Ưu tiên cao</span>' : ''}
+              ${t.note ? '<span style="color:var(--text-low); font-size:10.5px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">💬 ' + t.note + '</span>' : ''}
+            </div>
+          </div>
+          <button class="icon-btn" onclick="editTodo('${t.id}')" title="Chỉnh sửa"><i data-lucide="edit-2" class="ic-14"></i></button>
+        </div>`;
+      }).join('');
     }
   }
 

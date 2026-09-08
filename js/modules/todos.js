@@ -1,3 +1,12 @@
+
+window.syncTodosUI = function() {
+  if (typeof renderTodos === 'function') renderTodos();
+  if (typeof renderToday === 'function') renderToday();
+  if (typeof renderOverview === 'function') renderOverview();
+  if (typeof updateBadges === 'function') updateBadges();
+  if (window.lucide) window.lucide.createIcons();
+};
+
 /* ────────────────────────────────────────────────────────
   TODOS
 ──────────────────────────────────────────────────────── */
@@ -34,7 +43,7 @@ async function saveTodo(){
  if(editId){const i=list.findIndex(t=>t.id===editId);if(i>=0)list[i]=item;else list.unshift(item);}
  else list.unshift(item);
  await persist('todos',list);
- closeModal('mTodo'); toast('Đã lưu!','success');
+ closeModal('mTodo'); toast('Đã lưu!','success'); window.syncTodosUI();
 }
 async function toggleTodo(id){
  const list=[...(window.DB.todos||[])];
@@ -65,10 +74,12 @@ async function toggleTodo(id){
  }
  
  await persist('todos',list);
+  window.syncTodosUI();
 }
 async function delTodo(id){
  await persist('todos',(window.DB.todos||[]).filter(x=>x.id!==id));
  toast('Đã xoá','info');
+  window.syncTodosUI();
 }
 function setTodoFilter(f,el){
  todoFilter=f;
@@ -117,22 +128,37 @@ async function todoDrop(e, newPri) {
 }
 
 function renderTodos(){
- const t=today();
- let list=[...(window.DB.todos||[])];
- if(todoFilter==='today')list=list.filter(x=>x.date===t);
- else if(todoFilter==='pending')list=list.filter(x=>!x.done);
- else if(todoFilter==='done')list=list.filter(x=>x.done);
+ const t = today();
+ let list = [...(window.DB.todos || [])];
  
+ if (todoFilter === 'today') {
+  list = list.filter(x => x.date === t || (!x.done && x.date && x.date < t) || (!x.date && !x.done));
+ } else if (todoFilter === 'pending') {
+  list = list.filter(x => !x.done);
+ } else if (todoFilter === 'done') {
+  list = list.filter(x => x.done);
+ }
+ 
+ // Sort: high priority first, then date ascending, then undone before done
+ list.sort((a, b) => {
+  if (a.done !== b.done) return a.done ? 1 : -1;
+  const priWeight = { high: 3, mid: 2, low: 1 };
+  const pa = priWeight[a.priority] || 2;
+  const pb = priWeight[b.priority] || 2;
+  if (pa !== pb) return pb - pa;
+  return (a.date || '').localeCompare(b.date || '');
+ });
+
  const listView = document.getElementById('todoListView');
  const kanbanView = document.getElementById('todoKanbanView');
  
- if(currentTodoView === 'kanban' && listView && kanbanView) {
-  listView.style.display = 'none';
+ if (currentTodoView === 'kanban' && kanbanView) {
+  if (listView) listView.style.display = 'none';
   kanbanView.style.display = 'flex';
   renderTodoKanban(list);
- } else if(listView && kanbanView) {
-  kanbanView.style.display = 'none';
-  listView.style.display = 'block';
+ } else {
+  if (kanbanView) kanbanView.style.display = 'none';
+  if (listView) listView.style.display = 'block';
   renderTodoList(list);
  }
 }

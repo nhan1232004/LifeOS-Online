@@ -265,7 +265,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1788890645789">
+<link rel="stylesheet" href="css/style.css?v=1788891100453">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -668,27 +668,60 @@ window.getCurrentUser = () => currentUser;
 
    <!-- ▸ STATS -->
    <div class="page" id="p-stats">
+    <div class="page-toolbar stats-toolbar" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px;">
+     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <div class="segmented-control" id="statsPeriodTabs" style="display:inline-flex;">
+       <button class="seg-btn" onclick="setStatsPeriod('day', this)">Ngày</button>
+       <button class="seg-btn" onclick="setStatsPeriod('week', this)">Tuần</button>
+       <button class="seg-btn active" onclick="setStatsPeriod('month', this)">Tháng</button>
+       <button class="seg-btn" onclick="setStatsPeriod('year', this)">Năm</button>
+       <button class="seg-btn" onclick="setStatsPeriod('all', this)">Tất cả</button>
+      </div>
+      <select class="inp" id="statsSubRange" onchange="renderStats()" style="padding:6px 12px; font-size:12.5px; border-radius:8px; width:auto; font-weight:600; cursor:pointer; background:var(--surface); border:1px solid var(--border); color:var(--text-hi);">
+       <option value="thisMonth" selected>Tháng này</option>
+       <option value="lastMonth">Tháng trước</option>
+       <option value="last3months">3 tháng qua (Quý)</option>
+       <option value="last6months">6 tháng qua</option>
+       <option value="last12months">12 tháng qua</option>
+      </select>
+     </div>
+     <div style="display:flex; align-items:center; gap:10px;">
+      <span class="badge" id="statsDateRangeLabel" style="font-size:12px; padding:6px 12px; border-radius:8px; background:var(--surface); border:1px solid var(--border); color:var(--accent-light); font-weight:700;">
+       Tháng này
+      </span>
+      <button class="btn btn-sm btn-outline" onclick="exportReport()" title="Xuất báo cáo tài chính"><i data-lucide="download" class="ic-14"></i> <span class="hide-mobile">Xuất báo cáo</span></button>
+     </div>
+    </div>
+
     <div class="grid-2">
      <div class="card">
       <div class="ch">
-       <div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="line-chart" style="width:16px;height:16px"></i> Thu nhập & Chi tiêu</div>
-       <div style="display:flex;gap:8px">
-        <button class="btn btn-sm btn-p" onclick="exportReport()"><i data-lucide="download" style="width:14px;height:14px;margin-right:4px"></i> Xuất báo cáo</button>
-        <select class="btn btn-sm" id="statsRange" onchange="renderStats()" style="border-color:var(--glass-b)">
-         <option value="7">7 ngày</option><option value="30" selected>30 ngày</option><option value="90">3 tháng</option>
-        </select>
-       </div>
+       <div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="line-chart" class="ic-16" style="color:var(--accent-cyan)"></i> <span>Thu nhập & Chi tiêu</span></div>
+       <span class="badge" id="stLineRangeBadge" style="font-size:11px; background:var(--surface2); color:var(--text-low); font-weight:600;"></span>
       </div>
       <div class="cb" style="position:relative;height:clamp(180px,28vw,240px)"><canvas id="stLineC"></canvas></div>
      </div>
      <div class="card">
-      <div class="ch"><div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="pie-chart" style="width:16px;height:16px"></i> Phân bổ chi tiêu</div></div>
+      <div class="ch">
+       <div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="pie-chart" class="ic-16" style="color:var(--pink)"></i> <span>Phân bổ chi tiêu</span></div>
+       <span class="badge" id="stDonutTotalBadge" style="font-size:11px; background:rgba(255,82,82,0.12); color:var(--danger); font-weight:700;"></span>
+      </div>
       <div class="cb" style="position:relative;height:clamp(180px,28vw,240px)"><canvas id="stDonutC"></canvas></div>
      </div>
     </div>
     <div class="grid-2">
-     <div class="card"><div class="ch"><div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="bar-chart-horizontal" style="width:16px;height:16px"></i> Chi tiêu theo danh mục</div></div><div class="cb" style="position:relative;height:clamp(180px,28vw,240px)"><canvas id="stCatC"></canvas></div></div>
-     <div class="card"><div class="ch"><div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="pie-chart" style="width:16px;height:16px"></i> Tóm tắt tài chính</div></div><div class="cb" id="finSum"></div></div>
+     <div class="card">
+      <div class="ch">
+       <div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="bar-chart-horizontal" class="ic-16" style="color:var(--warning)"></i> <span>Chi tiêu theo danh mục</span></div>
+      </div>
+      <div class="cb" style="position:relative;height:clamp(180px,28vw,240px)"><canvas id="stCatC"></canvas></div>
+     </div>
+     <div class="card">
+      <div class="ch">
+       <div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="wallet" class="ic-16" style="color:var(--success)"></i> <span>Tóm tắt tài chính</span></div>
+      </div>
+      <div class="cb" id="finSum"></div>
+     </div>
     </div>
    </div>
 
@@ -1300,18 +1333,18 @@ window.getCurrentUser = () => currentUser;
 </div>
 
 <script src="js/data.js?v=2"></script>
-<script src="js/workspace.js?v=1788890645789"></script>
-<script src="js/projViews.js?v=1788890645789"></script>
-<script src="js/main.js?v=1788890645789"></script>
-<script src="js/modules/todos.js?v=1788890645789"></script>
-<script src="js/modules/notes.js?v=1788890645789"></script>
-<script src="js/modules/habits.js?v=1788890645789"></script>
-<script src="js/modules/goals.js?v=1788890645789"></script>
-<script src="js/modules/journal.js?v=1788890645789"></script>
-<script src="js/modules/pomodoro.js?v=1788890645789"></script>
-<script src="js/modules/vocab.js?v=1788890645789"></script>
-<script src="js/modules/mocktests.js?v=1788890645789"></script>
-<script src="js/modules/cmd.js?v=1788890645789"></script>
+<script src="js/workspace.js?v=1788891100453"></script>
+<script src="js/projViews.js?v=1788891100453"></script>
+<script src="js/main.js?v=1788891100453"></script>
+<script src="js/modules/todos.js?v=1788891100453"></script>
+<script src="js/modules/notes.js?v=1788891100453"></script>
+<script src="js/modules/habits.js?v=1788891100453"></script>
+<script src="js/modules/goals.js?v=1788891100453"></script>
+<script src="js/modules/journal.js?v=1788891100453"></script>
+<script src="js/modules/pomodoro.js?v=1788891100453"></script>
+<script src="js/modules/vocab.js?v=1788891100453"></script>
+<script src="js/modules/mocktests.js?v=1788891100453"></script>
+<script src="js/modules/cmd.js?v=1788891100453"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1376,7 +1409,7 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 <script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
-<script src="js/modules/export.js?v=1788890645789"></script>
+<script src="js/modules/export.js?v=1788891100453"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">
