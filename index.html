@@ -287,7 +287,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1788894031607">
+<link rel="stylesheet" href="css/style.css?v=1788894626427">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -1384,18 +1384,18 @@ window.getCurrentUser = () => currentUser;
  }
 </script>
 <script src="js/data.js?v=2"></script>
-<script src="js/workspace.js?v=1788894031607"></script>
-<script src="js/projViews.js?v=1788894031607"></script>
-<script src="js/main.js?v=1788894031607"></script>
-<script src="js/modules/todos.js?v=1788894031607"></script>
-<script src="js/modules/notes.js?v=1788894031607"></script>
-<script src="js/modules/habits.js?v=1788894031607"></script>
-<script src="js/modules/goals.js?v=1788894031607"></script>
-<script src="js/modules/journal.js?v=1788894031607"></script>
-<script src="js/modules/pomodoro.js?v=1788894031607"></script>
-<script src="js/modules/vocab.js?v=1788894031607"></script>
-<script src="js/modules/mocktests.js?v=1788894031607"></script>
-<script src="js/modules/cmd.js?v=1788894031607"></script>
+<script src="js/workspace.js?v=1788894626427"></script>
+<script src="js/projViews.js?v=1788894626427"></script>
+<script src="js/main.js?v=1788894626427"></script>
+<script src="js/modules/todos.js?v=1788894626427"></script>
+<script src="js/modules/notes.js?v=1788894626427"></script>
+<script src="js/modules/habits.js?v=1788894626427"></script>
+<script src="js/modules/goals.js?v=1788894626427"></script>
+<script src="js/modules/journal.js?v=1788894626427"></script>
+<script src="js/modules/pomodoro.js?v=1788894626427"></script>
+<script src="js/modules/vocab.js?v=1788894626427"></script>
+<script src="js/modules/mocktests.js?v=1788894626427"></script>
+<script src="js/modules/cmd.js?v=1788894626427"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1487,12 +1487,13 @@ window.getCurrentUser = () => currentUser;
     </div>
     <div style="display:flex; align-items:center; gap:8px;">
      <label style="font-size:12px; font-weight:600; color:var(--text-mid); margin:0;">Số lượng từ:</label>
-     <select id="viLimit" class="inp" style="padding:5px 10px; font-size:12px; border-radius:6px; width:auto;">
-      <option value="15" selected>15 từ quan trọng</option>
-      <option value="25">25 từ</option>
-      <option value="40">40 từ</option>
-      <option value="60">60 từ</option>
-     </select>
+      <select id="viLimit" class="inp" style="padding:5px 10px; font-size:12px; border-radius:6px; width:auto;">
+       <option value="999" selected>Tất cả từ có trong tài liệu (Khuyên dùng)</option>
+       <option value="100">100 từ</option>
+       <option value="60">60 từ</option>
+       <option value="30">30 từ</option>
+       <option value="15">15 từ</option>
+      </select>
      <button class="btn btn-p btn-sm" id="btnRunExtract" onclick="runVocabExtraction()" style="padding:6px 14px; font-weight:700;">
       <i data-lucide="sparkles" style="width:14px;height:14px;margin-right:4px;"></i> Bắt đầu quét
      </button>
@@ -1579,7 +1580,7 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 <script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
-<script src="js/modules/export.js?v=1788894031607"></script>
+<script src="js/modules/export.js?v=1788894626427"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">

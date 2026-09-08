@@ -125,7 +125,7 @@ async function setImportFile(file) {
    if (pdfRow) pdfRow.style.display = 'flex';
    if (totalPagesEl) totalPagesEl.textContent = `(Tổng cộng ${currentPdfDoc.numPages} trang)`;
    if (startInp) startInp.value = 1;
-   if (endInp) endInp.value = Math.min(currentPdfDoc.numPages, 35);
+   if (endInp) endInp.value = currentPdfDoc.numPages;
   } catch (err) {
    console.warn('[LifeOS Vocab] Pre-reading PDF metadata failed:', err);
   }
@@ -182,84 +182,199 @@ async function readDocxFileText(file) {
 function mapPartOfSpeech(rawType) {
  if (!rawType) return 'n';
  const t = rawType.toLowerCase().trim();
- if (t.includes('noun') || t === 'n') return 'n';
- if (t.includes('verb') || t === 'v') return 'v';
+ if (t.includes('noun') && !t.includes('phrase')) return 'n';
+ if (t.includes('verb') && !t.includes('phrase')) return 'v';
  if (t.includes('adj') || t.includes('adjective')) return 'adj';
  if (t.includes('adv') || t.includes('adverb')) return 'adv';
- if (t.includes('idiom') || t.includes('phrase') || t.includes('clause') || t.includes('linking') || t === 'phr') return 'phr';
- return 'phr';
+ if (t.includes('idiom') || t.includes('phrase') || t.includes('clause') || t.includes('collocation') || t.includes('phr') || t.includes('phrasal') || t.includes('slang') || t.includes('metaphor')) return 'phr';
+ if (t.includes('noun')) return 'n';
+ if (t.includes('verb')) return 'v';
+ return 'n';
 }
 
-// ── Comprehensive Regex Parser for Vietnamese IELTS Books & Lists ──
+// ── Comprehensive Parser for IELTS Books, Handbooks & Vocabulary Lists ──
 function parseStructuredVocabList(content) {
  const lines = content.split(/\r?\n/);
  const items = [];
  const seenWords = new Set();
- let currentItem = null;
+ let currentEntry = null;
+
+ function finalizeEntry() {
+  if (!currentEntry) return;
+  let w = currentEntry.word.trim();
+  const m = currentEntry.mean.trim();
+  
+  // Clean numbering if present e.g. "1. Dismiss" -> "Dismiss"
+  w = w.replace(/^\d+\.\s*/, '').trim();
+  const lower = w.toLowerCase();
+  
+  if (w && m && !seenWords.has(lower) && w.length >= 2) {
+   seenWords.add(lower);
+   items.push({
+    word: w,
+    type: currentEntry.type || 'n',
+    pron: currentEntry.pron || '',
+    mean: m,
+    ex: currentEntry.ex || '',
+    selected: true
+   });
+  }
+  currentEntry = null;
+ }
 
  for (let i = 0; i < lines.length; i++) {
-  const line = lines[i].trim();
+  let line = lines[i].trim();
   if (!line) continue;
 
-  // Handle English definition / example line: "ENG: ..."
-  if (/^ENG\s*:\s*/i.test(line) && currentItem) {
-   const engDef = line.replace(/^ENG\s*:\s*/i, '').trim();
-   currentItem.ex = engDef;
+  // Clean bullet symbols at start: ●, •, *, ▪, ▫, -
+  const cleanLine = line.replace(/^[●•*▪▫-]\s*/, '').trim();
+
+  // 1. Attribute matchers for current entry
+  const pronMatch = cleanLine.match(/^(?:Phiên âm|Pronunciation)\s*:\s*(.+)$/i);
+  if (pronMatch) {
+   if (currentEntry) currentEntry.pron = pronMatch[1].trim();
    continue;
   }
 
-  // Matches patterns:
-  // - on the outskirts of something (prepositional phrase): ở ngoại ô
-  // - facilitate something (verb): tạo điều kiện thuận lợi
-  // - located + adv./prep. (adj): tọa lạc, ở
-  // - born and bred (idiom): sinh ra và lớn lên
-  // • resilient (adj) : kiên cường
-  // word - meaning
-  // word : meaning
-  const entryMatch = line.match(/^[-•*–—]?\s*([a-zA-Z0-9\s\/'\+\.\,\(\)~…\-’‘]+?)\s*(?:\(([^)]+)\))?\s*[:–—=]\s*(.+)$/);
-  if (entryMatch) {
-   let rawWord = entryMatch[1].trim().replace(/^[-•*–—]\s*/, '').trim();
-   const rawType = entryMatch[2] ? entryMatch[2].trim() : '';
-   let mean = entryMatch[3].trim();
+  const typeMatch = cleanLine.match(/^(?:Từ loại|Part of speech)\s*:\s*(.+)$/i);
+  if (typeMatch) {
+   if (currentEntry) currentEntry.type = mapPartOfSpeech(typeMatch[1].trim());
+   continue;
+  }
+
+  const meanMatch = cleanLine.match(/^(?:Nghĩa tiếng Việt|Nghĩa|Meaning)\s*:\s*(.+)$/i);
+  if (meanMatch) {
+   if (currentEntry) currentEntry.mean = meanMatch[1].trim();
+   continue;
+  }
+
+  const familyMatch = cleanLine.match(/^(?:Gia đình từ|Word family|Word families)\s*:\s*(.+)$/i);
+  if (familyMatch) {
+   continue;
+  }
+
+  const exMatch = cleanLine.match(/^(?:Ví dụ|Example|Ex)\s*:\s*(.+)$/i);
+  if (exMatch) {
+   if (currentEntry) currentEntry.ex = exMatch[1].trim();
+   continue;
+  }
+
+  // 2. Word Header detection (Handbook Block format: "1. Dismiss", "20. Ace an exam")
+  const numHeaderMatch = cleanLine.match(/^(\d+)\.\s+([A-Za-z0-9\s\/'\+\.\,\(\)~…\-’‘]+)$/);
+  if (numHeaderMatch) {
+   const potentialWord = numHeaderMatch[2].trim();
+   const lower = potentialWord.toLowerCase();
    
-   const lowerWord = rawWord.toLowerCase();
-   // Skip metadata headers
+   // Skip chapter/section headers like "1. Education (Giáo dục)" or "Mục lục"
    if (
-    lowerWord.startsWith('câu hỏi') ||
-    lowerWord.startsWith('giải thích') ||
-    lowerWord.startsWith('mục lục') ||
-    lowerWord.startsWith('lời mở đầu') ||
-    lowerWord.startsWith('http') ||
-    lowerWord.startsWith('trang') ||
-    lowerWord.startsWith('ielts thanh loan') ||
-    /^\d+\./.test(rawWord)
+    lower.includes('(giáo dục)') ||
+    lower.includes('(công việc') ||
+    lower.includes('(truyền thông') ||
+    lower.includes('(môi trường') ||
+    lower.includes('(xã hội') ||
+    lower.includes('(kinh doanh') ||
+    lower.includes('(sức khỏe') ||
+    lower.includes('(du lịch') ||
+    lower.includes('(gia đình') ||
+    lower.includes('(tính cách') ||
+    lower.includes('(văn hóa') ||
+    lower.startsWith('mục lục') ||
+    /^[A-Z\s,–—]{6,}$/.test(potentialWord)
    ) {
+    finalizeEntry();
     continue;
    }
 
-   if (rawWord.length >= 2 && mean.length >= 1 && !seenWords.has(lowerWord)) {
-    seenWords.add(lowerWord);
-    currentItem = {
-     word: rawWord,
-     type: mapPartOfSpeech(rawType),
+   // Peek ahead to confirm it's followed by "Phiên âm" or "Từ loại" or "Nghĩa"
+   let isVocabBlock = false;
+   for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
+    const nextClean = lines[j].replace(/^[●•*▪▫-]\s*/, '').trim();
+    if (/^(?:Phiên âm|Từ loại|Nghĩa tiếng Việt|Nghĩa)\s*:/i.test(nextClean)) {
+     isVocabBlock = true;
+     break;
+    }
+   }
+
+   if (isVocabBlock) {
+    finalizeEntry();
+    currentEntry = {
+     word: potentialWord,
+     type: 'n',
      pron: '',
-     mean: mean,
-     ex: '',
-     selected: true
+     mean: '',
+     ex: ''
     };
-    items.push(currentItem);
     continue;
    }
   }
 
-  // Multiline continuation of English definition / example
-  if (currentItem && currentItem.ex && !line.startsWith('-') && !line.startsWith('•') && !line.startsWith('Giải thích') && !line.startsWith('Câu hỏi')) {
-   if (!line.includes(':') || line.startsWith('(')) {
-    currentItem.ex += ' ' + line;
+  // Also check if line is word header without number: e.g. "Cognitive" followed immediately by "Phiên âm:"
+  if (/^[A-Za-z\s\/'\+\,\(\)~…\-’‘]{3,50}$/.test(cleanLine)) {
+   let isVocabBlock = false;
+   for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+    const nextClean = lines[j].replace(/^[●•*▪▫-]\s*/, '').trim();
+    if (/^(?:Phiên âm|Từ loại|Nghĩa tiếng Việt|Nghĩa)\s*:/i.test(nextClean)) {
+     isVocabBlock = true;
+     break;
+    }
+   }
+   if (isVocabBlock) {
+    finalizeEntry();
+    currentEntry = {
+     word: cleanLine,
+     type: 'n',
+     pron: '',
+     mean: '',
+     ex: ''
+    };
+    continue;
+   }
+  }
+
+  // 3. Single-line pattern match: "word (type) : meaning" or "word - meaning"
+  const singleLineMatch = cleanLine.match(/^([a-zA-Z0-9\s\/'\+\.\,\(\)~…\-’‘]+?)\s*(?:\(([^)]+)\))?\s*[:–—=]\s*(.+)$/);
+  if (singleLineMatch) {
+   const w = singleLineMatch[1].trim();
+   const lower = w.toLowerCase();
+   if (
+    !lower.startsWith('phiên âm') &&
+    !lower.startsWith('từ loại') &&
+    !lower.startsWith('nghĩa') &&
+    !lower.startsWith('gia đình từ') &&
+    !lower.startsWith('ví dụ') &&
+    !lower.startsWith('câu hỏi') &&
+    !lower.startsWith('giải thích') &&
+    !lower.startsWith('mục lục') &&
+    !lower.startsWith('lời mở đầu') &&
+    !lower.startsWith('trang')
+   ) {
+    finalizeEntry();
+    const cleanWord = w.replace(/^\d+\.\s*/, '').trim();
+    if (cleanWord.length >= 2) {
+     items.push({
+      word: cleanWord,
+      type: mapPartOfSpeech(singleLineMatch[2]),
+      pron: '',
+      mean: singleLineMatch[3].trim(),
+      ex: '',
+      selected: true
+     });
+    }
+    continue;
+   }
+  }
+
+  // 4. Multiline continuation of example or meaning
+  if (currentEntry) {
+   if (currentEntry.ex && (cleanLine.startsWith('(') || !cleanLine.includes(':'))) {
+    currentEntry.ex += ' ' + cleanLine;
+   } else if (currentEntry.mean && !currentEntry.ex && !cleanLine.includes(':')) {
+    currentEntry.mean += ' ' + cleanLine;
    }
   }
  }
 
+ finalizeEntry();
  return items;
 }
 
@@ -356,9 +471,9 @@ window.runVocabExtraction = async function() {
   // 1. First priority: Check if text contains structured book lists like "Giải thích từ vựng:"
   let items = parseStructuredVocabList(text);
 
-  // 2. If structured parser found words, limit to requested amount (or take all if within reason)
+  // 2. If structured parser found words, limit to requested amount (or take all if limit is 999)
   if (items.length > 0) {
-   if (items.length > limit) {
+   if (limit < 999 && items.length > limit) {
     items = items.slice(0, limit);
    }
   } else {
