@@ -5,7 +5,7 @@ async function loadWorkspaces() {
   if (window.DEMO_MODE) {
     return [{id:'default', name:'Personal'}];
   }
-  const uDoc = await window.getDoc(window.doc(window.db, 'users', currentUser.uid));
+  const uDoc = await window.getDoc(window.doc(window.db, 'users', (window.window.currentUser||{}).uid));
   let wss = [{id:'default', name:'Personal'}];
   if (uDoc.exists() && uDoc.data().workspaces) {
     wss = [{id:'default', name:'Personal'}, ...uDoc.data().workspaces];
@@ -53,7 +53,7 @@ async function createWorkspace() {
   const custom = wss.filter(x => x.id !== 'default');
   custom.push({id: newId, name});
   
-  await window.setDoc(window.doc(window.db, 'users', currentUser.uid), {workspaces: custom}, {merge: true});
+  await window.setDoc(window.doc(window.db, 'users', (window.window.currentUser||{}).uid), {workspaces: custom}, {merge: true});
   
   document.getElementById('newWsName').value = '';
   renderWorkspaceSwitcher();

@@ -137,7 +137,9 @@ async function delNote(id) {
  window.DB.notes = (window.DB.notes || []).filter(x => x.id !== id);
  await persist('notes', window.DB.notes);
  renderNotes();
- undoManager.execute('notes', t, renderNotes);
+ // undoManager removed - direct delete
+ await persist('notes', t);
+ renderNotes();
 }
 
 function getNotePreview(bodyStr) {

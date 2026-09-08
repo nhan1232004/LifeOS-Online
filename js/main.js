@@ -219,10 +219,15 @@ async function persist(col,items){
   if(lbl) lbl.textContent='Đã đồng bộ';
   if(dot) dot.style.background='var(--green)';
  } catch (error) {
-  if(lbl) lbl.textContent='Không thể đồng bộ';
+  console.error('[LifeOS] persist error for "' + col + '":', error);
+  if(lbl) lbl.textContent='Lỗi đồng bộ';
   if(dot) dot.style.background='var(--red)';
-  toast('Không thể lưu dữ liệu. Vui lòng thử lại.', 'error');
-  throw error;
+  // Don't toast for every persist error - can be spammy during offline
+  // Only show once per minute
+  if (!window._lastPersistErrTime || Date.now() - window._lastPersistErrTime > 60000) {
+   window._lastPersistErrTime = Date.now();
+   toast('Không thể lưu dữ liệu "' + col + '". Kiểm tra kết nối mạng.', 'error');
+  }
  }
 }
 window.persist = persist;
@@ -512,7 +517,10 @@ function openProjDetail(id){
  document.getElementById('mdTimeline').textContent=p.timeline||'Chưa có hoạt động nào.';
  document.getElementById('mdEval').textContent=p.evaluation||'Chưa có đánh giá.';
  
- document.getElementById('btnEditProj').setAttribute('onclick', `editProj('${p.id}')`);
+ const bDetail = document.getElementById('btnEditProjDetail');
+ if (bDetail) bDetail.setAttribute('onclick', `editProj('${p.id}')`);
+ const bTool = document.getElementById('btnEditProj');
+ if (bTool) bTool.setAttribute('onclick', `editProj('${p.id}')`);
  openModal('mProjDetail');
 }
 async function saveProj(){
@@ -963,8 +971,8 @@ async function saveProjTask() {
  if(id) {
   const list = window.DB.proj_tasks || [];
   const idx = list.findIndex(x => x.id === id);
-  if(idx >= 0) t = {...list[idx], text, status, priority: pri, desc};
-  else t = {id: uid(), projId: pId, text, status, priority: pri, desc, comments: []};
+  if(idx >= 0) t = {...list[idx], text, status, priority: pri, desc, start, due};
+  else t = {id: uid(), projId: pId, text, status, priority: pri, desc, start, due, comments: []};
  } else {
   t = {id: uid(), projId: pId, text, status, priority: pri, desc, comments: []};
  }
@@ -1675,7 +1683,7 @@ function renderToday() {
         <div class="empty-state-icon" style="width:38px;height:38px;"><i data-lucide="flame" class="ic-18"></i></div>
         <div class="empty-state-title" style="font-size:13.5px;">Chưa có thói quen</div>
         <div class="empty-state-desc" style="font-size:11.5px; margin-bottom:10px;">Thêm thói quen để rèn luyện mỗi ngày.</div>
-        <button class="btn btn-p btn-sm" onclick="openHabitModal()"><i data-lucide="plus" class="ic-14"></i> Thêm thói quen</button>
+        <button class="btn btn-p btn-sm" onclick="openHabit()"><i data-lucide="plus" class="ic-14"></i> Thêm thói quen</button>
       </div>`;
     } else {
       habitEl.innerHTML = habits.map(h => {
@@ -1685,7 +1693,7 @@ function renderToday() {
             <div style="font-size:13.5px; font-weight:600; ${isDone ? 'text-decoration:line-through;color:var(--text-low)' : 'color:var(--text-hi)'}">${h.name}</div>
             <div style="font-size:11px; color:var(--warning); margin-top:2px;">🔥 Chuỗi ${h.streak || 0} ngày</div>
           </div>
-          <button class="btn btn-sm ${isDone ? 'btn-ghost' : 'btn-p'}" onclick="toggleHabitLog('${h.id}', '${td}')" style="font-size:12px; padding:4px 12px;">
+          <button class="btn btn-sm ${isDone ? 'btn-ghost' : 'btn-p'}" onclick="toggleHabitDay('${h.id}', '${td}')" style="font-size:12px; padding:4px 12px;">
             ${isDone ? '✓ Đã xong' : 'Hoàn thành'}
           </button>
         </div>`;
@@ -1719,11 +1727,12 @@ function renderToday() {
 }
 
 window.renderAll = function(){
- updateBadges();
+ try { if(typeof updateBadges==='function') updateBadges(); } catch(e) { console.warn('[LifeOS] renderAll: updateBadges error:', e.message); }
  const active=document.querySelector('.page.active'); if(!active)return;
  const pg=active.id.replace('p-','');
- const map={today:renderToday,overview:renderOverview,calendar:renderCal,schedule:renderWeek,projects:()=>{renderProjSelector();renderKanbanBoard();},todos:renderTodos,finance:()=>{renderFinKpi();renderFinTables();},stats:renderStats,notes:renderNotes,habits:renderHabits,goals:renderGoals,journal:renderJournal,pomodoro:renderPomodoro,vocab:renderVocab,mocktests:renderMockTests};
- if(map[pg])map[pg]();
+ const map={today:renderToday,overview:renderOverview,calendar:renderCal,schedule:renderWeek,projects:()=>{renderProjSelector();renderKanbanBoard();},todos:renderTodos,finance:()=>{renderFinKpi();renderFinTables();},stats:renderStats,notes:renderNotes,habits:renderHabits,goals:renderGoals,journal:renderJournal,pomodoro:renderPomodoro,vocab:renderVocab,mocktests:typeof renderMockTests==='function'?renderMockTests:null};
+ try { if(map[pg]) map[pg](); } catch(e) { console.warn('[LifeOS] renderAll: error rendering "' + pg + '":', e.message); }
+ try { if(window.lucide) window.lucide.createIcons(); } catch(e) {}
 };
 
 /* ────────────────────────────────────────────────────────
@@ -1867,7 +1876,7 @@ window.renderProjSubtasksUI = function() {
 
 
 window.renderProjGantt = function(projId) {
-    const tasks = (window.DB.proj_tasks || []).filter(t => t.pid === projId);
+    const tasks = (window.DB.proj_tasks || []).filter(t => t.projId === projId);
     const container = document.getElementById('projGanttView');
     if(!container) return;
     
@@ -2053,16 +2062,16 @@ window.switchQuickFinType = function(type) {
 };
 
 window.saveQuickExpense = async function() {
-  const amt = parseFloat(document.getElementById('qfExpAmt').value);
+  const amt = parseFloat(document.getElementById('qfExpAmt')?.value);
   if (!amt || amt <= 0) { toast('Nhập số tiền hợp lệ!', 'error'); return; }
-  const cat = document.getElementById('qfExpCat').value;
-  const date = document.getElementById('qfExpDate').value || today();
-  const pay = document.getElementById('qfExpPay').value;
-  const note = document.getElementById('qfExpNote').value;
+  const cat = document.getElementById('qfExpCat')?.value || 'Khác';
+  const date = document.getElementById('qfExpDate')?.value || today();
+  const pay = document.getElementById('qfExpPay')?.value || 'Tiền mặt';
+  const note = document.getElementById('qfExpNote')?.value || '';
   
   const list = [...(window.DB.expense || [])];
   list.unshift({ id: uid(), cat, amt, date, pay, note });
-  await persist('expense', list);
+  await window.persist('expense', list);
   
   document.getElementById('qfExpAmt').value = '';
   document.getElementById('qfExpNote').value = '';
@@ -2072,15 +2081,15 @@ window.saveQuickExpense = async function() {
 };
 
 window.saveQuickIncome = async function() {
-  const amt = parseFloat(document.getElementById('qfIncAmt').value);
+  const amt = parseFloat(document.getElementById('qfIncAmt')?.value);
   if (!amt || amt <= 0) { toast('Nhập số tiền hợp lệ!', 'error'); return; }
-  const src = document.getElementById('qfIncSrc').value;
-  const date = document.getElementById('qfIncDate').value || today();
-  const note = document.getElementById('qfIncNote').value;
+  const src = document.getElementById('qfIncSrc')?.value || 'Khác';
+  const date = document.getElementById('qfIncDate')?.value || today();
+  const note = document.getElementById('qfIncNote')?.value || '';
   
   const list = [...(window.DB.income || [])];
   list.unshift({ id: uid(), src, amt, date, note });
-  await persist('income', list);
+  await window.persist('income', list);
   
   document.getElementById('qfIncAmt').value = '';
   document.getElementById('qfIncNote').value = '';

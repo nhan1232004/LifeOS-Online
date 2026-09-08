@@ -99,15 +99,15 @@ function buildDefault() {
    { id: 'p3', name: 'Nghiên cứu Gemini & Claude AI API', status: 'Hoàn thành', priority: 'low', budget: 5000000, due: off(-5), tags: ['AI', 'Research'], desc: 'Tích hợp AI Digest tóm tắt tự động' }
   ],
   proj_tasks: [
-   { id: 'pt1', projId: 'p1', title: 'Thiết kế hệ thống Design Tokens duy nhất', status: 'done', priority: 'high', due: t },
-   { id: 'pt2', projId: 'p1', title: 'Nâng cấp Mobile Bottom-Sheet Navigation', status: 'doing', priority: 'high', due: off(1) },
-   { id: 'pt3', projId: 'p1', title: 'Tích hợp Frappe Gantt Chart tương tác', status: 'doing', priority: 'mid', due: off(4) },
-   { id: 'pt4', projId: 'p1', title: 'Viết tài liệu README.md chuẩn quốc tế', status: 'todo', priority: 'mid', due: off(7) },
-   { id: 'pt5', projId: 'p1', title: 'Tối ưu tốc độ tải trang dưới 1.5s', status: 'todo', priority: 'high', due: off(8) },
-   { id: 'pt6', projId: 'p2', title: 'Phân tích yêu cầu và Database Schema', status: 'todo', priority: 'high', due: off(15) },
-   { id: 'pt7', projId: 'p2', title: 'Thiết kế API RESTful với Express & JWT', status: 'todo', priority: 'mid', due: off(20) },
-   { id: 'pt8', projId: 'p3', title: 'Thử nghiệm Function Calling với Gemini 2.0', status: 'done', priority: 'high', due: off(-3) },
-   { id: 'pt9', projId: 'p3', title: 'Tích hợp Web Speech API nhận diện giọng nói', status: 'done', priority: 'mid', due: off(-2) }
+   { id: 'pt1', projId: 'p1', text: 'Thiết kế hệ thống Design Tokens duy nhất', status: 'Hoàn thành', priority: 'high', due: t },
+   { id: 'pt2', projId: 'p1', text: 'Nâng cấp Mobile Bottom-Sheet Navigation', status: 'Đang làm', priority: 'high', due: off(1) },
+   { id: 'pt3', projId: 'p1', text: 'Tích hợp Frappe Gantt Chart tương tác', status: 'Đang làm', priority: 'mid', due: off(4) },
+   { id: 'pt4', projId: 'p1', text: 'Viết tài liệu README.md chuẩn quốc tế', status: 'Cần làm', priority: 'mid', due: off(7) },
+   { id: 'pt5', projId: 'p1', text: 'Tối ưu tốc độ tải trang dưới 1.5s', status: 'Cần làm', priority: 'high', due: off(8) },
+   { id: 'pt6', projId: 'p2', text: 'Phân tích yêu cầu và Database Schema', status: 'Cần làm', priority: 'high', due: off(15) },
+   { id: 'pt7', projId: 'p2', text: 'Thiết kế API RESTful với Express & JWT', status: 'Cần làm', priority: 'mid', due: off(20) },
+   { id: 'pt8', projId: 'p3', text: 'Thử nghiệm Function Calling với Gemini 2.0', status: 'Hoàn thành', priority: 'high', due: off(-3) },
+   { id: 'pt9', projId: 'p3', text: 'Tích hợp Web Speech API nhận diện giọng nói', status: 'Hoàn thành', priority: 'mid', due: off(-2) }
   ],
   income: [
    { id: 'i1', src: 'Lương Công ty Full-time', amt: 22000000, date: t, note: 'Lương tháng 08/2026' },
@@ -131,25 +131,25 @@ function buildDefault() {
    { id: 'n3', title: '📚 Ghi chú học tập System Design', content: 'Các nguyên lý cơ bản: Caching (Redis), Load Balancing (Nginx), Database Indexing và Partitioning. Luôn thiết kế theo hướng Stateless Server.', date: off(-6), tags: ['Architecture', 'Study'], pinned: false }
   ],
   habits: [
-   { id: 'h1', name: 'Đọc sách công nghệ 30 phút', streak: 12, target: 'Mỗi ngày', history: [t, off(-1), off(-2), off(-3), off(-4), off(-5), off(-6)] },
-   { id: 'h2', name: 'Uống đủ 2L nước & Vận động', streak: 8, target: 'Mỗi ngày', history: [t, off(-1), off(-2), off(-3)] },
-   { id: 'h3', name: 'Học 15 từ vựng tiếng Anh', streak: 15, target: 'Mỗi ngày', history: [t, off(-1), off(-2), off(-3), off(-4)] },
-   { id: 'h4', name: 'Ngủ trước 23:30', streak: 5, target: 'Mỗi ngày', history: [off(-1), off(-2), off(-3), off(-4), off(-5)] }
+   { id: 'h1', name: 'Đọc sách công nghệ 30 phút', streak: 12, target: 'Mỗi ngày', log: { [t]: true, [off(-1)]: true, [off(-2)]: true, [off(-3)]: true, [off(-4)]: true, [off(-5)]: true, [off(-6)]: true } },
+   { id: 'h2', name: 'Uống đủ 2L nước & Vận động', streak: 8, target: 'Mỗi ngày', log: { [t]: true, [off(-1)]: true, [off(-2)]: true, [off(-3)]: true } },
+   { id: 'h3', name: 'Học 15 từ vựng tiếng Anh', streak: 15, target: 'Mỗi ngày', log: { [t]: true, [off(-1)]: true, [off(-2)]: true, [off(-3)]: true, [off(-4)]: true } },
+   { id: 'h4', name: 'Ngủ trước 23:30', streak: 5, target: 'Mỗi ngày', log: { [off(-1)]: true, [off(-2)]: true, [off(-3)]: true, [off(-4)]: true, [off(-5)]: true } }
   ],
   goals: [
-   { id: 'g1', title: 'Quỹ dự phòng tài chính 6 tháng', target: 60000000, current: 42000000, category: 'Tài chính', deadline: off(90) },
-   { id: 'g2', title: 'Đạt chứng chỉ IELTS 7.5+', target: 100, current: 75, category: 'Học tập', deadline: off(120) },
-   { id: 'g3', title: 'Hoàn thành 12 cuốn sách chuyên ngành', target: 12, current: 8, category: 'Học tập', deadline: off(150) }
+   { id: 'g1', name: 'Quỹ dự phòng tài chính 6 tháng', target: 60000000, saved: 42000000, category: 'Tài chính', due: off(90) },
+   { id: 'g2', name: 'Đạt chứng chỉ IELTS 7.5+', target: 100, saved: 75, category: 'Học tập', due: off(120) },
+   { id: 'g3', name: 'Hoàn thành 12 cuốn sách chuyên ngành', target: 12, saved: 8, category: 'Học tập', due: off(150) }
   ],
   journal: [
-   { id: 'j1', title: 'Một ngày làm việc hiệu quả và tập trung', content: 'Hôm nay hoàn thành xuất sắc các mục tiêu quan trọng. Cảm giác tập trung với kỹ thuật Pomodoro đem lại năng suất rất cao. Cần duy trì nhịp độ này!', date: t, mood: 'happy' },
-   { id: 'j2', title: 'Tổng kết tuần và định hướng mới', content: 'Tuần qua đã đạt được 80% kế hoạch đề ra. Cần kiểm soát chi tiêu ăn ngoài tốt hơn vào cuối tuần.', date: off(-3), mood: 'calm' }
+   { id: 'j1', title: 'Một ngày làm việc hiệu quả và tập trung', body: 'Hôm nay hoàn thành xuất sắc các mục tiêu quan trọng. Cảm giác tập trung với kỹ thuật Pomodoro đem lại năng suất rất cao. Cần duy trì nhịp độ này!', date: t, mood: '😊' },
+   { id: 'j2', title: 'Tổng kết tuần và định hướng mới', body: 'Tuần qua đã đạt được 80% kế hoạch đề ra. Cần kiểm soát chi tiêu ăn ngoài tốt hơn vào cuối tuần.', date: off(-3), mood: '😌' }
   ],
   vocab: [
-   { id: 'v1', word: 'resilient', ipa: '/rɪˈzɪl.jənt/', meaning: 'kiên cường, có khả năng phục hồi nhanh', example: 'She is a resilient developer who learns quickly from bugs.' },
-   { id: 'v2', word: 'streamline', ipa: '/ˈstriːm.laɪn/', meaning: 'hợp lý hóa, tối ưu hóa quy trình', example: 'We streamlined our deployment pipeline using CI/CD automation.' },
-   { id: 'v3', word: 'meticulous', ipa: '/məˈtɪk.jə.ləs/', meaning: 'tỉ mỉ, cẩn trọng trong từng chi tiết', example: 'The UI was designed with meticulous attention to spacing.' },
-   { id: 'v4', word: 'ubiquitous', ipa: '/juːˈbɪk.wɪ.təs/', meaning: 'phổ biến, có mặt ở khắp mọi nơi', example: 'Smartphones have become ubiquitous in daily life.' }
+   { id: 'v1', word: 'resilient', pron: '/rɪˈzɪl.jənt/', mean: 'kiên cường, có khả năng phục hồi nhanh', ex: 'She is a resilient developer who learns quickly from bugs.', type: 'adj' },
+   { id: 'v2', word: 'streamline', pron: '/ˈstriːm.laɪn/', mean: 'hợp lý hóa, tối ưu hóa quy trình', ex: 'We streamlined our deployment pipeline using CI/CD automation.', type: 'adj' },
+   { id: 'v3', word: 'meticulous', pron: '/məˈtɪk.jə.ləs/', mean: 'tỉ mỉ, cẩn trọng trong từng chi tiết', ex: 'The UI was designed with meticulous attention to spacing.', type: 'adj' },
+   { id: 'v4', word: 'ubiquitous', pron: '/juːˈbɪk.wɪ.təs/', mean: 'phổ biến, có mặt ở khắp mọi nơi', ex: 'Smartphones have become ubiquitous in daily life.', type: 'adj' }
   ]
  };
 }
@@ -164,11 +164,15 @@ async function fbSaveAll(col, items) {
 }
 function fbListen(col, cb) {
  if (window.DEMO_MODE) { cb(demoLoad()[col]||[]); return ()=>{}; }
+ if (!currentUser || !currentUser.uid) { console.warn('[LifeOS] fbListen: no currentUser, skipping', col); cb([]); return ()=>{}; }
  const ws = localStorage.getItem('currentWorkspace') || 'default';
  const p = ws === 'default' 
     ? window.doc(window.db,'users',currentUser.uid,'data',col)
     : window.doc(window.db,'users',currentUser.uid,'workspaces',ws,'data',col);
- return onSnapshot(p, s => cb(s.exists()?(s.data().items||[]):[]));
+ return onSnapshot(p, s => cb(s.exists()?(s.data().items||[]):[]), err => {
+  console.warn('[LifeOS] fbListen error on collection "' + col + '":', err.code || err.message);
+  cb([]);
+ });
 }
 let unsubProjects = null;
 let unsubTasks = null;
@@ -181,6 +185,10 @@ function listenSharedData() {
   window.renderAll && window.renderAll();
   return;
  }
+ if (!currentUser || !currentUser.uid) {
+  console.warn('[LifeOS] listenSharedData: no currentUser, skipping shared data listeners');
+  return;
+ }
  if (unsubProjects) unsubProjects();
  if (unsubTasks) unsubTasks();
 
@@ -191,10 +199,10 @@ function listenSharedData() {
    snap.forEach(d => projs.push({id: d.id, ...d.data()}));
    window.DB.projects = projs;
    if(window.renderAll) window.renderAll();
-  }, err => {
-   console.error("Firebase Rules error for Projects", err);
-   toast("Lỗi Nhóm (Projects): " + err.message + ". Vui lòng cập nhật Rules!", "error");
-  });
+   }, err => {
+    console.warn("[LifeOS] Firestore shared_projects:", err.code || err.message);
+    window.DB.projects = window.DB.projects || [];
+   });
 
   const qTask = query(collection(db, 'shared_tasks'), where('memberUids', 'array-contains', currentUser.uid));
   unsubTasks = onSnapshot(qTask, snap => {
@@ -203,11 +211,11 @@ function listenSharedData() {
    window.DB.proj_tasks = tasks;
    if(window.renderAll) window.renderAll();
   }, err => {
-   console.error("Firebase Rules error for Tasks", err);
-   toast("Lỗi Nhóm (Tasks): " + err.message + ". Vui lòng cập nhật Rules!", "error");
-  });
+    console.warn("[LifeOS] Firestore shared_tasks:", err.code || err.message);
+    window.DB.proj_tasks = window.DB.proj_tasks || [];
+   });
  } catch(e) {
-  toast("Lỗi khởi tạo đồng bộ: " + e.message, "error");
+  console.warn("[LifeOS] listenSharedData init error:", e.message);
  }
 }
 
@@ -224,26 +232,40 @@ async function showApp(user) {
  document.getElementById('userAvatar').textContent=(user.displayName||user.email||'U')[0].toUpperCase();
  document.getElementById('userName').textContent=user.displayName||user.email||'User';
  document.getElementById('userEmail').textContent=user.email||'';
- ['events','todos','income','expense','notes','habits','goals','journal','vocab'].forEach(col => {
-  fbListen(col, items => { window.DB[col]=items; window.renderAll&&window.renderAll(); });
- });
+ 
+ if (window.DEMO_MODE) {
+  // In demo mode, load from localStorage directly - no Firestore
+  const d = demoLoad();
+  ['events','todos','income','expense','notes','habits','goals','journal','vocab'].forEach(col => {
+   window.DB[col] = d[col] || [];
+  });
+  window.DB.projects = d.projects || [];
+  window.DB.proj_tasks = d.proj_tasks || [];
+  setTimeout(() => { if(window.renderAll) window.renderAll(); }, 50);
+ } else {
+  ['events','todos','income','expense','notes','habits','goals','journal','vocab'].forEach(col => {
+   fbListen(col, items => { window.DB[col]=items; window.renderAll&&window.renderAll(); });
+  });
   listenSharedData();
-  if (typeof renderWorkspaceSwitcher === 'function') renderWorkspaceSwitcher();
-  if (window.initNotifications) window.initNotifications();
-  if (window.lucide) window.lucide.createIcons();
+ }
+ 
+ if (typeof renderWorkspaceSwitcher === 'function') renderWorkspaceSwitcher();
+ if (window.initNotifications) window.initNotifications();
+ setTimeout(() => { if (window.lucide) window.lucide.createIcons(); }, 100);
 }
 function showLogin() {
  document.getElementById('loginScreen').style.display='flex';
  document.getElementById('appShell').style.display='none';
 }
 window.enterDemoMode = function enterDemoMode() {
+ window.DEMO_MODE = true;
  currentUser={displayName:'Demo User',email:'demo@lifeos.app',uid:'demo'}; window.currentUser = currentUser;
  showApp(currentUser);
 }
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1787649391759">
+<link rel="stylesheet" href="css/style.css?v=1788890645789">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -770,6 +792,9 @@ window.getCurrentUser = () => currentUser;
     </div>
     <div id="vocabGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px"></div>
    </div>
+   </div> <!-- /.content -->
+  </main> <!-- /.main -->
+ </div> <!-- /.layout -->
 
 <!-- MOBILE BOTTOM NAV -->
 <!-- MOBILE 5-TAB BOTTOM NAVIGATION -->
@@ -855,6 +880,7 @@ window.getCurrentUser = () => currentUser;
   </div>
  </div>
 </div>
+<!-- /mobileMoreSheet -->
 </div><!-- /appShell -->
 
 <!-- ════ MODALS ════ -->
@@ -1274,18 +1300,18 @@ window.getCurrentUser = () => currentUser;
 </div>
 
 <script src="js/data.js?v=2"></script>
-<script src="js/workspace.js?v=2"></script>
-<script src="js/projViews.js?v=1787649391759"></script>
-<script src="js/main.js?v=1787649391759"></script>
-<script src="js/modules/todos.js?v=1787649391759"></script>
-<script src="js/modules/notes.js?v=1787649391759"></script>
-<script src="js/modules/habits.js?v=1787649391759"></script>
-<script src="js/modules/goals.js?v=1787649391759"></script>
-<script src="js/modules/journal.js?v=1787649391759"></script>
-<script src="js/modules/pomodoro.js?v=1787649391759"></script>
-<script src="js/modules/vocab.js?v=1787649391759"></script>
-<script src="js/modules/mocktests.js?v=1787649391759"></script>
-<script src="js/modules/cmd.js?v=1787649391759"></script>
+<script src="js/workspace.js?v=1788890645789"></script>
+<script src="js/projViews.js?v=1788890645789"></script>
+<script src="js/main.js?v=1788890645789"></script>
+<script src="js/modules/todos.js?v=1788890645789"></script>
+<script src="js/modules/notes.js?v=1788890645789"></script>
+<script src="js/modules/habits.js?v=1788890645789"></script>
+<script src="js/modules/goals.js?v=1788890645789"></script>
+<script src="js/modules/journal.js?v=1788890645789"></script>
+<script src="js/modules/pomodoro.js?v=1788890645789"></script>
+<script src="js/modules/vocab.js?v=1788890645789"></script>
+<script src="js/modules/mocktests.js?v=1788890645789"></script>
+<script src="js/modules/cmd.js?v=1788890645789"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1350,7 +1376,7 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 <script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
-<script src="js/modules/export.js?v=1787649391759"></script>
+<script src="js/modules/export.js?v=1788890645789"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">

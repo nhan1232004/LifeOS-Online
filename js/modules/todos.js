@@ -126,11 +126,11 @@ function renderTodos(){
  const listView = document.getElementById('todoListView');
  const kanbanView = document.getElementById('todoKanbanView');
  
- if(currentTodoView === 'kanban') {
+ if(currentTodoView === 'kanban' && listView && kanbanView) {
   listView.style.display = 'none';
   kanbanView.style.display = 'flex';
   renderTodoKanban(list);
- } else {
+ } else if(listView && kanbanView) {
   kanbanView.style.display = 'none';
   listView.style.display = 'block';
   renderTodoList(list);

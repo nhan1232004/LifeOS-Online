@@ -49,16 +49,37 @@ function pomSaveStats(s) { localStorage.setItem(getPomKey(), JSON.stringify(s));
 
 function pomUpdateDisplay() {
  const m = Math.floor(Math.max(0, pomLeft) / 60), s = Math.max(0, pomLeft) % 60;
- document.getElementById('pomodoroTimer').textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+ const timeStr = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+ 
+ const timerEl = document.getElementById('pomodoroTimer');
+ if (timerEl) timerEl.textContent = timeStr;
+ 
+ // Sync to Today page widget
+ const todayPomEl = document.getElementById('todayPomDisplay');
+ if (todayPomEl) todayPomEl.textContent = timeStr;
+ const todayPomBtn = document.getElementById('btnTodayPomToggle');
+ if (todayPomBtn) todayPomBtn.textContent = pomRunning ? 'Tạm dừng' : 'Bắt đầu';
+
+ // Sync SVG ring progress
+ const ringEl = document.getElementById('pomRingProgress');
+ if (ringEl && pomTime > 0) {
+  const totalDash = 276.46;
+  const progress = Math.max(0, Math.min(1, 1 - (pomLeft / pomTime)));
+  ringEl.style.strokeDashoffset = String(totalDash * (1 - progress));
+ }
+
  const stats = pomLoadStats();
- document.getElementById('pomCount').textContent = stats.count;
- document.getElementById('pomMins').textContent = stats.mins;
+ const countEl = document.getElementById('pomCount');
+ if (countEl) countEl.textContent = stats.count;
+ const minsEl = document.getElementById('pomMins');
+ if (minsEl) minsEl.textContent = stats.mins;
+
  // Update document title if running
  if (pomRunning) {
   const isWork = pomTime > 15 * 60 || pomTime < 5 * 60;
-  document.title = `(${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}) ${isWork ? 'Tập trung' : 'Nghỉ ngơi'} - LifeOS`;
+  document.title = `(${timeStr}) ${isWork ? 'Tập trung' : 'Nghỉ ngơi'} - LifeOS`;
  } else {
-  document.title = 'LifeOS - Dashboard Quản Lý';
+  document.title = 'LifeOS – Quản lý cuộc sống';
  }
 }
 

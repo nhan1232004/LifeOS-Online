@@ -31,7 +31,9 @@ async function delHabit(id) {
  window.DB.habits = (window.DB.habits || []).filter(x => x.id !== id);
  await persist('habits', window.DB.habits);
  renderHabits();
- undoManager.execute('habits', t, renderHabits);
+ // undoManager removed - direct delete
+ await persist('habits', t);
+ renderHabits();
 }
 function getStreak(log) {
  let streak = 0;

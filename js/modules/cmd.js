@@ -163,7 +163,7 @@ setTimeout(() => {
     // 4. Events
     (window.DB.events || []).forEach(ev => {
       if ((ev.title && ev.title.toLowerCase().includes(q)) || (ev.desc && ev.desc.toLowerCase().includes(q))) {
-        cmdItems.push({type: 'event', text: ev.title, desc: 'Sự kiện (' + ev.start + ')', icon: 'calendar-days', data: ev});
+        cmdItems.push({type: 'event', text: ev.title, desc: 'Sự kiện (' + ev.dateStart + ')', icon: 'calendar-days', data: ev});
       }
     });
     

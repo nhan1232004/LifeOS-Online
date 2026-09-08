@@ -6,16 +6,16 @@ function switchProjView(v) {
  const btnL = document.getElementById('btnViewList');
  const btnG = document.getElementById('btnViewGantt');
  if(btnB) {
-  btnB.className = 'btn btn-sm ' + (v==='board'?'active':'');
-  btnB.style.background = v==='board' ? 'var(--surface2)' : 'transparent';
+  btnB.className = 'seg-btn ' + (v==='board'?'active':'');
+  
  }
  if(btnL) {
-  btnL.className = 'btn btn-sm ' + (v==='list'?'active':'');
-  btnL.style.background = v==='list' ? 'var(--surface2)' : 'transparent';
+  btnL.className = 'seg-btn ' + (v==='list'?'active':'');
+  
  }
  if(btnG) {
-  btnG.className = 'btn btn-sm ' + (v==='gantt'?'active':'');
-  btnG.style.background = v==='gantt' ? 'var(--surface2)' : 'transparent';
+  btnG.className = 'seg-btn ' + (v==='gantt'?'active':'');
+  
  }
  renderKanbanBoard();
 }
