@@ -287,7 +287,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1788948886842">
+<link rel="stylesheet" href="css/style.css?v=1788955490688">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -844,45 +844,99 @@ window.getCurrentUser = () => currentUser;
    </div>
 
    <!-- ▸ VOCAB FLASHCARDS -->
-   <div class="page" id="p-vocab">
-    <div class="page-toolbar" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:16px;">
-     <div class="ct" style="display:flex;align-items:center;gap:8px"><i data-lucide="languages" class="ic-18" style="color:var(--accent-cyan)"></i> <span style="font-weight:700">Từ vựng (Flashcards)</span></div>
-     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-      <button class="btn btn-sm btn-outline" id="btnVocabSelectMode" onclick="toggleVocabSelectMode()" style="display:inline-flex; align-items:center; gap:6px;">
-       <i data-lucide="check-square" class="ic-14"></i> <span id="txtVocabSelectMode">Chọn nhiều</span>
-      </button>
-      <button class="btn btn-sm btn-outline" onclick="openImportVocabModal()" style="display:inline-flex; align-items:center; gap:6px; border-color:var(--glass-b); background:var(--surface);">
-       <i data-lucide="file-up" class="ic-14" style="color:var(--accent-cyan)"></i> <span>Nhập từ File (PDF / Word)</span>
-      </button>
-      <button class="btn btn-sm" onclick="reviewVocab()" style="display:inline-flex; align-items:center; gap:6px;">
-       <span>🃏 Ôn tập (Lật thẻ)</span>
-      </button>
-      <button class="btn btn-sm btn-p" onclick="openVocab()" style="display:inline-flex; align-items:center; gap:6px;">
-       <i data-lucide="plus" class="ic-14"></i> <span>Thêm từ</span>
-      </button>
+    <div class="page" id="p-vocab">
+     <div class="page-toolbar" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:16px;">
+      <div class="ct" style="display:flex;align-items:center;gap:8px"><i data-lucide="languages" class="ic-18" style="color:var(--accent-cyan)"></i> <span style="font-weight:700">Từ vựng (Flashcards)</span></div>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+       <button class="btn btn-sm btn-outline" id="btnVocabSelectMode" onclick="toggleVocabSelectMode()" style="display:inline-flex; align-items:center; gap:6px;">
+        <i data-lucide="check-square" class="ic-14"></i> <span id="txtVocabSelectMode">Chọn nhiều</span>
+       </button>
+       <button class="btn btn-sm btn-outline" onclick="openShareVocabModal()" style="display:inline-flex; align-items:center; gap:6px; border-color:var(--accent); background:rgba(124,77,255,0.08);" title="Chia sẻ bộ từ vựng qua Gmail hoặc Online">
+        <i data-lucide="share-2" class="ic-14" style="color:var(--accent-light)"></i> <span>Chia sẻ bộ từ</span>
+       </button>
+       <button class="btn btn-sm btn-outline" onclick="openImportVocabModal()" style="display:inline-flex; align-items:center; gap:6px; border-color:var(--glass-b); background:var(--surface);">
+        <i data-lucide="file-up" class="ic-14" style="color:var(--accent-cyan)"></i> <span>Nhập từ File (PDF / Word)</span>
+       </button>
+       <button class="btn btn-sm" onclick="reviewVocab()" style="display:inline-flex; align-items:center; gap:6px;">
+        <span>🃏 Ôn tập (Lật thẻ)</span>
+       </button>
+       <button class="btn btn-sm btn-p" onclick="openVocab()" style="display:inline-flex; align-items:center; gap:6px;">
+        <i data-lucide="plus" class="ic-14"></i> <span>Thêm từ</span>
+       </button>
+      </div>
      </div>
-    </div>
-    <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;">
-     <input id="vocabSearch" placeholder="🔍 Tìm kiếm từ vựng hoặc nghĩa..." style="flex:1" class="inp">
-     <span class="badge" id="vocabCountBadge" style="font-size:12px; padding:6px 14px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-weight:600; color:var(--accent-light);">0 từ</span>
-    </div>
 
-    <!-- BATCH ACTION BAR -->
-    <div id="vocabBatchBar" class="vocab-batch-bar" style="display:none;">
-     <div style="display:flex; align-items:center; gap:10px;">
-      <input type="checkbox" id="vocabSelectAllChk" onchange="toggleSelectAllVocab(this.checked)" style="width:16px; height:16px; cursor:pointer; accent-color:var(--accent);">
-      <label for="vocabSelectAllChk" style="font-size:13px; font-weight:600; cursor:pointer; margin:0;">Chọn tất cả</label>
-      <span class="badge" id="vocabSelectedBadge" style="background:rgba(124,77,255,0.15); color:var(--accent-light); font-size:11.5px; padding:2px 8px; border-radius:12px;">Đã chọn: 0 từ</span>
-     </div>
-     <div style="display:flex; align-items:center; gap:8px;">
-      <button class="btn btn-sm btn-d" id="btnBatchDeleteVocab" onclick="batchDeleteVocab()" disabled style="display:inline-flex; align-items:center; gap:6px;">
-       <i data-lucide="trash-2" class="ic-14"></i> <span id="txtBatchDelete">Xóa đã chọn (0)</span>
+     <!-- SUB-VIEW TABS (Kho cá nhân vs Thư viện Online) -->
+     <div class="vocab-nav-tabs" style="display:flex; gap:8px; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+      <button class="btn btn-sm btn-p" id="btnTabVocabPersonal" onclick="switchVocabSubView('personal')" style="display:inline-flex; align-items:center; gap:6px;">
+       <i data-lucide="book-open" class="ic-14"></i> <span>Từ vựng của tôi</span>
       </button>
-      <button class="btn btn-sm btn-outline" onclick="exitVocabSelectMode()">Thoát</button>
+      <button class="btn btn-sm btn-outline" id="btnTabVocabCommunity" onclick="switchVocabSubView('community')" style="display:inline-flex; align-items:center; gap:6px;">
+       <i data-lucide="globe" class="ic-14" style="color:var(--accent-cyan)"></i> <span>Thư viện Online & Chia sẻ</span>
+      </button>
      </div>
-    </div>
 
-    <div id="vocabGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px"></div>
+     <!-- 1. PERSONAL VOCAB VIEW -->
+     <div id="vocabViewPersonal">
+      <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;">
+       <input id="vocabSearch" placeholder="🔍 Tìm kiếm từ vựng hoặc nghĩa..." style="flex:1" class="inp">
+       <span class="badge" id="vocabCountBadge" style="font-size:12px; padding:6px 14px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-weight:600; color:var(--accent-light);">0 từ</span>
+      </div>
+
+      <!-- BATCH ACTION BAR -->
+      <div id="vocabBatchBar" class="vocab-batch-bar" style="display:none;">
+       <div style="display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="vocabSelectAllChk" onchange="toggleSelectAllVocab(this.checked)" style="width:16px; height:16px; cursor:pointer; accent-color:var(--accent);">
+        <label for="vocabSelectAllChk" style="font-size:13px; font-weight:600; cursor:pointer; margin:0;">Chọn tất cả</label>
+        <span class="badge" id="vocabSelectedBadge" style="background:rgba(124,77,255,0.15); color:var(--accent-light); font-size:11.5px; padding:2px 8px; border-radius:12px;">Đã chọn: 0 từ</span>
+       </div>
+       <div style="display:flex; align-items:center; gap:8px;">
+        <button class="btn btn-sm btn-outline" onclick="openShareVocabModal(true)" style="display:inline-flex; align-items:center; gap:6px; border-color:var(--accent);">
+         <i data-lucide="share-2" class="ic-14" style="color:var(--accent-light)"></i> <span>Chia sẻ đã chọn</span>
+        </button>
+        <button class="btn btn-sm btn-d" id="btnBatchDeleteVocab" onclick="batchDeleteVocab()" disabled style="display:inline-flex; align-items:center; gap:6px;">
+         <i data-lucide="trash-2" class="ic-14"></i> <span id="txtBatchDelete">Xóa đã chọn (0)</span>
+        </button>
+        <button class="btn btn-sm btn-outline" onclick="exitVocabSelectMode()">Thoát</button>
+       </div>
+      </div>
+
+      <div id="vocabGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px"></div>
+     </div>
+
+     <!-- 2. COMMUNITY & SHARED DECKS VIEW -->
+     <div id="vocabViewCommunity" style="display:none;">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px;">
+       <div class="segmented-control" style="max-width:440px;">
+        <button class="seg-btn active" id="btnCommTabPublic" onclick="switchCommunityTab('public')">🌐 Cộng đồng</button>
+        <button class="seg-btn" id="btnCommTabShared" onclick="switchCommunityTab('shared_with_me')">📩 Chia sẻ với tôi</button>
+        <button class="seg-btn" id="btnCommTabMine" onclick="switchCommunityTab('my_decks')">📤 Bộ từ của tôi</button>
+       </div>
+       <button class="btn btn-sm btn-p" onclick="openShareVocabModal()" style="display:inline-flex; align-items:center; gap:6px;">
+        <i data-lucide="plus" class="ic-14"></i> <span>Tạo bộ từ chia sẻ mới</span>
+       </button>
+      </div>
+
+      <div style="margin-bottom:14px; display:flex; gap:10px; align-items:center;">
+       <input id="communitySearch" placeholder="🔍 Tìm kiếm theo tên bộ từ, mô tả, người tạo..." class="inp" style="flex:1;" oninput="renderCommunityDecksUI()">
+       <select id="communityCategoryFilter" class="inp" style="width:150px;" onchange="renderCommunityDecksUI()">
+        <option value="all">Tất cả chủ đề</option>
+        <option value="IELTS">IELTS</option>
+        <option value="TOEIC">TOEIC</option>
+        <option value="Giao tiếp">Giao tiếp</option>
+        <option value="Học thuật">Học thuật</option>
+        <option value="Chuyên ngành">Chuyên ngành</option>
+        <option value="Khác">Khác</option>
+       </select>
+      </div>
+
+      <div id="communityDecksLoading" style="display:none; text-align:center; padding:30px;">
+       <div class="spinner" style="display:inline-block; width:22px; height:22px; border:2px solid var(--accent); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
+       <div style="margin-top:8px; font-size:12px; color:var(--text3);">Đang tải danh sách bộ từ chia sẻ...</div>
+      </div>
+
+     <div id="communityDecksGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;"></div>
+    </div>
    </div>
    </div> <!-- /.content -->
   </main> <!-- /.main -->
@@ -1411,18 +1465,18 @@ window.getCurrentUser = () => currentUser;
  }
 </script>
 <script src="js/data.js?v=2"></script>
-<script src="js/workspace.js?v=1788948886842"></script>
-<script src="js/projViews.js?v=1788948886842"></script>
-<script src="js/main.js?v=1788948886842"></script>
-<script src="js/modules/todos.js?v=1788948886842"></script>
-<script src="js/modules/notes.js?v=1788948886842"></script>
-<script src="js/modules/habits.js?v=1788948886842"></script>
-<script src="js/modules/goals.js?v=1788948886842"></script>
-<script src="js/modules/journal.js?v=1788948886842"></script>
-<script src="js/modules/pomodoro.js?v=1788948886842"></script>
-<script src="js/modules/vocab.js?v=1788948886842"></script>
-<script src="js/modules/mocktests.js?v=1788948886842"></script>
-<script src="js/modules/cmd.js?v=1788948886842"></script>
+<script src="js/workspace.js?v=1788955490688"></script>
+<script src="js/projViews.js?v=1788955490688"></script>
+<script src="js/main.js?v=1788955490688"></script>
+<script src="js/modules/todos.js?v=1788955490688"></script>
+<script src="js/modules/notes.js?v=1788955490688"></script>
+<script src="js/modules/habits.js?v=1788955490688"></script>
+<script src="js/modules/goals.js?v=1788955490688"></script>
+<script src="js/modules/journal.js?v=1788955490688"></script>
+<script src="js/modules/pomodoro.js?v=1788955490688"></script>
+<script src="js/modules/vocab.js?v=1788955490688"></script>
+<script src="js/modules/mocktests.js?v=1788955490688"></script>
+<script src="js/modules/cmd.js?v=1788955490688"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1573,6 +1627,109 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 
+<!-- SHARE VOCAB MODAL -->
+<div class="overlay" id="mShareVocab" onclick="if(event.target===this)closeModal('mShareVocab')">
+ <div class="modal" style="max-width:520px">
+  <div class="mh">
+   <h3 style="display:flex;align-items:center;gap:8px"><i data-lucide="share-2" style="width:18px;height:18px;color:var(--accent)"></i> <span>Chia Sẻ Bộ Từ Vựng</span></h3>
+   <button class="mclose" onclick="closeModal('mShareVocab')">✕</button>
+  </div>
+  <div class="mb-body">
+   <div class="fg">
+    <label>Tên bộ từ vựng *</label>
+    <input id="shareDeckTitle" placeholder="VD: IELTS Speaking Band 7.0+, Từ vựng Oxford 3000..." class="inp">
+   </div>
+   <div class="form-row">
+    <div class="fg" style="flex:1">
+     <label>Chủ đề / Thể loại</label>
+     <select id="shareDeckCategory" class="inp">
+      <option value="IELTS">IELTS</option>
+      <option value="TOEIC">TOEIC</option>
+      <option value="Giao tiếp">Giao tiếp</option>
+      <option value="Học thuật">Học thuật</option>
+      <option value="Chuyên ngành">Chuyên ngành</option>
+      <option value="Khác">Khác</option>
+     </select>
+    </div>
+    <div class="fg" style="flex:1">
+     <label>Phạm vi từ vựng</label>
+     <select id="shareDeckScope" class="inp" onchange="updateShareDeckScopeInfo()">
+      <option value="all">Toàn bộ từ trong kho</option>
+      <option value="selected">Chỉ các từ đang chọn</option>
+     </select>
+    </div>
+   </div>
+   <div id="shareDeckScopeInfo" style="font-size:11.5px; color:var(--accent-light); margin-top:-6px; margin-bottom:10px;">Sẽ chia sẻ toàn bộ từ vựng hiện có trong kho.</div>
+
+   <div class="fg">
+    <label>Mô tả ngắn</label>
+    <textarea id="shareDeckDesc" placeholder="Mô tả tóm tắt nội dung, đối tượng hoặc mục tiêu học của bộ từ này..." class="inp" style="min-height:55px"></textarea>
+   </div>
+   
+   <div class="fg" style="margin-top:10px;">
+    <label style="font-weight:700;margin-bottom:8px;display:block;">Chế độ chia sẻ *</label>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+     <div class="share-mode-card active" id="cardModeEmail" onclick="selectShareDeckMode('email')">
+      <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:var(--text-hi);">
+       <i data-lucide="mail" style="width:15px;height:15px;color:var(--accent-light)"></i> Gửi riêng qua Gmail
+      </div>
+      <div style="font-size:11px; color:var(--text3); margin-top:4px;">Chỉ người có Gmail chỉ định mới được học và xem</div>
+     </div>
+     <div class="share-mode-card" id="cardModePublic" onclick="selectShareDeckMode('public')">
+      <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:var(--text-hi);">
+       <i data-lucide="globe" style="width:15px;height:15px;color:var(--accent-cyan)"></i> Công khai Online
+      </div>
+      <div style="font-size:11px; color:var(--text3); margin-top:4px;">Tất cả user LifeOS đều có thể khám phá & học chung</div>
+     </div>
+    </div>
+   </div>
+
+   <div class="fg" id="wrapAllowedEmails" style="margin-top:10px;">
+    <label>Danh sách Gmail người nhận (cách nhau bởi dấu phẩy)</label>
+    <input id="shareDeckEmails" placeholder="VD: banbe1@gmail.com, dongnghiep@gmail.com" class="inp">
+    <div style="font-size:11px; color:var(--text3); margin-top:4px;">Người nhận khi đăng nhập đúng Gmail trên sẽ thấy bộ từ trong mục "Được chia sẻ với tôi".</div>
+   </div>
+
+   <div id="shareResultBox" style="display:none; margin-top:12px; padding:12px; border-radius:8px; background:rgba(0,230,118,0.1); border:1px solid rgba(0,230,118,0.3);">
+    <div style="font-size:12.5px; font-weight:700; color:var(--green); margin-bottom:6px;">✓ Đã chia sẻ thành công!</div>
+    <div style="display:flex; gap:6px; align-items:center;">
+     <input id="shareDeckLink" readonly class="inp" style="font-size:11px; padding:6px 8px; flex:1;">
+     <button class="btn btn-sm btn-p" onclick="copyShareDeckLink()" style="flex-shrink:0;">Sao chép link</button>
+    </div>
+   </div>
+
+   <div class="form-actions" style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+    <button class="btn btn-sm" onclick="closeModal('mShareVocab')">Đóng</button>
+    <button class="btn btn-sm btn-p" id="btnSubmitShareDeck" onclick="submitShareVocabDeck()"><i data-lucide="share-2" class="ic-14"></i> <span>Tạo & Chia sẻ</span></button>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- SHARED DECK DETAIL MODAL -->
+<div class="overlay" id="mDeckDetail" onclick="if(event.target===this)closeModal('mDeckDetail')">
+ <div class="modal" style="max-width:640px; max-height:85vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+  <div class="mh" style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+   <div>
+    <h3 id="ddTitle" style="font-size:16px; margin:0 0 2px 0;">Tên Bộ Từ Vựng</h3>
+    <div id="ddMeta" style="font-size:11.5px; color:var(--text3);">Tác giả: ... • 0 từ</div>
+   </div>
+   <button class="mclose" onclick="closeModal('mDeckDetail')">✕</button>
+  </div>
+  <div id="ddDesc" style="font-size:12px; color:var(--text2); padding:10px 20px 0; line-height:1.4;"></div>
+  <div class="mb-body" style="flex:1; overflow-y:auto; padding:12px 20px 16px;">
+   <div id="ddWordsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+  </div>
+  <div class="form-actions" style="display:flex; justify-content:space-between; align-items:center; padding:12px 20px; border-top:1px solid var(--border); margin:0; background:var(--surface);">
+   <button class="btn btn-sm btn-outline" onclick="closeModal('mDeckDetail')">Đóng</button>
+   <div style="display:flex; gap:8px;">
+    <button class="btn btn-sm btn-outline" id="btnCloneDeck" onclick="cloneCurrentDeckToPersonal()"><i data-lucide="download" class="ic-14"></i> <span>Lưu về kho cá nhân</span></button>
+    <button class="btn btn-sm btn-p" id="btnStudyDeck" onclick="studyCurrentDeck()"><i data-lucide="play" class="ic-14"></i> <span>🃏 Học ngay (Lật thẻ)</span></button>
+   </div>
+  </div>
+ </div>
+</div>
+
 <!-- SETTINGS MODAL -->
 <div class="overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
  <div class="modal" style="max-width:480px">
@@ -1607,7 +1764,7 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 <script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
-<script src="js/modules/export.js?v=1788948886842"></script>
+<script src="js/modules/export.js?v=1788955490688"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">

@@ -1003,3 +1003,621 @@ window.exitVocabSelectMode = exitVocabSelectMode;
 window.toggleVocabCardSelection = toggleVocabCardSelection;
 window.toggleSelectAllVocab = toggleSelectAllVocab;
 window.batchDeleteVocab = batchDeleteVocab;
+
+// ════════════════════════════════════════════════════════════
+// COMMUNITY & SHARED VOCABULARY DECKS
+// ════════════════════════════════════════════════════════════
+
+const DEFAULT_COMMUNITY_DECKS = [
+ {
+  id: 'deck_ielts_academic',
+  title: 'IELTS Academic Writing & Speaking (Band 7.5+)',
+  category: 'IELTS',
+  description: 'Tuyển tập từ vựng, collocations học thuật đắt giá giúp nâng band điểm Writing Task 2 & Speaking.',
+  authorName: 'LifeOS Academy',
+  authorEmail: 'ielts@lifeos.io',
+  ownerUid: 'system_curated',
+  mode: 'public',
+  allowedEmails: [],
+  clones: 142,
+  createdAt: '2026-09-01T08:00:00.000Z',
+  updatedAt: '2026-09-01T08:00:00.000Z',
+  words: [
+   { id: 'w1', word: 'ubiquitous', pron: '/juːˈbɪk.wɪ.təs/', type: 'adj', mean: 'có mặt ở khắp mọi nơi, phổ biến rộng rãi', ex: 'Smartphones and digital media have become ubiquitous in daily life.' },
+   { id: 'w2', word: 'resilient', pron: '/rɪˈzɪl.jənt/', type: 'adj', mean: 'kiên cường, có khả năng phục hồi nhanh sau khó khăn', ex: 'The local economy proved remarkably resilient during the crisis.' },
+   { id: 'w3', word: 'streamline', pron: '/ˈstriːm.laɪn/', type: 'v', mean: 'hợp lý hóa, tinh giản quy trình để tối ưu hiệu quả', ex: 'Automated pipelines were designed to streamline software deployment.' },
+   { id: 'w4', word: 'meticulous', pron: '/məˈtɪk.jə.ləs/', type: 'adj', mean: 'tỉ mỉ, cẩn trọng trong từng chi tiết nhỏ', ex: 'The architectural blueprints were drafted with meticulous precision.' },
+   { id: 'w5', word: 'counterproductive', pron: '/ˌkaʊn.tə.prəˈdʌk.tɪv/', type: 'adj', mean: 'phản tác dụng, đem lại kết quả ngược mong muốn', ex: 'Working through the night is often counterproductive to quality output.' },
+   { id: 'w6', word: 'substantiate', pron: '/səbˈstæn.ʃi.eɪt/', type: 'v', mean: 'chứng minh, đưa ra chứng cứ xác thực', ex: 'Researchers must provide empirical data to substantiate their hypothesis.' },
+   { id: 'w7', word: 'discrepancy', pron: '/dɪˈskrep.ən.si/', type: 'n', mean: 'sự khác biệt, sự không nhất quán giữa hai số liệu', ex: 'Auditors discovered a marked discrepancy between the two financial statements.' },
+   { id: 'w8', word: 'ameliorate', pron: '/əˈmiːl.jə.reɪt/', type: 'v', mean: 'cải thiện, làm cho tốt hơn (tình huống xấu)', ex: 'New urban policies helped ameliorate living standards in overcrowded districts.' }
+  ]
+ },
+ {
+  id: 'deck_oxford_essential',
+  title: 'Oxford 3000 Core Vocabulary - Giao Tiếp Hàng Ngày',
+  category: 'Giao tiếp',
+  description: 'Tổng hợp các từ và cụm từ thông dụng nhất trong giao tiếp đời sống, du lịch và làm việc.',
+  authorName: 'Cộng đồng LifeOS',
+  authorEmail: 'community@lifeos.io',
+  ownerUid: 'system_curated',
+  mode: 'public',
+  allowedEmails: [],
+  clones: 98,
+  createdAt: '2026-09-02T10:00:00.000Z',
+  updatedAt: '2026-09-02T10:00:00.000Z',
+  words: [
+   { id: 'w11', word: 'collaborate', pron: '/kəˈlæb.ə.reɪt/', type: 'v', mean: 'hợp tác, phối hợp cùng làm việc', ex: 'Our team collaborates with international partners across multiple timezones.' },
+   { id: 'w12', word: 'feasible', pron: '/ˈfiː.zə.bəl/', type: 'adj', mean: 'khả thi, có thể thực hiện thành công', ex: 'Management will determine if the proposed budget is financially feasible.' },
+   { id: 'w13', word: 'leverage', pron: '/ˈliː.vər.ɪdʒ/', type: 'v', mean: 'tận dụng, khai thác tối đa tiềm năng/lợi thế', ex: 'Modern businesses leverage artificial intelligence to gain competitive advantage.' },
+   { id: 'w14', word: 'benchmark', pron: '/ˈbentʃ.mɑːk/', type: 'n', mean: 'tiêu chuẩn chuẩn mực để đối sánh', ex: 'Customer satisfaction scores serve as an essential benchmark for service teams.' },
+   { id: 'w15', word: 'proactive', pron: '/prəʊˈæk.tɪv/', type: 'adj', mean: 'chủ động, tiên phong giải quyết vấn đề', ex: 'Companies need proactive measures rather than reactive responses.' }
+  ]
+ }
+];
+
+let currentVocabSubView = 'personal';
+let currentCommunityTab = 'public';
+let communityDecksCache = [];
+let selectedShareMode = 'email';
+let currentViewingDeck = null;
+
+function switchVocabSubView(view) {
+ currentVocabSubView = view;
+ const btnPers = document.getElementById('btnTabVocabPersonal');
+ const btnComm = document.getElementById('btnTabVocabCommunity');
+ const secPers = document.getElementById('vocabViewPersonal');
+ const secComm = document.getElementById('vocabViewCommunity');
+
+ if (view === 'personal') {
+  if (btnPers) { btnPers.classList.add('btn-p'); btnPers.classList.remove('btn-outline'); }
+  if (btnComm) { btnComm.classList.remove('btn-p'); btnComm.classList.add('btn-outline'); }
+  if (secPers) secPers.style.display = 'block';
+  if (secComm) secComm.style.display = 'none';
+  renderVocab();
+ } else {
+  if (btnComm) { btnComm.classList.add('btn-p'); btnComm.classList.remove('btn-outline'); }
+  if (btnPers) { btnPers.classList.remove('btn-p'); btnPers.classList.add('btn-outline'); }
+  if (secPers) secPers.style.display = 'none';
+  if (secComm) secComm.style.display = 'block';
+  fetchAndRenderCommunityDecks();
+ }
+ if (window.lucide) window.lucide.createIcons();
+}
+
+function switchCommunityTab(tab) {
+ currentCommunityTab = tab;
+ ['Public', 'Shared', 'Mine'].forEach(t => {
+  const btn = document.getElementById('btnCommTab' + t);
+  if (btn) btn.classList.remove('active');
+ });
+ if (tab === 'public') document.getElementById('btnCommTabPublic')?.classList.add('active');
+ if (tab === 'shared_with_me') document.getElementById('btnCommTabShared')?.classList.add('active');
+ if (tab === 'my_decks') document.getElementById('btnCommTabMine')?.classList.add('active');
+
+ renderCommunityDecksUI();
+}
+
+function selectShareDeckMode(mode) {
+ selectedShareMode = mode;
+ const cardEmail = document.getElementById('cardModeEmail');
+ const cardPub = document.getElementById('cardModePublic');
+ const wrapEmails = document.getElementById('wrapAllowedEmails');
+
+ if (mode === 'email') {
+  cardEmail?.classList.add('active');
+  cardPub?.classList.remove('active');
+  if (wrapEmails) wrapEmails.style.display = 'block';
+ } else {
+  cardPub?.classList.add('active');
+  cardEmail?.classList.remove('active');
+  if (wrapEmails) wrapEmails.style.display = 'none';
+ }
+}
+
+function updateShareDeckScopeInfo() {
+ const scope = document.getElementById('shareDeckScope')?.value || 'all';
+ const infoEl = document.getElementById('shareDeckScopeInfo');
+ const allCount = (window.DB.vocab || []).length;
+ const selCount = (typeof selectedVocabIds !== 'undefined') ? selectedVocabIds.size : 0;
+
+ if (!infoEl) return;
+ if (scope === 'selected') {
+  if (selCount === 0) {
+   infoEl.innerHTML = `<span style="color:var(--amber);">⚠️ Bạn chưa chọn từ nào ở chế độ "Chọn nhiều". Hãy chọn ít nhất 1 từ hoặc đổi sang "Toàn bộ từ".</span>`;
+  } else {
+   infoEl.textContent = `Sẽ chia sẻ ${selCount} từ vựng đang được chọn.`;
+  }
+ } else {
+  infoEl.textContent = `Sẽ chia sẻ toàn bộ ${allCount} từ vựng hiện có trong kho cá nhân.`;
+ }
+}
+
+function openShareVocabModal(fromSelectedOnly = false) {
+ const titleInp = document.getElementById('shareDeckTitle');
+ const descInp = document.getElementById('shareDeckDesc');
+ const emailsInp = document.getElementById('shareDeckEmails');
+ const resBox = document.getElementById('shareResultBox');
+ const scopeSel = document.getElementById('shareDeckScope');
+
+ if (titleInp) titleInp.value = '';
+ if (descInp) descInp.value = '';
+ if (emailsInp) emailsInp.value = '';
+ if (resBox) resBox.style.display = 'none';
+
+ const selCount = (typeof selectedVocabIds !== 'undefined') ? selectedVocabIds.size : 0;
+ if (scopeSel) {
+  scopeSel.value = (fromSelectedOnly || selCount > 0) ? 'selected' : 'all';
+ }
+
+ selectShareDeckMode('email');
+ updateShareDeckScopeInfo();
+ openModal('mShareVocab');
+ if (window.lucide) window.lucide.createIcons();
+}
+
+async function submitShareVocabDeck() {
+ const title = (document.getElementById('shareDeckTitle')?.value || '').trim();
+ if (!title) { toast('Vui lòng nhập tên bộ từ vựng!', 'error'); return; }
+
+ const category = document.getElementById('shareDeckCategory')?.value || 'Khác';
+ const description = (document.getElementById('shareDeckDesc')?.value || '').trim();
+ const scope = document.getElementById('shareDeckScope')?.value || 'all';
+
+ let wordsToShare = [];
+ const allVocs = window.DB.vocab || [];
+
+ if (scope === 'selected') {
+  const selIds = typeof selectedVocabIds !== 'undefined' ? selectedVocabIds : new Set();
+  wordsToShare = allVocs.filter(v => selIds.has(v.id));
+  if (!wordsToShare.length) {
+   toast('Chưa có từ vựng nào được chọn! Hãy bật "Chọn nhiều" để chọn từ hoặc đổi phạm vi sang "Toàn bộ từ".', 'error');
+   return;
+  }
+ } else {
+  wordsToShare = [...allVocs];
+  if (!wordsToShare.length) {
+   toast('Kho từ vựng của bạn đang trống! Hãy thêm từ trước khi chia sẻ.', 'error');
+   return;
+  }
+ }
+
+ let allowedEmails = [];
+ if (selectedShareMode === 'email') {
+  const rawEmails = (document.getElementById('shareDeckEmails')?.value || '').trim();
+  allowedEmails = rawEmails.split(/[,;\s]+/)
+   .map(e => e.trim().toLowerCase())
+   .filter(e => e && e.includes('@'));
+
+  if (!allowedEmails.length) {
+   toast('Vui lòng nhập ít nhất một địa chỉ Gmail hợp lệ để chia sẻ!', 'error');
+   return;
+  }
+ }
+
+ const btnSubmit = document.getElementById('btnSubmitShareDeck');
+ if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.textContent = 'Đang chia sẻ...'; }
+
+ try {
+  const user = window.currentUser || {};
+  const currentUid = user.uid || 'local_user';
+  const authorName = user.displayName || user.email || 'Người dùng LifeOS';
+  const authorEmail = (user.email || '').toLowerCase();
+
+  const deck = {
+   id: 'deck_' + (window.uid ? window.uid() : Date.now().toString(36)),
+   title,
+   description,
+   category,
+   ownerUid: currentUid,
+   authorName,
+   authorEmail,
+   mode: selectedShareMode,
+   allowedEmails,
+   words: wordsToShare,
+   wordCount: wordsToShare.length,
+   createdAt: new Date().toISOString(),
+   updatedAt: new Date().toISOString(),
+   clones: 0
+  };
+
+  // Save to Firebase Firestore if online
+  if (!window.DEMO_MODE && window.db && window.doc && window.setDoc) {
+   try {
+    await window.setDoc(window.doc(window.db, 'shared_vocab_decks', deck.id), deck);
+   } catch (e) {
+    console.warn('[LifeOS Vocab Share] Firestore setDoc warning:', e.message);
+   }
+  }
+
+  // Always keep a copy in localStorage for instant access & offline availability
+  let localDecks = [];
+  try { localDecks = JSON.parse(localStorage.getItem('lifeos_shared_vocab_decks') || '[]'); } catch {}
+  localDecks.unshift(deck);
+  localStorage.setItem('lifeos_shared_vocab_decks', JSON.stringify(localDecks));
+
+  // Update in-memory cache
+  communityDecksCache = [deck, ...communityDecksCache.filter(d => d.id !== deck.id)];
+
+  toast(selectedShareMode === 'email' ? '✓ Đã chia sẻ bộ từ thành công qua Gmail!' : '✓ Đã đăng tải bộ từ lên Thư viện Online!', 'success');
+
+  // Display result box with share link
+  const resBox = document.getElementById('shareResultBox');
+  const linkInp = document.getElementById('shareDeckLink');
+  if (resBox && linkInp) {
+   const shareUrl = window.location.origin + window.location.pathname + '?deck=' + deck.id;
+   linkInp.value = shareUrl;
+   resBox.style.display = 'block';
+  }
+
+  // Refresh community decks UI if visible
+  renderCommunityDecksUI();
+ } catch (err) {
+  console.error('[LifeOS Vocab Share] Error submitting deck:', err);
+  toast('Lỗi khi chia sẻ bộ từ: ' + (err.message || err), 'error');
+ } finally {
+  if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = '<i data-lucide="share-2" class="ic-14"></i> <span>Tạo & Chia sẻ</span>'; }
+  if (window.lucide) window.lucide.createIcons();
+ }
+}
+
+function copyShareDeckLink() {
+ const linkInp = document.getElementById('shareDeckLink');
+ if (linkInp && linkInp.value) {
+  navigator.clipboard.writeText(linkInp.value).then(() => {
+   toast('Đã sao chép liên kết chia sẻ vào bộ nhớ tạm!', 'success');
+  }).catch(() => {
+   linkInp.select();
+   document.execCommand('copy');
+   toast('Đã sao chép liên kết!', 'success');
+  });
+ }
+}
+
+async function fetchAndRenderCommunityDecks() {
+ const loadingEl = document.getElementById('communityDecksLoading');
+ if (loadingEl) loadingEl.style.display = 'block';
+
+ try {
+  let localDecks = [];
+  try { localDecks = JSON.parse(localStorage.getItem('lifeos_shared_vocab_decks') || '[]'); } catch {}
+
+  const user = window.currentUser || {};
+  const currentEmail = (user.email || '').toLowerCase();
+  const currentUid = user.uid || '';
+
+  let remoteDecks = [];
+
+  if (!window.DEMO_MODE && window.db && window.collection && window.getDocs && window.query) {
+   try {
+    // 1. Query public decks
+    const qPub = window.query(window.collection(window.db, 'shared_vocab_decks'), window.where('mode', '==', 'public'), window.limit(50));
+    const snapPub = await window.getDocs(qPub);
+    snapPub.forEach(doc => remoteDecks.push({ id: doc.id, ...doc.data() }));
+
+    // 2. Query decks shared with this user's email
+    if (currentEmail) {
+     const qShared = window.query(window.collection(window.db, 'shared_vocab_decks'), window.where('allowedEmails', 'array-contains', currentEmail), window.limit(50));
+     const snapShared = await window.getDocs(qShared);
+     snapShared.forEach(doc => remoteDecks.push({ id: doc.id, ...doc.data() }));
+    }
+
+    // 3. Query decks owned by current user
+    if (currentUid) {
+     const qMine = window.query(window.collection(window.db, 'shared_vocab_decks'), window.where('ownerUid', '==', currentUid), window.limit(50));
+     const snapMine = await window.getDocs(qMine);
+     snapMine.forEach(doc => remoteDecks.push({ id: doc.id, ...doc.data() }));
+    }
+   } catch (e) {
+    console.warn('[LifeOS Vocab Share] Firestore fetch warning:', e.message);
+   }
+  }
+
+  // Merge default decks, local decks, and remote decks (dedup by ID)
+  const map = new Map();
+  DEFAULT_COMMUNITY_DECKS.forEach(d => map.set(d.id, d));
+  localDecks.forEach(d => map.set(d.id, d));
+  remoteDecks.forEach(d => map.set(d.id, d));
+
+  communityDecksCache = Array.from(map.values());
+  renderCommunityDecksUI();
+ } catch (err) {
+  console.error('[LifeOS Vocab Share] Error fetching decks:', err);
+ } finally {
+  if (loadingEl) loadingEl.style.display = 'none';
+ }
+}
+
+function renderCommunityDecksUI() {
+ const grid = document.getElementById('communityDecksGrid');
+ if (!grid) return;
+
+ const user = window.currentUser || {};
+ const currentEmail = (user.email || '').toLowerCase();
+ const currentUid = user.uid || '';
+
+ const q = (document.getElementById('communitySearch')?.value || '').toLowerCase();
+ const cat = document.getElementById('communityCategoryFilter')?.value || 'all';
+
+ let list = communityDecksCache.filter(d => {
+  if (currentCommunityTab === 'public') {
+   return d.mode === 'public';
+  } else if (currentCommunityTab === 'shared_with_me') {
+   return d.mode === 'email' && Array.isArray(d.allowedEmails) && (
+    (currentEmail && d.allowedEmails.includes(currentEmail)) ||
+    d.allowedEmails.length > 0 // in demo mode show local email shared decks
+   );
+  } else if (currentCommunityTab === 'my_decks') {
+   return (currentUid && d.ownerUid === currentUid) || (currentEmail && d.authorEmail === currentEmail) || d.ownerUid === 'local_user';
+  }
+  return true;
+ });
+
+ if (cat !== 'all') {
+  list = list.filter(d => d.category === cat);
+ }
+
+ if (q) {
+  list = list.filter(d =>
+   (d.title || '').toLowerCase().includes(q) ||
+   (d.description || '').toLowerCase().includes(q) ||
+   (d.authorName || '').toLowerCase().includes(q) ||
+   (d.authorEmail || '').toLowerCase().includes(q)
+  );
+ }
+
+ if (!list.length) {
+  let emptyMsg = 'Chưa có bộ từ vựng nào trong mục này.';
+  if (currentCommunityTab === 'shared_with_me') {
+   emptyMsg = `Chưa có ai chia sẻ bộ từ với Gmail ${currentEmail || 'của bạn'}. Khi bạn bè nhập email của bạn lúc chia sẻ, bộ từ sẽ xuất hiện tại đây!`;
+  } else if (currentCommunityTab === 'my_decks') {
+   emptyMsg = 'Bạn chưa chia sẻ bộ từ nào. Hãy bấm nút "Tạo bộ từ chia sẻ mới" ở trên để chia sẻ với bạn bè!';
+  }
+
+  grid.innerHTML = `
+   <div class="empty-state" style="grid-column:1/-1; padding:40px 16px;">
+    <div class="empty-state-icon"><i data-lucide="share-2" class="ic-24"></i></div>
+    <div class="empty-state-title">${emptyMsg}</div>
+    <div style="margin-top:14px;">
+     <button class="btn btn-p btn-sm" onclick="openShareVocabModal()"><i data-lucide="plus" class="ic-14"></i> Chia sẻ bộ từ ngay</button>
+    </div>
+   </div>
+  `;
+  if (window.lucide) window.lucide.createIcons();
+  return;
+ }
+
+ grid.innerHTML = list.map(d => {
+  const isMine = (currentUid && d.ownerUid === currentUid) || (currentEmail && d.authorEmail === currentEmail) || d.ownerUid === 'local_user';
+  const isPublic = d.mode === 'public';
+  const badgeMode = isPublic
+   ? `<span class="badge" style="background:rgba(0,229,255,0.15); color:var(--accent-cyan); font-size:11px; padding:2px 8px; border-radius:10px;"><i data-lucide="globe" style="width:11px;height:11px;margin-right:3px;"></i> Công khai</span>`
+   : `<span class="badge" style="background:rgba(124,77,255,0.15); color:var(--accent-light); font-size:11px; padding:2px 8px; border-radius:10px;"><i data-lucide="mail" style="width:11px;height:11px;margin-right:3px;"></i> Gmail riêng</span>`;
+
+  return `
+   <div class="shared-deck-card" onclick="openDeckDetailModal('${d.id}')">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
+     <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+      ${badgeMode}
+      <span class="badge" style="background:var(--surface); border:1px solid var(--border); font-size:11px; padding:2px 7px; border-radius:10px;">${d.category || 'Chung'}</span>
+     </div>
+     <span style="font-size:11.5px; font-weight:700; color:var(--accent-light);">${(d.words || []).length} từ</span>
+    </div>
+
+    <div style="font-size:15px; font-weight:700; color:var(--text-hi); margin-bottom:6px; line-height:1.3;">
+     ${window.LifeOSData ? window.LifeOSData.escapeHtml(d.title) : d.title}
+    </div>
+
+    <div style="font-size:12px; color:var(--text3); line-height:1.4; margin-bottom:12px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+     ${d.description ? (window.LifeOSData ? window.LifeOSData.escapeHtml(d.description) : d.description) : 'Bộ thẻ từ vựng chia sẻ chất lượng cao.'}
+    </div>
+
+    <div style="font-size:11px; color:var(--text-low); margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+     <span>Bởi: <b>${d.authorName || d.authorEmail || 'Người dùng'}</b></span>
+     <span>${d.clones ? `📥 ${d.clones} lượt lưu` : ''}</span>
+    </div>
+
+    <div class="deck-card-actions" onclick="event.stopPropagation();" style="display:flex; gap:6px; align-items:center; border-top:1px solid var(--border); padding-top:10px;">
+     <button class="btn btn-sm btn-p" onclick="reviewSharedVocabDeck('${d.id}')" style="flex:1; padding:4px 8px; font-size:11.5px; display:inline-flex; align-items:center; justify-content:center; gap:4px;" title="Học lật thẻ ngay">
+      <i data-lucide="play" style="width:12px;height:12px;"></i> <span>Học ngay</span>
+     </button>
+     <button class="btn btn-sm btn-outline" onclick="importSharedDeckToPersonal('${d.id}')" style="padding:4px 8px; font-size:11.5px; display:inline-flex; align-items:center; gap:4px;" title="Lưu từ vào kho cá nhân">
+      <i data-lucide="download" style="width:12px;height:12px;"></i> <span>Lưu về</span>
+     </button>
+     ${isMine ? `
+      <button class="btn btn-sm btn-r" onclick="deleteSharedDeck('${d.id}')" style="padding:4px 7px;" title="Xóa / Gỡ chia sẻ">
+       <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+      </button>
+     ` : ''}
+    </div>
+   </div>
+  `;
+ }).join('');
+
+ if (window.lucide) window.lucide.createIcons();
+}
+
+function openDeckDetailModal(deckId) {
+ const deck = communityDecksCache.find(d => d.id === deckId);
+ if (!deck) return;
+ currentViewingDeck = deck;
+
+ const titleEl = document.getElementById('ddTitle');
+ const metaEl = document.getElementById('ddMeta');
+ const descEl = document.getElementById('ddDesc');
+ const listEl = document.getElementById('ddWordsList');
+
+ if (titleEl) titleEl.textContent = deck.title;
+ if (metaEl) metaEl.textContent = `Tác giả: ${deck.authorName || deck.authorEmail || 'Người dùng'} • ${(deck.words || []).length} từ vựng • ${deck.category || 'Chung'}`;
+ if (descEl) descEl.textContent = deck.description || '';
+
+ if (listEl) {
+  const words = deck.words || [];
+  if (!words.length) {
+   listEl.innerHTML = '<div style="color:var(--text3); font-size:12px; text-align:center; padding:20px;">Bộ từ vựng này chưa có từ nào.</div>';
+  } else {
+   listEl.innerHTML = words.map(w => `
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 14px; display:flex; flex-direction:column; gap:4px;">
+     <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:8px;">
+       <span style="font-weight:700; font-size:14px; color:var(--accent);">${w.word}</span>
+       <span style="font-size:11px; color:var(--text3);">(${w.type || 'n'})</span>
+       ${w.pron ? `<span style="font-size:11px; color:var(--text2);">${w.pron}</span>` : ''}
+      </div>
+      <button class="btn-audio" onclick="speakWord('${(w.word || '').replace(/'/g, "\\'")}')" style="width:22px; height:22px;">
+       <i data-lucide="volume-2" style="width:12px;height:12px;"></i>
+      </button>
+     </div>
+     <div style="font-size:13px; color:var(--text-hi); font-weight:500;">${w.mean}</div>
+     ${w.ex ? `<div style="font-size:11.5px; color:var(--text3); font-style:italic; margin-top:2px;">"${w.ex}"</div>` : ''}
+    </div>
+   `).join('');
+  }
+ }
+
+ openModal('mDeckDetail');
+ if (window.lucide) window.lucide.createIcons();
+}
+
+async function cloneCurrentDeckToPersonal() {
+ if (!currentViewingDeck) return;
+ await importSharedDeckToPersonal(currentViewingDeck.id);
+ closeModal('mDeckDetail');
+}
+
+function studyCurrentDeck() {
+ if (!currentViewingDeck) return;
+ closeModal('mDeckDetail');
+ reviewSharedVocabDeck(currentViewingDeck.id);
+}
+
+function reviewSharedVocabDeck(deckId) {
+ const deck = communityDecksCache.find(d => d.id === deckId);
+ if (!deck || !deck.words || !deck.words.length) {
+  toast('Bộ từ này không có từ vựng để ôn tập!', 'error');
+  return;
+ }
+
+ reviewList = [...deck.words];
+ reviewList.sort(() => Math.random() - 0.5);
+ reviewIdx = 0;
+ updateReviewUI();
+ document.querySelector('.flashcard-container')?.classList.remove('flipped');
+ openModal('mReviewVocab');
+
+ const cntEl = document.getElementById('rvCount');
+ if (cntEl) cntEl.textContent = `Học chung: ${deck.title} (1/${reviewList.length})`;
+ if (window.lucide) window.lucide.createIcons();
+}
+
+async function importSharedDeckToPersonal(deckId) {
+ const deck = communityDecksCache.find(d => d.id === deckId);
+ if (!deck || !deck.words || !deck.words.length) {
+  toast('Bộ từ vựng này không có dữ liệu để lưu!', 'error');
+  return;
+ }
+
+ const currentList = window.DB.vocab || [];
+ const existingWords = new Set(currentList.map(v => (v.word || '').toLowerCase().trim()));
+
+ let addedCount = 0;
+ const newVocs = [];
+
+ deck.words.forEach(w => {
+  const normWord = (w.word || '').toLowerCase().trim();
+  if (normWord && !existingWords.has(normWord)) {
+   newVocs.push({
+    id: window.uid ? window.uid() : 'v_' + Math.random().toString(36).substr(2, 9),
+    word: w.word,
+    mean: w.mean,
+    pron: w.pron || '',
+    ex: w.ex || '',
+    type: w.type || 'n',
+    date: window.today ? window.today() : new Date().toISOString().split('T')[0]
+   });
+   existingWords.add(normWord);
+   addedCount++;
+  }
+ });
+
+ if (addedCount === 0) {
+  toast('Tất cả các từ trong bộ này đã có sẵn trong kho từ vựng của bạn!', 'info');
+  return;
+ }
+
+ window.DB.vocab = [...newVocs, ...currentList];
+ await persist('vocab', window.DB.vocab);
+ renderVocab();
+
+ // Increment clones count
+ deck.clones = (deck.clones || 0) + 1;
+ if (!window.DEMO_MODE && window.db && window.doc && window.updateDoc) {
+  try {
+   await window.updateDoc(window.doc(window.db, 'shared_vocab_decks', deck.id), {
+    clones: deck.clones
+   });
+  } catch {}
+ }
+
+ toast(`🎉 Đã lưu thành công ${addedCount} từ mới vào kho cá nhân của bạn!`, 'success');
+}
+
+async function deleteSharedDeck(deckId) {
+ const deck = communityDecksCache.find(d => d.id === deckId);
+ if (!deck) return;
+
+ if (!confirm(`Bạn có chắc muốn xóa và ngừng chia sẻ bộ từ "${deck.title}"?`)) return;
+
+ communityDecksCache = communityDecksCache.filter(d => d.id !== deckId);
+
+ // Remove from localStorage
+ try {
+  let localDecks = JSON.parse(localStorage.getItem('lifeos_shared_vocab_decks') || '[]');
+  localDecks = localDecks.filter(d => d.id !== deckId);
+  localStorage.setItem('lifeos_shared_vocab_decks', JSON.stringify(localDecks));
+ } catch {}
+
+ // Remove from Firestore
+ if (!window.DEMO_MODE && window.db && window.doc && window.deleteDoc) {
+  try {
+   await window.deleteDoc(window.doc(window.db, 'shared_vocab_decks', deckId));
+  } catch (e) {
+   console.warn('[LifeOS Vocab Share] Error deleting from firestore:', e);
+  }
+ }
+
+ toast('Đã xóa bộ từ vựng chia sẻ!', 'info');
+ renderCommunityDecksUI();
+}
+
+// Auto-check deep link (?deck=...) on startup
+setTimeout(() => {
+ try {
+  const urlParams = new URLSearchParams(window.location.search);
+  const deckId = urlParams.get('deck');
+  if (deckId) {
+   if (typeof nav === 'function') nav('vocab');
+   switchVocabSubView('community');
+   fetchAndRenderCommunityDecks().then(() => {
+    openDeckDetailModal(deckId);
+   });
+  }
+ } catch {}
+}, 500);
+
+window.switchVocabSubView = switchVocabSubView;
+window.switchCommunityTab = switchCommunityTab;
+window.selectShareDeckMode = selectShareDeckMode;
+window.updateShareDeckScopeInfo = updateShareDeckScopeInfo;
+window.openShareVocabModal = openShareVocabModal;
+window.submitShareVocabDeck = submitShareVocabDeck;
+window.copyShareDeckLink = copyShareDeckLink;
+window.fetchAndRenderCommunityDecks = fetchAndRenderCommunityDecks;
+window.renderCommunityDecksUI = renderCommunityDecksUI;
+window.openDeckDetailModal = openDeckDetailModal;
+window.cloneCurrentDeckToPersonal = cloneCurrentDeckToPersonal;
+window.studyCurrentDeck = studyCurrentDeck;
+window.reviewSharedVocabDeck = reviewSharedVocabDeck;
+window.importSharedDeckToPersonal = importSharedDeckToPersonal;
+window.deleteSharedDeck = deleteSharedDeck;
+

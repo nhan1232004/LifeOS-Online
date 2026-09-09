@@ -47,5 +47,20 @@ service cloud.firestore {
         isMember(project(resource.data.projId))
       );
     }
+
+    match /shared_vocab_decks/{deckId} {
+      allow read: if signedIn() && (
+        resource.data.mode == 'public' ||
+        resource.data.ownerUid == request.auth.uid ||
+        (resource.data.allowedEmails != null && request.auth.token.email != null && request.auth.token.email in resource.data.allowedEmails) ||
+        (resource.data.memberUids != null && request.auth.uid in resource.data.memberUids)
+      );
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if signedIn() && (
+        resource.data.ownerUid == request.auth.uid ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clones', 'memberUids'])
+      );
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
   }
 }

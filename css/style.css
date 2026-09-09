@@ -1206,6 +1206,14 @@ body::before {
 .vocab-card.is-selected { border-color:var(--accent) !important; background:linear-gradient(135deg, rgba(124,77,255,0.18), rgba(20,20,40,0.85)) !important; box-shadow:0 0 0 2px var(--accent), 0 8px 24px rgba(124,77,255,0.2) !important; }
 .vc-select-chk { position:absolute; top:14px; right:14px; width:20px; height:20px; cursor:pointer; accent-color:var(--accent); z-index:3; }
 
+/* Shared Vocab & Community Decks */
+.shared-deck-card { background:linear-gradient(135deg, rgba(20,20,40,.7), rgba(14,14,28,.5)); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.07); border-radius:12px; padding:16px; cursor:pointer; transition:all .25s cubic-bezier(.16,1,.3,1); display:flex; flex-direction:column; justify-content:space-between; position:relative; }
+.shared-deck-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.2), 0 0 12px rgba(124,77,255,0.15); }
+.share-mode-card { border:1px solid var(--border); background:var(--surface); padding:12px; border-radius:10px; cursor:pointer; transition:all 0.2s ease; display:flex; flex-direction:column; gap:4px; }
+.share-mode-card:hover { border-color:var(--border2); background:var(--bg-hover); }
+.share-mode-card.active { border-color:var(--accent) !important; background:rgba(124,77,255,0.1) !important; box-shadow:0 0 0 1px var(--accent); }
+.vocab-nav-tabs .btn { transition:all 0.2s ease; }
+
 
 .flashcard-container { width:100%; height:250px; perspective:1000px; cursor:pointer; }
 .flashcard { width:100%; height:100%; position:relative; transition:transform 0.6s; transform-style:preserve-3d; }
