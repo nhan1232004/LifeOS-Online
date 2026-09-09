@@ -115,7 +115,8 @@ window.openAiKeyModal = function() {
   }
 
   const curKey = localStorage.getItem('lifeos_gemini_key') || '';
-  const curModel = localStorage.getItem('lifeos_ai_preferred_model') || localStorage.getItem('lifeos_ai_working_model') || 'gemini-2.0-flash';
+  let curModel = localStorage.getItem('lifeos_ai_preferred_model') || localStorage.getItem('lifeos_ai_working_model') || 'gemini-2.0-flash';
+  if (curModel.includes('3.') || curModel.includes('pro')) curModel = 'gemini-2.0-flash';
   
   if (input) {
     input.value = curKey;
@@ -372,20 +373,24 @@ function appendApiKeyPromptCard() {
 
 // ── Multi-turn Gemini API Core ──
 // ── Multi-turn Gemini API Core (Speed-optimized: Gemini 2.0 Flash First) ──
+// Clean up any deprecated/problematic cached models
+try {
+  const curSaved = localStorage.getItem('lifeos_ai_working_model') || localStorage.getItem('lifeos_ai_preferred_model');
+  if (curSaved && (curSaved.includes('3.') || curSaved.includes('2.5') || curSaved.includes('pro'))) {
+    localStorage.setItem('lifeos_ai_working_model', 'gemini-2.0-flash');
+    localStorage.setItem('lifeos_ai_preferred_model', 'gemini-2.0-flash');
+  }
+} catch(e) {}
+
 const ALL_MODELS = [
-  'gemini-2.0-flash',     // Fastest: < 1s latency
-  'gemini-1.5-flash',     // High speed & stability
-  'gemini-1.5-flash-8b',  // Ultra lightweight
-  'gemini-2.5-flash',
-  'gemini-1.5-pro',
-  'gemini-3.5-flash',
-  'gemini-3.8-flash'
+  'gemini-2.0-flash',     // Fastest (< 1s, highly intelligent)
+  'gemini-1.5-flash',     // Standard, 100% reliable across all keys
+  'gemini-1.5-flash-8b'   // Ultra lightweight fallback
 ];
 
 function getWindowedHistory(history, maxTurns = 6) {
   if (!history || history.length <= maxTurns) return history;
   let slice = history.slice(-maxTurns);
-  // Ensure we don't start on an orphaned model answer
   while (slice.length > 0 && slice[0].role !== 'user') {
     slice.shift();
   }
@@ -399,8 +404,11 @@ async function callGeminiRaw(contents, systemInstruction, tools, customKey = nul
     throw new Error('CHUA_CO_KEY');
   }
 
-  // Use user's chosen model or previously confirmed working model first for zero latency overhead
-  const preferredModel = localStorage.getItem('lifeos_ai_preferred_model') || localStorage.getItem('lifeos_ai_working_model') || 'gemini-2.0-flash';
+  let preferredModel = localStorage.getItem('lifeos_ai_preferred_model') || localStorage.getItem('lifeos_ai_working_model') || 'gemini-2.0-flash';
+  if (preferredModel.includes('3.') || preferredModel.includes('pro')) {
+    preferredModel = 'gemini-2.0-flash';
+  }
+
   const modelsToTry = [
     preferredModel,
     ...ALL_MODELS.filter(m => m !== preferredModel)
@@ -422,9 +430,9 @@ async function callGeminiRaw(contents, systemInstruction, tools, customKey = nul
       payload.tools = [{ functionDeclarations: tools }];
     }
 
-    // 8-second timeout per model to prevent hanging
+    // 25-second realistic timeout to allow model to finish reasoning without premature aborts
     const controller = new AbortController();
-    const timeoutTimer = setTimeout(() => controller.abort(), 8500);
+    const timeoutTimer = setTimeout(() => controller.abort(), 25000);
 
     try {
       const res = await fetch(url, {
@@ -453,7 +461,7 @@ async function callGeminiRaw(contents, systemInstruction, tools, customKey = nul
           throw new Error('KEY_PERMISSION_DENIED: ' + msg);
         }
 
-        console.warn(`Model ${model} returned ${res.status} (${msg}), trying next...`);
+        console.warn(`Model ${model} returned ${res.status} (${msg}), trying next model...`);
         lastError = new Error(`Model ${model}: ${msg}`);
         continue;
       }
@@ -467,15 +475,14 @@ async function callGeminiRaw(contents, systemInstruction, tools, customKey = nul
       }
 
       const data = await res.json();
-      // Cache this working model so every future message calls it immediately!
       localStorage.setItem('lifeos_ai_working_model', model);
       return data;
     } catch (err) {
       clearTimeout(timeoutTimer);
       lastError = err;
       if (err.name === 'AbortError') {
-        console.warn(`Model ${model} timed out after 8.5s, switching to next model...`);
-        lastError = new Error(`Model ${model} timeout`);
+        console.warn(`Model ${model} timed out after 25s, switching to next model...`);
+        lastError = new Error(`Model ${model} quá hạn phản hồi (timeout)`);
         continue;
       }
       if (err.message && err.message.startsWith('KEY_')) throw err;
