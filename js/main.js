@@ -318,10 +318,13 @@ function nav(pg, el){
    mocktests: typeof renderMockTests === 'function' ? renderMockTests : null
  };
  
- setTimeout(() => {
-   if (renders[pg]) renders[pg]();
-   if (window.lucide) window.lucide.createIcons();
- }, 30);
+  setTimeout(() => {
+    if (renders[pg]) renders[pg]();
+    if (pg === 'schedule') {
+      setTimeout(() => { if (typeof scrollWeekToCurrentTime === 'function') scrollWeekToCurrentTime(); }, 60);
+    }
+    if (window.lucide) window.lucide.createIcons();
+  }, 30);
 }
 
 /* ────────────────────────────────────────────────────────
@@ -369,7 +372,10 @@ function openEv(date='',hour=''){
  document.getElementById('evDesc').value='';
  document.getElementById('evRecur').value='';
  document.getElementById('mEvTitle').textContent='Thêm sự kiện';
+ const btnDel = document.getElementById('btnDelEv');
+ if(btnDel) btnDel.style.display = 'none';
  openModal('mEv');
+ if(window.lucide) window.lucide.createIcons();
 }
 function editEv(id){
  const ev=(window.DB.events||[]).find(e=>e.id===id); if(!ev) return;
@@ -380,7 +386,10 @@ function editEv(id){
  document.getElementById('evType').value=ev.type||'work';
  document.getElementById('evRecur').value=ev.recurrence||'';
  document.getElementById('mEvTitle').textContent='Sửa sự kiện';
+ const btnDel = document.getElementById('btnDelEv');
+ if(btnDel) btnDel.style.display = 'inline-flex';
  openModal('mEv');
+ if(window.lucide) window.lucide.createIcons();
 }
 async function saveEv(){
  const title=document.getElementById('evTitle').value.trim();
@@ -388,17 +397,64 @@ async function saveEv(){
  const ds=document.getElementById('evDs').value;
  if(!ds){toast('Chọn ngày!','error');return;}
  const editId=document.getElementById('evId').value;
- const ev={id:editId||uid(),title,dateStart:ds,dateEnd:document.getElementById('evDe').value||ds,timeStart:document.getElementById('evTs').value,timeEnd:document.getElementById('evTe').value,type:document.getElementById('evType').value,desc:document.getElementById('evDesc').value};
+ const ev={
+  id:editId||uid(),
+  title,
+  dateStart:ds,
+  dateEnd:document.getElementById('evDe').value||ds,
+  timeStart:document.getElementById('evTs').value,
+  timeEnd:document.getElementById('evTe').value,
+  type:document.getElementById('evType').value,
+  desc:document.getElementById('evDesc').value,
+  recurrence:document.getElementById('evRecur').value
+ };
  const list=[...(window.DB.events||[])];
  if(editId){const i=list.findIndex(x=>x.id===editId);if(i>=0)list[i]=ev;else list.push(ev);}
  else list.push(ev);
+ if(window.DB) window.DB.events = list;
  await persist('events',list);
  closeModal('mEv'); toast('Đã lưu sự kiện!','success');
+ refreshAllEventViews();
+}
+async function deleteCurrentEv() {
+ const id = document.getElementById('evId').value;
+ if (!id) return;
+ const ev = (window.DB.events || []).find(e => e.id === id);
+ const title = ev ? `"${ev.title}"` : 'sự kiện này';
+ if (!confirm(`Bạn có chắc chắn muốn xóa ${title}? Thao tác này không thể hoàn tác.`)) return;
+ closeModal('mEv');
+ await delEv(id);
 }
 async function delEv(id){
- await persist('events',(window.DB.events||[]).filter(e=>e.id!==id));
- toast('Đã xoá','info');
+ if(!id) return;
+ const list = (window.DB.events || []).filter(e => e.id !== id);
+ if(window.DB) window.DB.events = list;
+ await persist('events', list);
+ toast('Đã xóa sự kiện thành công!', 'info');
+ refreshAllEventViews();
 }
+async function delEvWithConfirm(id) {
+ if (!id) return;
+ const ev = (window.DB.events || []).find(e => e.id === id);
+ const title = ev ? `"${ev.title}"` : 'sự kiện này';
+ if (!confirm(`Bạn có chắc chắn muốn xóa ${title}?`)) return;
+ await delEv(id);
+}
+function refreshAllEventViews() {
+ if (typeof renderCal === 'function') renderCal();
+ if (typeof renderWeek === 'function') renderWeek();
+ if (typeof renderToday === 'function') renderToday();
+ if (typeof renderOverview === 'function') renderOverview();
+ if (typeof renderMiniCal === 'function') renderMiniCal();
+}
+
+window.openEv = openEv;
+window.editEv = editEv;
+window.saveEv = saveEv;
+window.delEv = delEv;
+window.deleteCurrentEv = deleteCurrentEv;
+window.delEvWithConfirm = delEvWithConfirm;
+window.refreshAllEventViews = refreshAllEventViews;
 
 /* ────────────────────────────────────────────────────────
   PROJECTS
@@ -1411,7 +1467,7 @@ function mcNav(d){mcM+=d;if(mcM>11){mcM=0;mcY++;}if(mcM<0){mcM=11;mcY--;}renderM
   WEEK VIEW
 ──────────────────────────────────────────────────────── */
 let wkOffset=0;
-const HOURS=['06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22'];
+const HOURS = Array.from({length: 24}, (_, i) => String(i).padStart(2, '0'));
 const WDAYS=['T.2','T.3','T.4','T.5','T.6','T.7','CN'];
 
 function getWeekDates(off){
@@ -1420,36 +1476,94 @@ function getWeekDates(off){
  return Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
 }
 function wkNav(d){wkOffset+=d;renderWeek();}
-function wkToday(){wkOffset=0;renderWeek();}
+function wkToday(){wkOffset=0;renderWeek();setTimeout(()=>scrollWeekToCurrentTime(true), 50);}
+
+function scrollWeekToCurrentTime(smooth = false) {
+ const wrap = document.querySelector('.wk-wrap');
+ if (!wrap) return;
+ const currentH = new Date().getHours();
+ const targetH = Math.max(0, Math.min(currentH - 1, 18));
+ const targetSlot = document.querySelector(`.wk-time[data-hour="${String(targetH).padStart(2, '0')}"]`);
+ if (targetSlot) {
+  wrap.scrollTo({
+   top: targetSlot.offsetTop - 50,
+   behavior: smooth ? 'smooth' : 'auto'
+  });
+ }
+}
 
 function renderWeek(){
  const dates=getWeekDates(wkOffset), t=today();
  const lbl=document.getElementById('wkLabel');
  if(lbl)lbl.textContent=`${dates[0].toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'})} – ${dates[6].toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'})}`;
  const grid=document.getElementById('wkGrid'); if(!grid)return;
- let html='<div class="wk-cell wk-hdr"></div>';
+ 
+ let html='<div class="wk-cell wk-hdr wk-hdr-corner"></div>';
  dates.forEach((d,i)=>{
   const ds=toLocalDateStr(d);
   html+=`<div class="wk-cell wk-hdr"><div class="wk-day-name">${WDAYS[i]}</div><div class="wk-day-num${ds===t?' today':''}">${d.getDate()}</div></div>`;
  });
+
+ // All-day events row (shown when any all-day event exists in this week)
+ const hasAllDay = dates.some(d => {
+  const ds = toLocalDateStr(d);
+  return (window.DB.events || []).some(e => e.dateStart <= ds && (e.dateEnd || e.dateStart) >= ds && !e.timeStart);
+ });
+
+ if (hasAllDay) {
+  html += `<div class="wk-cell wk-time wk-allday-label" style="font-size:9.5px;font-weight:700;color:var(--accent);padding:4px 6px;">Cả ngày</div>`;
+  dates.forEach(d => {
+   const ds = toLocalDateStr(d);
+   const allDayEvs = (window.DB.events || []).filter(e => e.dateStart <= ds && (e.dateEnd || e.dateStart) >= ds && !e.timeStart);
+   html += `<div class="wk-slot wk-allday-slot" style="min-height:36px;height:auto;padding:3px;display:flex;flex-direction:column;gap:2px;" onclick="openEv('${ds}')">
+    ${allDayEvs.map(e => `
+     <div class="wk-ev-allday" style="background:${EC[e.type]||'#7c4dff'};color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:600;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="event.stopPropagation();editEv('${e.id}')">
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${e.title}</span>
+      <button class="wk-ev-del" onclick="event.stopPropagation();delEvWithConfirm('${e.id}')" title="Xóa sự kiện" style="opacity:0.8;font-size:10px;margin-left:4px;">✕</button>
+     </div>
+    `).join('')}
+   </div>`;
+  });
+ }
+
  HOURS.forEach(h=>{
-  html+=`<div class="wk-cell wk-time">${h}:00</div>`;
+  html+=`<div class="wk-cell wk-time" data-hour="${h}">${h}:00</div>`;
   dates.forEach(d=>{
    const ds=toLocalDateStr(d);
-   const evs=(window.DB.events||[]).filter(e=>e.dateStart<=ds&&(e.dateEnd||e.dateStart)>=ds&&e.timeStart&&e.timeStart.split(':')[0]===h);
+   const evs=(window.DB.events||[]).filter(e=>{
+    if(!e.dateStart) return false;
+    const inRange = e.dateStart<=ds && (e.dateEnd||e.dateStart)>=ds;
+    if(!inRange || !e.timeStart) return false;
+    const evH = parseInt(e.timeStart.split(':')[0], 10);
+    return !isNaN(evH) && evH === parseInt(h, 10);
+   });
    html+=`<div class="wk-slot" onclick="openEv('${ds}','${h}:00')">${evs.map(e=>{
     const [sh, sm] = e.timeStart.split(':').map(Number);
     let [eh, em] = e.timeEnd ? e.timeEnd.split(':').map(Number) : [sh + 1, sm];
-    let dur = (eh - sh) * 60 + (em - sm);
-    if(dur <= 0) dur = 60;
-    const topPx = (sm / 60) * 49;
-    const heightPx = (dur / 60) * 49 - 1;
-    return `<div class="wk-ev" style="top:${topPx}px; height:${heightPx}px; background:${EC[e.type]||'#7c4dff'}e6;color:#fff;border-left:3px solid ${EC[e.type]||'#7c4dff'}" onclick="event.stopPropagation();editEv('${e.id}')"><div style="font-weight:700;margin-bottom:2px">${e.title}</div>${e.timeEnd?`<div style="font-size:8.5px;opacity:0.9">${e.timeStart} - ${e.timeEnd}</div>`:''}</div>`;
+    let dur = (eh - sh) * 60 + ((em || 0) - (sm || 0));
+    if(dur <= 0) {
+     dur = (eh < sh) ? (24 - sh) * 60 - (sm || 0) + (eh * 60 + (em || 0)) : 60;
+     if(dur <= 0) dur = 60;
+    }
+    const topPx = ((sm || 0) / 60) * 49;
+    const heightPx = Math.max(22, (dur / 60) * 49 - 2);
+    return `<div class="wk-ev" style="top:${topPx}px; height:${heightPx}px; background:${EC[e.type]||'#7c4dff'}e6;color:#fff;border-left:3px solid ${EC[e.type]||'#7c4dff'}" onclick="event.stopPropagation();editEv('${e.id}')">
+     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:2px;">
+      <div style="font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${e.title}</div>
+      <button class="wk-ev-del" onclick="event.stopPropagation();delEvWithConfirm('${e.id}')" title="Xóa sự kiện">✕</button>
+     </div>
+     ${e.timeEnd?`<div style="font-size:8.5px;opacity:0.9">${e.timeStart} - ${e.timeEnd}</div>`:''}
+    </div>`;
    }).join('')}</div>`;
   });
  });
  grid.innerHTML=html;
 }
+
+window.wkNav = wkNav;
+window.wkToday = wkToday;
+window.renderWeek = renderWeek;
+window.scrollWeekToCurrentTime = scrollWeekToCurrentTime;
 
 /* ────────────────────────────────────────────────────────
   OVERVIEW
@@ -1524,7 +1638,10 @@ function renderOverview(){
    <div style="font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.title}</div>
    <div style="font-size:10.5px;color:var(--text3)">${fmtDate(e.dateStart)}${e.timeStart?' • '+e.timeStart:''}</div>
   </div>
-  <button class="btn btn-sm" style="padding:2px 7px;flex-shrink:0" onclick="editEv('${e.id}')"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
+  <div style="display:flex;gap:4px;flex-shrink:0;align-items:center">
+   <button class="btn btn-sm" style="padding:2px 7px" onclick="editEv('${e.id}')" title="Sửa sự kiện"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>
+   <button class="btn btn-sm btn-r" style="padding:2px 7px" onclick="event.stopPropagation();delEvWithConfirm('${e.id}')" title="Xóa sự kiện"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
+  </div>
  </div>`).join(''):`<div class="empty"><br>Không có sự kiện sắp tới</div>`;
  
  // Today todos
@@ -2236,7 +2353,7 @@ function renderToday() {
   }
 
   // 3. Render Events
-  const events = (window.DB.events || []).filter(e => e.dateStart === td);
+  const events = (window.DB.events || []).filter(e => e.dateStart <= td && (e.dateEnd || e.dateStart) >= td);
   const eventEl = document.getElementById('todayEventList');
   if (eventEl) {
     if (!events.length) {
@@ -2252,7 +2369,10 @@ function renderToday() {
           <div style="font-size:13.5px; font-weight:600; color:var(--text-hi);">${e.title}</div>
           <div style="font-size:11.5px; color:var(--text-mid); margin-top:2px;">${e.timeStart ? e.timeStart + (e.timeEnd ? ' - ' + e.timeEnd : '') : 'Cả ngày'}</div>
         </div>
-        <button class="icon-btn" onclick="editEv('${e.id}')"><i data-lucide="edit-2" class="ic-14"></i></button>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button class="icon-btn" onclick="editEv('${e.id}')" title="Sửa sự kiện"><i data-lucide="edit-2" class="ic-14"></i></button>
+          <button class="icon-btn" onclick="event.stopPropagation();delEvWithConfirm('${e.id}')" title="Xóa sự kiện" style="color:var(--red);"><i data-lucide="trash-2" class="ic-14"></i></button>
+        </div>
       </div>`).join('');
     }
   }

@@ -287,7 +287,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1788895013965">
+<link rel="stylesheet" href="css/style.css?v=1788948886842">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -997,7 +997,15 @@ window.getCurrentUser = () => currentUser;
     </div>
    </div>
    <div class="fg"><label>Ghi chú</label><textarea id="evDesc" placeholder="Thêm mô tả..."></textarea></div>
-   <div class="form-actions"><button class="btn" onclick="closeModal('mEv')">Hủy</button><button class="btn btn-p" onclick="saveEv()"><i data-lucide="save" style="width:14px;height:14px;margin-right:4px"></i> Lưu</button></div>
+    <div class="form-actions" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+     <button type="button" class="btn btn-d btn-sm" id="btnDelEv" onclick="deleteCurrentEv()" style="display:none; align-items:center; gap:6px;">
+      <i data-lucide="trash-2" style="width:14px;height:14px"></i> <span>Xóa sự kiện</span>
+     </button>
+     <div style="display:flex; gap:8px; margin-left:auto;">
+      <button type="button" class="btn btn-sm" onclick="closeModal('mEv')">Hủy</button>
+      <button type="button" class="btn btn-p btn-sm" onclick="saveEv()"><i data-lucide="save" style="width:14px;height:14px;margin-right:4px"></i> Lưu</button>
+     </div>
+    </div>
   </div>
  </div>
 </div>
@@ -1403,18 +1411,18 @@ window.getCurrentUser = () => currentUser;
  }
 </script>
 <script src="js/data.js?v=2"></script>
-<script src="js/workspace.js?v=1788895013965"></script>
-<script src="js/projViews.js?v=1788895013965"></script>
-<script src="js/main.js?v=1788895013965"></script>
-<script src="js/modules/todos.js?v=1788895013965"></script>
-<script src="js/modules/notes.js?v=1788895013965"></script>
-<script src="js/modules/habits.js?v=1788895013965"></script>
-<script src="js/modules/goals.js?v=1788895013965"></script>
-<script src="js/modules/journal.js?v=1788895013965"></script>
-<script src="js/modules/pomodoro.js?v=1788895013965"></script>
-<script src="js/modules/vocab.js?v=1788895013965"></script>
-<script src="js/modules/mocktests.js?v=1788895013965"></script>
-<script src="js/modules/cmd.js?v=1788895013965"></script>
+<script src="js/workspace.js?v=1788948886842"></script>
+<script src="js/projViews.js?v=1788948886842"></script>
+<script src="js/main.js?v=1788948886842"></script>
+<script src="js/modules/todos.js?v=1788948886842"></script>
+<script src="js/modules/notes.js?v=1788948886842"></script>
+<script src="js/modules/habits.js?v=1788948886842"></script>
+<script src="js/modules/goals.js?v=1788948886842"></script>
+<script src="js/modules/journal.js?v=1788948886842"></script>
+<script src="js/modules/pomodoro.js?v=1788948886842"></script>
+<script src="js/modules/vocab.js?v=1788948886842"></script>
+<script src="js/modules/mocktests.js?v=1788948886842"></script>
+<script src="js/modules/cmd.js?v=1788948886842"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1599,7 +1607,7 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 <script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
-<script src="js/modules/export.js?v=1788895013965"></script>
+<script src="js/modules/export.js?v=1788948886842"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">
