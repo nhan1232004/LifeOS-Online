@@ -168,11 +168,10 @@ function appendApiKeyPromptCard() {
 
 // ── Multi-turn Gemini API Core ──
 const MODELS = [
-  'gemini-1.5-flash-latest',
-  'gemini-1.5-flash',
-  'gemini-2.0-flash',
-  'gemini-2.5-flash',
-  'gemini-1.5-pro-latest'
+  'gemini-3.5-flash',
+  'gemini-3.7-flash',
+  'gemini-3.8-flash',
+  'gemini-3.5-flash-lite'
 ];
 
 async function callGeminiRaw(contents, systemInstruction, tools) {
@@ -202,20 +201,24 @@ async function callGeminiRaw(contents, systemInstruction, tools) {
       if (res.status === 400 || res.status === 403) {
         const errJson = await res.json().catch(() => ({}));
         const msg = errJson.error?.message || '';
-        if (msg.toLowerCase().includes('api key') || msg.toLowerCase().includes('api_key') || msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('permission_denied') || msg.toLowerCase().includes('has not been used in project')) {
+        const msgLower = msg.toLowerCase();
+        // Only treat as key error if the error specifically mentions API key issues
+        if (msgLower.includes('api key') || msgLower.includes('api_key') || msgLower.includes('permission_denied') || msgLower.includes('has not been used in project')) {
           throw new Error('KEY_KHONG_HOP_LE');
         }
-        console.warn(`Model ${model} returned 400 (${msg}), trying next...`);
+        console.warn(`Model ${model} returned ${res.status} (${msg}), trying next...`);
         lastError = new Error(`Model ${model}: ${msg}`);
         continue;
       }
 
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
-        const msg = errJson.error?.message || (await res.text().catch(() => `HTTP ${res.status}`));
-        if (msg.includes('not found for API version') || msg.includes('NOT_FOUND') || msg.includes('PERMISSION_DENIED')) {
+        const msg = errJson.error?.message || `HTTP ${res.status}`;
+        const msgLower = msg.toLowerCase();
+        if (msgLower.includes('permission_denied')) {
           throw new Error('KEY_KHONG_HOP_LE');
         }
+        // Model not found or other errors → try next model, don't assume key is bad
         console.warn(`Model ${model} returned ${res.status} (${msg}), trying next model...`);
         lastError = new Error(msg);
         continue;
@@ -229,7 +232,8 @@ async function callGeminiRaw(contents, systemInstruction, tools) {
       console.warn(`Error calling model ${model}:`, err.message);
     }
   }
-  throw lastError || new Error('CHUA_CO_KEY');
+  // All models failed — throw meaningful error instead of generic CHUA_CO_KEY
+  throw lastError || new Error('Tất cả các model Gemini đều không phản hồi. Vui lòng thử lại sau.');
 }
 
 // ── Smart Local Heuristic Engine (Offline / No Key Fallback) ──
@@ -426,13 +430,25 @@ async function processUserAiMessage(promptText) {
     if (loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
     console.error('AI Processing Error:', err);
 
+    const isKeyError = (err.message === 'CHUA_CO_KEY' || err.message === 'KEY_KHONG_HOP_LE');
+    const hasKey = !!getApiKey();
+
     // Try local heuristic execution first so actions work offline
     const localResult = await executeLocalHeuristicAi(promptText);
     if (localResult) {
       appendMessage('ai', localResult);
-    } else {
+    } else if (isKeyError && !hasKey) {
+      // No key at all → show key prompt
       appendMessage('ai', 'Chào bạn! Để trò chuyện và ra lệnh ngôn ngữ tự nhiên không giới hạn cùng **LifeOS AI**, bạn chỉ cần kết nối **Gemini API Key** cá nhân (miễn phí từ Google AI Studio).');
       appendApiKeyPromptCard();
+    } else if (isKeyError && hasKey) {
+      // Key exists but invalid → tell user to re-enter
+      appendMessage('ai', '⚠️ **API Key không hợp lệ hoặc đã hết hạn.** Vui lòng kiểm tra lại Key của bạn.\n\n- Key phải được tạo tại **Google AI Studio** (aistudio.google.com)\n- Đảm bảo API "Generative Language API" đã được kích hoạt trong Google Cloud Console\n- Thử tạo Key mới nếu Key cũ bị lỗi');
+      appendApiKeyPromptCard();
+    } else {
+      // Other errors (network, rate limit, etc.) → show helpful error, NOT key prompt
+      const errMsg = err.message || 'Lỗi không xác định';
+      appendMessage('ai', `❌ **Không thể kết nối Gemini AI lúc này.**\n\n- Lỗi: *${errMsg}*\n- Có thể do mạng không ổn định, API bị quá tải hoặc đạt giới hạn request.\n- Hãy thử lại sau ít phút hoặc kiểm tra kết nối internet.`);
     }
   }
 }
