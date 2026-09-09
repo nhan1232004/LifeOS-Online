@@ -287,7 +287,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1788955490688">
+<link rel="stylesheet" href="css/style.css?v=1788956761214">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -860,6 +860,9 @@ window.getCurrentUser = () => currentUser;
        <button class="btn btn-sm" onclick="reviewVocab()" style="display:inline-flex; align-items:center; gap:6px;">
         <span>🃏 Ôn tập (Lật thẻ)</span>
        </button>
+       <button class="btn btn-sm btn-outline" onclick="startVocabTest('personal')" style="display:inline-flex; align-items:center; gap:6px; border-color:var(--accent-cyan); color:var(--accent-cyan); background:rgba(0,229,255,0.06);" title="Kiểm tra gõ từ tiếng Anh theo nghĩa tiếng Việt">
+        <i data-lucide="edit-3" class="ic-14"></i> <span>📝 Kiểm tra (Gõ từ)</span>
+       </button>
        <button class="btn btn-sm btn-p" onclick="openVocab()" style="display:inline-flex; align-items:center; gap:6px;">
         <i data-lucide="plus" class="ic-14"></i> <span>Thêm từ</span>
        </button>
@@ -893,6 +896,9 @@ window.getCurrentUser = () => currentUser;
        <div style="display:flex; align-items:center; gap:8px;">
         <button class="btn btn-sm btn-outline" onclick="openShareVocabModal(true)" style="display:inline-flex; align-items:center; gap:6px; border-color:var(--accent);">
          <i data-lucide="share-2" class="ic-14" style="color:var(--accent-light)"></i> <span>Chia sẻ đã chọn</span>
+        </button>
+        <button class="btn btn-sm btn-outline" onclick="startVocabTest('selected')" style="display:inline-flex; align-items:center; gap:6px; border-color:var(--accent-cyan); color:var(--accent-cyan);">
+         <i data-lucide="edit-3" class="ic-14"></i> <span>Kiểm tra đã chọn</span>
         </button>
         <button class="btn btn-sm btn-d" id="btnBatchDeleteVocab" onclick="batchDeleteVocab()" disabled style="display:inline-flex; align-items:center; gap:6px;">
          <i data-lucide="trash-2" class="ic-14"></i> <span id="txtBatchDelete">Xóa đã chọn (0)</span>
@@ -1465,18 +1471,18 @@ window.getCurrentUser = () => currentUser;
  }
 </script>
 <script src="js/data.js?v=2"></script>
-<script src="js/workspace.js?v=1788955490688"></script>
-<script src="js/projViews.js?v=1788955490688"></script>
-<script src="js/main.js?v=1788955490688"></script>
-<script src="js/modules/todos.js?v=1788955490688"></script>
-<script src="js/modules/notes.js?v=1788955490688"></script>
-<script src="js/modules/habits.js?v=1788955490688"></script>
-<script src="js/modules/goals.js?v=1788955490688"></script>
-<script src="js/modules/journal.js?v=1788955490688"></script>
-<script src="js/modules/pomodoro.js?v=1788955490688"></script>
-<script src="js/modules/vocab.js?v=1788955490688"></script>
-<script src="js/modules/mocktests.js?v=1788955490688"></script>
-<script src="js/modules/cmd.js?v=1788955490688"></script>
+<script src="js/workspace.js?v=1788956761214"></script>
+<script src="js/projViews.js?v=1788956761214"></script>
+<script src="js/main.js?v=1788956761214"></script>
+<script src="js/modules/todos.js?v=1788956761214"></script>
+<script src="js/modules/notes.js?v=1788956761214"></script>
+<script src="js/modules/habits.js?v=1788956761214"></script>
+<script src="js/modules/goals.js?v=1788956761214"></script>
+<script src="js/modules/journal.js?v=1788956761214"></script>
+<script src="js/modules/pomodoro.js?v=1788956761214"></script>
+<script src="js/modules/vocab.js?v=1788956761214"></script>
+<script src="js/modules/mocktests.js?v=1788956761214"></script>
+<script src="js/modules/cmd.js?v=1788956761214"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1720,12 +1726,137 @@ window.getCurrentUser = () => currentUser;
   <div class="mb-body" style="flex:1; overflow-y:auto; padding:12px 20px 16px;">
    <div id="ddWordsList" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
-  <div class="form-actions" style="display:flex; justify-content:space-between; align-items:center; padding:12px 20px; border-top:1px solid var(--border); margin:0; background:var(--surface);">
+  <div class="form-actions" style="display:flex; justify-content:space-between; align-items:center; padding:12px 20px; border-top:1px solid var(--border); margin:0; background:var(--surface); flex-wrap:wrap; gap:8px;">
    <button class="btn btn-sm btn-outline" onclick="closeModal('mDeckDetail')">Đóng</button>
-   <div style="display:flex; gap:8px;">
+   <div style="display:flex; gap:8px; flex-wrap:wrap;">
     <button class="btn btn-sm btn-outline" id="btnCloneDeck" onclick="cloneCurrentDeckToPersonal()"><i data-lucide="download" class="ic-14"></i> <span>Lưu về kho cá nhân</span></button>
-    <button class="btn btn-sm btn-p" id="btnStudyDeck" onclick="studyCurrentDeck()"><i data-lucide="play" class="ic-14"></i> <span>🃏 Học ngay (Lật thẻ)</span></button>
+    <button class="btn btn-sm btn-outline" id="btnTestDeck" onclick="testCurrentDeck()" style="border-color:var(--accent-cyan); color:var(--accent-cyan); background:rgba(0,229,255,0.06);"><i data-lucide="edit-3" class="ic-14"></i> <span>📝 Kiểm tra (Gõ từ)</span></button>
+    <button class="btn btn-sm btn-p" id="btnStudyDeck" onclick="studyCurrentDeck()"><i data-lucide="play" class="ic-14"></i> <span>🃏 Lật thẻ</span></button>
    </div>
+  </div>
+ </div>
+</div>
+
+<!-- VOCAB TEST / QUIZ MODAL -->
+<div class="overlay" id="mTestVocab" onclick="if(event.target===this)closeVocabTestModal()">
+ <div class="modal" style="max-width:540px; background:transparent; box-shadow:none; pointer-events:none;">
+  <div class="vtest-container" style="pointer-events:auto;">
+   
+   <!-- HEADER -->
+   <div class="mh" style="border-bottom:1px solid var(--border); padding:14px 20px; display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; align-items:center; gap:8px;">
+     <i data-lucide="edit-3" class="ic-18" style="color:var(--accent-cyan);"></i>
+     <div>
+      <h3 id="vtHeaderTitle" style="font-size:15px; font-weight:700; margin:0; line-height:1.2;">Kiểm tra từ vựng</h3>
+      <div id="vtHeaderSubtitle" style="font-size:11.5px; color:var(--text3); margin-top:2px;">Gõ từ tiếng Anh tương ứng với nghĩa</div>
+     </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+     <span class="badge" id="vtScoreBadge" style="background:rgba(0,229,255,0.15); color:var(--accent-cyan); font-weight:700; font-size:11.5px; padding:3px 8px; border-radius:12px;">0/0 đúng</span>
+     <button class="mclose" onclick="closeVocabTestModal()" style="margin:0;">✕</button>
+    </div>
+   </div>
+
+   <!-- PROGRESS BAR -->
+   <div class="vtest-progress-bar-bg">
+    <div id="vtProgressBar" class="vtest-progress-bar-fill" style="width:0%;"></div>
+   </div>
+
+   <!-- 1. QUESTION PLAY AREA -->
+   <div id="vTestPlayArea" style="padding:22px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+     <span id="vtQuestionCount" style="font-size:12px; font-weight:600; color:var(--text3);">Câu hỏi 1/10</span>
+     <span id="vtWordTypeBadge" class="badge" style="background:var(--surface2); color:var(--text2); font-size:11px; padding:2px 8px; border-radius:6px;">(n)</span>
+    </div>
+
+    <!-- PROMPT CARD (VIETNAMESE MEANING) -->
+    <div class="vtest-prompt-card">
+     <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text3); font-weight:600;">🇻🇳 Nghĩa tiếng Việt:</div>
+     <div id="vtPromptMeaning" class="vtest-prompt-mean">Môi trường</div>
+     <div id="vtContextWrap" style="display:none;">
+      <div class="vtest-context" id="vtContextSentence">We need to protect the _______.</div>
+     </div>
+    </div>
+
+    <!-- HINT & LETTER COUNT ROW -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:14px 0 10px;">
+     <button type="button" class="btn btn-sm btn-outline" id="btnVtHint" onclick="showTestHint()" style="font-size:11.5px; padding:3px 9px; display:inline-flex; align-items:center; gap:4px; border-style:dashed;">
+      <i data-lucide="lightbulb" style="width:12px; height:12px; color:#ffb703;"></i> <span id="txtVtHint">💡 Gợi ý chữ cái</span>
+     </button>
+     <span id="vtLetterCount" style="font-size:11.5px; color:var(--text3); font-family:monospace;"></span>
+    </div>
+
+    <!-- INPUT FORM -->
+    <form id="vtInputForm" onsubmit="event.preventDefault(); handleVocabTestSubmit();" style="margin:0;">
+     <div style="position:relative;">
+      <input type="text" id="vocabTestInput" class="vtest-input" placeholder="Gõ từ tiếng Anh tại đây..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+     </div>
+
+     <!-- ACTION BUTTONS (BEFORE CHECKING) -->
+     <div id="vtActionsPreCheck" style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:14px;">
+      <button type="button" class="btn btn-outline" onclick="skipTestQuestion()" style="font-size:12.5px; color:var(--text3);">
+       <span>Bỏ qua / Chưa nhớ</span>
+      </button>
+      <button type="submit" class="btn btn-p" style="font-size:13px; font-weight:600; padding:9px 20px; display:inline-flex; align-items:center; gap:6px;">
+       <span>Kiểm tra</span> <i data-lucide="corner-down-left" class="ic-14"></i>
+      </button>
+     </div>
+    </form>
+
+    <!-- FEEDBACK BOX (AFTER CHECKING) -->
+    <div id="vtFeedbackBox" style="display:none;" class="vtest-feedback-box">
+     <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:8px;">
+       <span id="vtFeedbackIcon" style="font-size:20px;">🎉</span>
+       <div>
+        <div id="vtFeedbackTitle" style="font-weight:700; font-size:15px;">Chính xác!</div>
+        <div id="vtFeedbackDetail" style="font-size:12.5px; margin-top:2px;"></div>
+       </div>
+      </div>
+      <button type="button" class="btn-audio" id="btnVtAudio" onclick="speakCurrentTestWord()" style="width:32px; height:32px; background:var(--surface2);" title="Nghe phát âm">
+       <i data-lucide="volume-2" class="ic-16"></i>
+      </button>
+     </div>
+
+     <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+      <button type="button" class="btn btn-p" id="btnVtNext" onclick="nextTestQuestion()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600;">
+       <span id="txtVtNext">Câu tiếp theo</span> <i data-lucide="arrow-right" class="ic-14"></i>
+      </button>
+     </div>
+    </div>
+
+   </div>
+
+   <!-- 2. SUMMARY AREA -->
+   <div id="vTestSummaryArea" style="display:none; padding:22px;">
+    <div class="vtest-summary-card">
+     <div id="vtSummaryBadge" style="font-size:36px; margin-bottom:6px;">🏆</div>
+     <h2 id="vtSummaryTitle" style="font-size:20px; font-weight:800; color:var(--text-hi); margin:0 0 6px;">Hoàn thành bài kiểm tra!</h2>
+     <div id="vtSummaryScore" style="font-size:28px; font-weight:800; color:var(--accent); margin-bottom:6px;">8 / 10</div>
+     <div id="vtSummaryPercent" style="font-size:13px; color:var(--text2);">Độ chính xác: 80%</div>
+    </div>
+
+    <!-- REVIEW WORDS LIST -->
+    <div style="font-size:13px; font-weight:700; color:var(--text-hi); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+     <span>Chi tiết bài làm:</span>
+     <span id="vtSummaryCount" style="font-size:11.5px; color:var(--text3);"></span>
+    </div>
+    <div id="vtSummaryList" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
+
+    <!-- SUMMARY ACTIONS -->
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; border-top:1px solid var(--border); padding-top:14px; flex-wrap:wrap;">
+     <button class="btn btn-outline" onclick="closeVocabTestModal()">Đóng</button>
+     <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-outline" id="btnVtRetryWrong" onclick="retryWrongVocabTest()" style="display:none; border-color:var(--red); color:var(--red); gap:6px; align-items:center;">
+       <i data-lucide="repeat" class="ic-14"></i> <span>Luyện lại từ sai (<span id="txtVtWrongCount">0</span>)</span>
+      </button>
+      <button class="btn btn-p" onclick="restartVocabTest()" style="display:inline-flex; align-items:center; gap:6px;">
+       <i data-lucide="rotate-ccw" class="ic-14"></i> <span>Làm lại từ đầu</span>
+      </button>
+     </div>
+    </div>
+   </div>
+
   </div>
  </div>
 </div>
@@ -1764,7 +1895,7 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 <script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
-<script src="js/modules/export.js?v=1788955490688"></script>
+<script src="js/modules/export.js?v=1788956761214"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">

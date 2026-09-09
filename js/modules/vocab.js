@@ -1419,7 +1419,10 @@ function renderCommunityDecksUI() {
 
     <div class="deck-card-actions" onclick="event.stopPropagation();" style="display:flex; gap:6px; align-items:center; border-top:1px solid var(--border); padding-top:10px;">
      <button class="btn btn-sm btn-p" onclick="reviewSharedVocabDeck('${d.id}')" style="flex:1; padding:4px 8px; font-size:11.5px; display:inline-flex; align-items:center; justify-content:center; gap:4px;" title="Học lật thẻ ngay">
-      <i data-lucide="play" style="width:12px;height:12px;"></i> <span>Học ngay</span>
+      <i data-lucide="play" style="width:12px;height:12px;"></i> <span>Lật thẻ</span>
+     </button>
+     <button class="btn btn-sm btn-outline" onclick="startVocabTest('deck', '${d.id}')" style="padding:4px 8px; font-size:11.5px; display:inline-flex; align-items:center; gap:4px; border-color:var(--accent-cyan); color:var(--accent-cyan); background:rgba(0,229,255,0.06);" title="Kiểm tra gõ từ tiếng Anh theo nghĩa tiếng Việt">
+      <i data-lucide="edit-3" style="width:12px;height:12px;"></i> <span>Test</span>
      </button>
      <button class="btn btn-sm btn-outline" onclick="importSharedDeckToPersonal('${d.id}')" style="padding:4px 8px; font-size:11.5px; display:inline-flex; align-items:center; gap:4px;" title="Lưu từ vào kho cá nhân">
       <i data-lucide="download" style="width:12px;height:12px;"></i> <span>Lưu về</span>
@@ -1489,6 +1492,12 @@ function studyCurrentDeck() {
  if (!currentViewingDeck) return;
  closeModal('mDeckDetail');
  reviewSharedVocabDeck(currentViewingDeck.id);
+}
+
+function testCurrentDeck() {
+ if (!currentViewingDeck) return;
+ closeModal('mDeckDetail');
+ startVocabTest('deck', currentViewingDeck.id);
 }
 
 function reviewSharedVocabDeck(deckId) {
@@ -1590,6 +1599,402 @@ async function deleteSharedDeck(deckId) {
  renderCommunityDecksUI();
 }
 
+
+// ════════════════════════════════════════════════════════════
+// VOCABULARY TEST / QUIZ (TYPING TEST: VIETNAMESE -> ENGLISH)
+// ════════════════════════════════════════════════════════════
+
+let testVocabList = [];
+let testOriginalList = [];
+let testCurrentIdx = 0;
+let testScore = 0;
+let testWrongList = [];
+let testHistory = [];
+let testIsAnswered = false;
+let testSourceTitle = '';
+
+function normalizeVocabWord(str) {
+ if (!str) return '';
+ return str.toLowerCase()
+   .replace(/\s*\([^)]*\)/g, '') // remove parentheticals
+   .replace(/[.,\/#!$%\^&\*;:{}=\-_\`~()?]/g, ' ') // punctuation to space
+   .replace(/\s+/g, ' ')
+   .trim();
+}
+
+function startVocabTest(sourceType, deckIdOrList) {
+ let source = [];
+ let title = 'Kho từ vựng cá nhân';
+
+ if (sourceType === 'personal') {
+  source = window.DB.vocab || [];
+  title = 'Kho từ vựng cá nhân';
+ } else if (sourceType === 'selected') {
+  const all = window.DB.vocab || [];
+  source = all.filter(v => selectedVocabIds.has(v.id));
+  title = `Đã chọn (${source.length} từ)`;
+ } else if (sourceType === 'deck') {
+  const deck = communityDecksCache.find(d => d.id === deckIdOrList);
+  if (!deck || !deck.words || !deck.words.length) {
+   toast('Bộ từ vựng này không có dữ liệu để kiểm tra!', 'error');
+   return;
+  }
+  source = deck.words;
+  title = deck.title;
+ } else if (sourceType === 'custom') {
+  source = Array.isArray(deckIdOrList) ? deckIdOrList : [];
+  title = 'Ôn luyện từ sai';
+ }
+
+ if (!source || !source.length) {
+  toast('Chưa có từ vựng nào để làm bài kiểm tra!', 'error');
+  return;
+ }
+
+ testOriginalList = [...source];
+ testVocabList = [...source].sort(() => Math.random() - 0.5);
+ testCurrentIdx = 0;
+ testScore = 0;
+ testWrongList = [];
+ testHistory = [];
+ testIsAnswered = false;
+ testSourceTitle = title;
+
+ const headerSub = document.getElementById('vtHeaderSubtitle');
+ if (headerSub) headerSub.textContent = title;
+
+ const playArea = document.getElementById('vTestPlayArea');
+ const sumArea = document.getElementById('vTestSummaryArea');
+ if (playArea) playArea.style.display = 'block';
+ if (sumArea) sumArea.style.display = 'none';
+
+ openModal('mTestVocab');
+ renderTestQuestion();
+ if (window.lucide) window.lucide.createIcons();
+}
+
+function renderTestQuestion() {
+ if (testCurrentIdx >= testVocabList.length) {
+  finishVocabTest();
+  return;
+ }
+
+ testIsAnswered = false;
+ const curr = testVocabList[testCurrentIdx];
+ const total = testVocabList.length;
+
+ const scoreBadge = document.getElementById('vtScoreBadge');
+ if (scoreBadge) scoreBadge.textContent = `${testScore}/${total} đúng`;
+
+ const progBar = document.getElementById('vtProgressBar');
+ if (progBar) {
+  const pct = Math.round((testCurrentIdx / total) * 100);
+  progBar.style.width = `${pct}%`;
+ }
+
+ const qCount = document.getElementById('vtQuestionCount');
+ if (qCount) qCount.textContent = `Câu hỏi ${testCurrentIdx + 1}/${total}`;
+
+ const typeBadge = document.getElementById('vtWordTypeBadge');
+ if (typeBadge) typeBadge.textContent = '(' + (curr.type || 'n') + ')';
+
+ const meanEl = document.getElementById('vtPromptMeaning');
+ if (meanEl) meanEl.textContent = curr.mean || '(Chưa có nghĩa)';
+
+ const contextWrap = document.getElementById('vtContextWrap');
+ const contextSentence = document.getElementById('vtContextSentence');
+ if (curr.ex && curr.ex.trim()) {
+  let sentence = curr.ex.trim();
+  const cleanWord = (curr.word || '').trim();
+  const escWord = cleanWord.replace(/[.*+?^${}()|[\]\\]/g, '\\// Auto-check deep link (?deck=...) on startup');
+  const regex = new RegExp('\\b' + escWord + '(\\w*)', 'gi');
+  if (regex.test(sentence)) {
+   sentence = sentence.replace(regex, '_______');
+  } else {
+   sentence = sentence.replace(new RegExp(escWord, 'gi'), '_______');
+  }
+  if (contextSentence) contextSentence.textContent = sentence;
+  if (contextWrap) contextWrap.style.display = 'block';
+ } else {
+  if (contextWrap) contextWrap.style.display = 'none';
+ }
+
+ const hintBtn = document.getElementById('btnVtHint');
+ const hintTxt = document.getElementById('txtVtHint');
+ const letterEl = document.getElementById('vtLetterCount');
+ if (hintBtn) hintBtn.disabled = false;
+ if (hintTxt) hintTxt.textContent = '💡 Gợi ý chữ cái';
+ if (letterEl) {
+  const len = (curr.word || '').trim().length;
+  letterEl.textContent = `${len} chữ cái`;
+ }
+
+ const input = document.getElementById('vocabTestInput');
+ if (input) {
+  input.value = '';
+  input.disabled = false;
+  input.className = 'vtest-input';
+  setTimeout(() => {
+   input.focus();
+  }, 100);
+ }
+
+ const preActions = document.getElementById('vtActionsPreCheck');
+ const feedbackBox = document.getElementById('vtFeedbackBox');
+ if (preActions) preActions.style.display = 'flex';
+ if (feedbackBox) feedbackBox.style.display = 'none';
+
+ if (window.lucide) window.lucide.createIcons();
+}
+
+function showTestHint() {
+ const curr = testVocabList[testCurrentIdx];
+ if (!curr) return;
+ const word = (curr.word || '').trim();
+ if (!word) return;
+
+ const firstChar = word.charAt(0).toUpperCase();
+ const len = word.length;
+ const hintPattern = `${firstChar} ` + `_ `.repeat(Math.max(0, len - 1)).trim() + ` (${len} chữ cái)`;
+
+ const letterEl = document.getElementById('vtLetterCount');
+ if (letterEl) letterEl.textContent = hintPattern;
+
+ const hintBtn = document.getElementById('btnVtHint');
+ const hintTxt = document.getElementById('txtVtHint');
+ if (hintBtn) hintBtn.disabled = true;
+ if (hintTxt) hintTxt.textContent = 'Đã mở gợi ý';
+
+ document.getElementById('vocabTestInput')?.focus();
+}
+
+function checkTestAnswer() {
+ if (testIsAnswered) return;
+ const curr = testVocabList[testCurrentIdx];
+ if (!curr) return;
+
+ const inputEl = document.getElementById('vocabTestInput');
+ const rawInput = inputEl ? inputEl.value.trim() : '';
+
+ if (!rawInput) {
+  toast('Vui lòng gõ từ tiếng Anh hoặc bấm "Bỏ qua"!', 'info');
+  inputEl?.focus();
+  return;
+ }
+
+ testIsAnswered = true;
+ const normUser = normalizeVocabWord(rawInput);
+ const normCorrect = normalizeVocabWord(curr.word);
+
+ const alternatives = (curr.word || '').split(/[\/,]/).map(w => normalizeVocabWord(w));
+ const isCorrect = (normUser === normCorrect) || alternatives.includes(normUser);
+
+ testHistory.push({
+  word: curr.word,
+  mean: curr.mean,
+  pron: curr.pron || '',
+  type: curr.type || 'n',
+  ex: curr.ex || '',
+  userAns: rawInput,
+  isCorrect: isCorrect
+ });
+
+ if (inputEl) inputEl.disabled = true;
+
+ const preActions = document.getElementById('vtActionsPreCheck');
+ const feedbackBox = document.getElementById('vtFeedbackBox');
+ const fbIcon = document.getElementById('vtFeedbackIcon');
+ const fbTitle = document.getElementById('vtFeedbackTitle');
+ const fbDetail = document.getElementById('vtFeedbackDetail');
+ const nextTxt = document.getElementById('txtVtNext');
+
+ if (preActions) preActions.style.display = 'none';
+ if (feedbackBox) feedbackBox.style.display = 'block';
+
+ const isLast = testCurrentIdx >= testVocabList.length - 1;
+ if (nextTxt) nextTxt.textContent = isLast ? 'Xem kết quả' : 'Câu tiếp theo';
+
+ if (isCorrect) {
+  testScore++;
+  if (feedbackBox) feedbackBox.className = 'vtest-feedback-box correct';
+  if (fbIcon) fbIcon.textContent = '🎉';
+  if (fbTitle) fbTitle.textContent = 'Chính xác! Rất xuất sắc!';
+  if (fbDetail) {
+   fbDetail.innerHTML = `<b style="font-size:15px; color:#2ed573;">${curr.word}</b> ${curr.pron ? `<span style="color:var(--text2); font-size:12px; margin-left:6px;">${curr.pron}</span>` : ''}`;
+  }
+  speakWord(curr.word);
+ } else {
+  testWrongList.push(curr);
+  if (feedbackBox) feedbackBox.className = 'vtest-feedback-box wrong';
+  if (fbIcon) fbIcon.textContent = '❌';
+  if (fbTitle) fbTitle.textContent = 'Chưa chính xác!';
+  if (fbDetail) {
+   fbDetail.innerHTML = `Bạn gõ: <s style="opacity:0.8;">${rawInput}</s> &bull; Đáp án đúng: <b style="font-size:15px; color:var(--text-hi); margin-left:4px;">${curr.word}</b> ${curr.pron ? `<span style="color:var(--text2); font-size:12px; margin-left:4px;">${curr.pron}</span>` : ''}`;
+  }
+ }
+
+ const scoreBadge = document.getElementById('vtScoreBadge');
+ if (scoreBadge) scoreBadge.textContent = `${testScore}/${testVocabList.length} đúng`;
+
+ document.getElementById('btnVtNext')?.focus();
+ if (window.lucide) window.lucide.createIcons();
+}
+
+function skipTestQuestion() {
+ if (testIsAnswered) return;
+ const curr = testVocabList[testCurrentIdx];
+ if (!curr) return;
+
+ testIsAnswered = true;
+ testWrongList.push(curr);
+ testHistory.push({
+  word: curr.word,
+  mean: curr.mean,
+  pron: curr.pron || '',
+  type: curr.type || 'n',
+  ex: curr.ex || '',
+  userAns: '(Bỏ qua)',
+  isCorrect: false
+ });
+
+ const inputEl = document.getElementById('vocabTestInput');
+ if (inputEl) inputEl.disabled = true;
+
+ const preActions = document.getElementById('vtActionsPreCheck');
+ const feedbackBox = document.getElementById('vtFeedbackBox');
+ const fbIcon = document.getElementById('vtFeedbackIcon');
+ const fbTitle = document.getElementById('vtFeedbackTitle');
+ const fbDetail = document.getElementById('vtFeedbackDetail');
+ const nextTxt = document.getElementById('txtVtNext');
+
+ if (preActions) preActions.style.display = 'none';
+ if (feedbackBox) {
+  feedbackBox.style.display = 'block';
+  feedbackBox.className = 'vtest-feedback-box wrong';
+ }
+ if (fbIcon) fbIcon.textContent = '💡';
+ if (fbTitle) fbTitle.textContent = 'Đáp án đúng:';
+ if (fbDetail) {
+  fbDetail.innerHTML = `<b style="font-size:15px; color:var(--text-hi);">${curr.word}</b> ${curr.pron ? `<span style="color:var(--text2); font-size:12px; margin-left:4px;">${curr.pron}</span>` : ''}`;
+ }
+
+ const isLast = testCurrentIdx >= testVocabList.length - 1;
+ if (nextTxt) nextTxt.textContent = isLast ? 'Xem kết quả' : 'Câu tiếp theo';
+
+ document.getElementById('btnVtNext')?.focus();
+ if (window.lucide) window.lucide.createIcons();
+}
+
+function nextTestQuestion() {
+ testCurrentIdx++;
+ renderTestQuestion();
+}
+
+function speakCurrentTestWord() {
+ const curr = testVocabList[testCurrentIdx];
+ if (curr && curr.word) speakWord(curr.word);
+}
+
+function handleVocabTestSubmit() {
+ if (!testIsAnswered) {
+  checkTestAnswer();
+ } else {
+  nextTestQuestion();
+ }
+}
+
+function finishVocabTest() {
+ const progBar = document.getElementById('vtProgressBar');
+ if (progBar) progBar.style.width = '100%';
+
+ const playArea = document.getElementById('vTestPlayArea');
+ const sumArea = document.getElementById('vTestSummaryArea');
+ if (playArea) playArea.style.display = 'none';
+ if (sumArea) sumArea.style.display = 'block';
+
+ const total = testVocabList.length;
+ const pct = Math.round((testScore / Math.max(1, total)) * 100);
+
+ const scoreEl = document.getElementById('vtSummaryScore');
+ if (scoreEl) scoreEl.textContent = `${testScore} / ${total}`;
+
+ const pctEl = document.getElementById('vtSummaryPercent');
+ if (pctEl) pctEl.textContent = `Tỉ lệ chính xác: ${pct}%`;
+
+ const badgeEl = document.getElementById('vtSummaryBadge');
+ const titleEl = document.getElementById('vtSummaryTitle');
+
+ if (pct >= 80) {
+  if (badgeEl) badgeEl.textContent = '🏆';
+  if (titleEl) titleEl.textContent = 'Xuất sắc! Bạn nhớ từ rất tốt! 🔥';
+  toast(`🎉 Xuất sắc! Bạn đạt ${pct}% trong bài kiểm tra từ vựng!`, 'success');
+ } else if (pct >= 50) {
+  if (badgeEl) badgeEl.textContent = '👍';
+  if (titleEl) titleEl.textContent = 'Khá tốt! Hãy tiếp tục rèn luyện nhé! ✨';
+ } else {
+  if (badgeEl) badgeEl.textContent = '💪';
+  if (titleEl) titleEl.textContent = 'Cần luyện tập thêm! Hãy ôn lại các từ sai nhé! 🎯';
+ }
+
+ const listEl = document.getElementById('vtSummaryList');
+ const countEl = document.getElementById('vtSummaryCount');
+ if (countEl) countEl.textContent = `${testScore} đúng • ${testWrongList.length} sai`;
+
+ if (listEl) {
+  listEl.innerHTML = testHistory.map(h => `
+   <div class="vtest-word-row" style="border-left:3px solid ${h.isCorrect ? '#2ed573' : '#ff4757'};">
+    <div style="display:flex; flex-direction:column; gap:2px;">
+     <div style="display:flex; align-items:center; gap:8px;">
+      <span style="font-weight:700; font-size:14px; color:var(--text-hi);">${h.word}</span>
+      <span style="font-size:11px; color:var(--text3);">(${h.type})</span>
+      ${h.pron ? `<span style="font-size:11px; color:var(--text2);">${h.pron}</span>` : ''}
+     </div>
+     <div style="font-size:12px; color:var(--text2);">${h.mean}</div>
+     ${!h.isCorrect ? `<div style="font-size:11.5px; color:#ff4757;">Bạn đã gõ: <s>${h.userAns}</s></div>` : ''}
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+     <span style="font-size:16px;">${h.isCorrect ? '✅' : '❌'}</span>
+     <button class="btn-audio" onclick="speakWord('${(h.word || '').replace(/'/g, "\\'")}')" style="width:24px; height:24px;">
+      <i data-lucide="volume-2" style="width:13px; height:13px;"></i>
+     </button>
+    </div>
+   </div>
+  `).join('');
+ }
+
+ const retryWrongBtn = document.getElementById('btnVtRetryWrong');
+ const wrongCountTxt = document.getElementById('txtVtWrongCount');
+ if (retryWrongBtn && wrongCountTxt) {
+  if (testWrongList.length > 0) {
+   retryWrongBtn.style.display = 'inline-flex';
+   wrongCountTxt.textContent = testWrongList.length;
+  } else {
+   retryWrongBtn.style.display = 'none';
+  }
+ }
+
+ if (window.lucide) window.lucide.createIcons();
+}
+
+function retryWrongVocabTest() {
+ if (!testWrongList.length) {
+  toast('Bạn không có từ nào làm sai!', 'info');
+  return;
+ }
+ startVocabTest('custom', [...testWrongList]);
+}
+
+function restartVocabTest() {
+ startVocabTest('custom', [...testOriginalList]);
+}
+
+function closeVocabTestModal() {
+ if (testCurrentIdx < testVocabList.length && !testIsAnswered && testCurrentIdx > 0) {
+  if (!confirm('Bạn có chắc muốn dừng bài kiểm tra từ vựng đang làm dở?')) return;
+ }
+ closeModal('mTestVocab');
+}
+
 // Auto-check deep link (?deck=...) on startup
 setTimeout(() => {
  try {
@@ -1620,4 +2025,16 @@ window.studyCurrentDeck = studyCurrentDeck;
 window.reviewSharedVocabDeck = reviewSharedVocabDeck;
 window.importSharedDeckToPersonal = importSharedDeckToPersonal;
 window.deleteSharedDeck = deleteSharedDeck;
+window.startVocabTest = startVocabTest;
+window.testCurrentDeck = testCurrentDeck;
+window.renderTestQuestion = renderTestQuestion;
+window.showTestHint = showTestHint;
+window.checkTestAnswer = checkTestAnswer;
+window.skipTestQuestion = skipTestQuestion;
+window.nextTestQuestion = nextTestQuestion;
+window.speakCurrentTestWord = speakCurrentTestWord;
+window.handleVocabTestSubmit = handleVocabTestSubmit;
+window.retryWrongVocabTest = retryWrongVocabTest;
+window.restartVocabTest = restartVocabTest;
+window.closeVocabTestModal = closeVocabTestModal;
 
