@@ -287,7 +287,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1788965088764">
+<link rel="stylesheet" href="css/style.css?v=1788965647326">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -1470,19 +1470,19 @@ window.getCurrentUser = () => currentUser;
   window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
  }
 </script>
-<script src="js/data.js?v=2"></script>
-<script src="js/workspace.js?v=1788965088764"></script>
-<script src="js/projViews.js?v=1788965088764"></script>
-<script src="js/main.js?v=1788965088764"></script>
-<script src="js/modules/todos.js?v=1788965088764"></script>
-<script src="js/modules/notes.js?v=1788965088764"></script>
-<script src="js/modules/habits.js?v=1788965088764"></script>
-<script src="js/modules/goals.js?v=1788965088764"></script>
-<script src="js/modules/journal.js?v=1788965088764"></script>
-<script src="js/modules/pomodoro.js?v=1788965088764"></script>
-<script src="js/modules/vocab.js?v=1788965088764"></script>
-<script src="js/modules/mocktests.js?v=1788965088764"></script>
-<script src="js/modules/cmd.js?v=1788965088764"></script>
+<script src="js/data.js?v=1788965647326"></script>
+<script src="js/workspace.js?v=1788965647326"></script>
+<script src="js/projViews.js?v=1788965647326"></script>
+<script src="js/main.js?v=1788965647326"></script>
+<script src="js/modules/todos.js?v=1788965647326"></script>
+<script src="js/modules/notes.js?v=1788965647326"></script>
+<script src="js/modules/habits.js?v=1788965647326"></script>
+<script src="js/modules/goals.js?v=1788965647326"></script>
+<script src="js/modules/journal.js?v=1788965647326"></script>
+<script src="js/modules/pomodoro.js?v=1788965647326"></script>
+<script src="js/modules/vocab.js?v=1788965647326"></script>
+<script src="js/modules/mocktests.js?v=1788965647326"></script>
+<script src="js/modules/cmd.js?v=1788965647326"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1861,6 +1861,76 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 
+
+<!-- GEMINI AI KEY CONFIG MODAL -->
+<div class="overlay" id="mAiKeyConfig" onclick="if(event.target===this)closeModal('mAiKeyConfig')">
+ <div class="modal" style="max-width:500px; padding:0; overflow:hidden; border-radius:14px; border:1px solid var(--border);">
+  <div class="mh" style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+   <div style="display:flex; align-items:center; gap:8px;">
+    <i data-lucide="key" class="ic-18" style="color:var(--accent);"></i>
+    <h3 style="margin:0; font-size:16px; font-weight:700;">Cấu hình Google Gemini AI Key</h3>
+   </div>
+   <button class="mclose" onclick="closeModal('mAiKeyConfig')">✕</button>
+  </div>
+
+  <div class="mb-body" style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+   <!-- Instructions Box -->
+   <div style="background:rgba(124,77,255,0.08); border:1px solid rgba(124,77,255,0.25); border-radius:10px; padding:12px 14px; font-size:12.5px; line-height:1.5;">
+    <div style="font-weight:700; color:var(--accent-light); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+     <i data-lucide="info" class="ic-14"></i> Cách lấy Gemini API Key miễn phí (100% Free):
+    </div>
+    <ol style="margin:0; padding-left:18px; color:var(--text2); display:flex; flex-direction:column; gap:4px;">
+     <li>Mở trang: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent-cyan); font-weight:600; text-decoration:underline;">Google AI Studio (aistudio.google.com)</a></li>
+     <li>Đăng nhập tài khoản Google (Gmail)</li>
+     <li>Bấm nút <b>"Create API key"</b> (Tạo khóa API)</li>
+     <li>Sao chép mã bắt đầu bằng <b><code>AIzaSy...</code></b> rồi dán vào ô dưới.</li>
+    </ol>
+    <div style="margin-top:6px; font-size:11.5px; color:var(--amber);">
+     ⚠️ <i>Lưu ý: Không dùng mã "OAuth Client ID" hoặc service account. Key đúng luôn có dạng <b>AIzaSy...</b> (khoảng 39 ký tự).</i>
+    </div>
+   </div>
+
+   <!-- Input Field -->
+   <div class="fg" style="margin:0;">
+    <label style="font-size:12.5px; font-weight:600; margin-bottom:6px; display:flex; justify-content:space-between;">
+     <span>Gemini API Key của bạn</span>
+     <span id="aiKeyStatusText" style="font-size:11px; font-weight:normal; color:var(--text3);"></span>
+    </label>
+    <div style="position:relative; display:flex; align-items:center;">
+     <input type="password" id="aiKeyInput" class="inp" placeholder="Dán mã AIzaSy... vào đây" style="padding-right:75px; font-family:monospace; font-size:13px; width:100%;">
+     <div style="position:absolute; right:8px; display:flex; gap:4px;">
+      <button type="button" class="btn-sm btn-outline" onclick="toggleAiKeyVisibility()" id="btnToggleAiKeyEye" style="padding:4px 7px; border:none; background:transparent;" title="Ẩn/Hiện Key">
+       <i data-lucide="eye" class="ic-14"></i>
+      </button>
+      <button type="button" class="btn-sm btn-outline" onclick="pasteAiKeyFromClipboard()" style="padding:4px 7px; font-size:11px;" title="Dán từ Clipboard">
+       Dán
+      </button>
+     </div>
+    </div>
+   </div>
+
+   <!-- Test Connection Feedback Box -->
+   <div id="aiKeyTestFeedback" style="display:none; border-radius:8px; padding:10px 14px; font-size:12.5px; line-height:1.4;"></div>
+
+   <!-- Action Buttons -->
+   <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap;">
+    <div>
+     <button type="button" class="btn btn-outline btn-sm" id="btnTestAiKey" onclick="testGeminiApiKey()" style="display:inline-flex; align-items:center; gap:5px; border-color:var(--accent-cyan); color:var(--accent-cyan); background:rgba(0,229,255,0.06);">
+      <i data-lucide="sparkles" class="ic-14"></i> <span id="txtTestAiKey">Kiểm tra kết nối</span>
+     </button>
+     <button type="button" class="btn btn-sm" onclick="clearAiKey()" style="color:var(--red); background:transparent; border:none; font-size:12px; margin-left:6px;">
+      Xóa Key
+     </button>
+    </div>
+    <div style="display:flex; gap:8px;">
+     <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('mAiKeyConfig')">Đóng</button>
+     <button type="button" class="btn btn-p btn-sm" onclick="saveGeminiApiKey()"><i data-lucide="check" class="ic-14"></i> Lưu Key</button>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
 <!-- SETTINGS MODAL -->
 <div class="overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
  <div class="modal" style="max-width:480px">
@@ -1894,8 +1964,8 @@ window.getCurrentUser = () => currentUser;
   </div>
  </div>
 </div>
-<script type="module" src="js/modules/ai/chat.js?v=1787590053930"></script>
-<script src="js/modules/export.js?v=1788965088764"></script>
+<script type="module" src="js/modules/ai/chat.js?v=1788965647326"></script>
+<script src="js/modules/export.js?v=1788965647326"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">

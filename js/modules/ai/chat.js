@@ -92,18 +92,203 @@ window.closeAiModal = function() {
   if (m) m.style.display = 'none';
 };
 
+function cleanApiKey(str) {
+  if (!str) return '';
+  return str.trim()
+    .replace(/^[\"']|[\"']$/g, '')
+    .replace(/^Bearer\s+/i, '')
+    .trim();
+}
+
+window.cleanApiKey = cleanApiKey;
+
 window.openAiKeyModal = function() {
-  const cur = localStorage.getItem('lifeos_gemini_key') || '';
-  const key = prompt('Nhập Gemini API Key của bạn (miễn phí tại https://aistudio.google.com):', cur);
-  if (key !== null) {
-    const trimmed = key.trim();
-    localStorage.setItem('lifeos_gemini_key', trimmed);
-    if (trimmed) {
-      toast('Đã lưu Gemini API Key!', 'success');
-      appendMessage('ai', '✅ **Đã kết nối Gemini API Key thành công!** Bạn có thể ra lệnh và trò chuyện tự nhiên ngay bây giờ.');
-    } else {
-      toast('Đã xóa Gemini API Key', 'info');
+  const modal = document.getElementById('mAiKeyConfig');
+  const input = document.getElementById('aiKeyInput');
+  const statusTxt = document.getElementById('aiKeyStatusText');
+  const feedback = document.getElementById('aiKeyTestFeedback');
+  
+  if (feedback) {
+    feedback.style.display = 'none';
+    feedback.innerHTML = '';
+  }
+
+  const curKey = localStorage.getItem('lifeos_gemini_key') || '';
+  if (input) {
+    input.value = curKey;
+    input.type = 'password';
+  }
+  const eye = document.getElementById('btnToggleAiKeyEye');
+  if (eye) eye.innerHTML = '<i data-lucide="eye" class="ic-14"></i>';
+
+  if (statusTxt) {
+    statusTxt.textContent = curKey ? `Đã lưu (${curKey.length} ký tự)` : 'Chưa cài đặt';
+    statusTxt.style.color = curKey ? 'var(--green)' : 'var(--text3)';
+  }
+
+  if (modal) {
+    modal.style.display = 'flex';
+    setTimeout(() => { input?.focus(); }, 100);
+  } else {
+    const key = prompt('Nhập Gemini API Key của bạn (miễn phí tại https://aistudio.google.com):', curKey);
+    if (key !== null) {
+      const clean = cleanApiKey(key);
+      if (clean) {
+        localStorage.setItem('lifeos_gemini_key', clean);
+        toast('Đã lưu Gemini API Key!', 'success');
+        appendMessage('ai', '✅ **Đã kết nối Gemini API Key thành công!** Bạn có thể ra lệnh và trò chuyện tự nhiên ngay bây giờ.');
+      } else {
+        localStorage.removeItem('lifeos_gemini_key');
+        toast('Đã xóa Gemini API Key', 'info');
+      }
     }
+  }
+  if (window.lucide) window.lucide.createIcons();
+};
+
+window.toggleAiKeyVisibility = function() {
+  const input = document.getElementById('aiKeyInput');
+  const eye = document.getElementById('btnToggleAiKeyEye');
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (eye) eye.innerHTML = '<i data-lucide="eye-off" class="ic-14"></i>';
+  } else {
+    input.type = 'password';
+    if (eye) eye.innerHTML = '<i data-lucide="eye" class="ic-14"></i>';
+  }
+  if (window.lucide) window.lucide.createIcons();
+};
+
+window.pasteAiKeyFromClipboard = async function() {
+  try {
+    const text = await navigator.clipboard.readText();
+    const input = document.getElementById('aiKeyInput');
+    if (input && text) {
+      input.value = cleanApiKey(text);
+      toast('Đã dán mã từ Clipboard', 'info');
+    }
+  } catch(e) {
+    toast('Vui lòng dùng phím Ctrl+V để dán', 'info');
+  }
+};
+
+window.saveGeminiApiKey = function() {
+  const input = document.getElementById('aiKeyInput');
+  const raw = input ? input.value : '';
+  const clean = cleanApiKey(raw);
+
+  if (!clean) {
+    localStorage.removeItem('lifeos_gemini_key');
+    toast('Đã xóa Gemini API Key', 'info');
+    closeModal('mAiKeyConfig');
+    return;
+  }
+
+  // Detect OAuth Client ID
+  if (clean.includes('.apps.googleusercontent.com') || clean.startsWith('GOCSPX-')) {
+    const fb = document.getElementById('aiKeyTestFeedback');
+    if (fb) {
+      fb.style.display = 'block';
+      fb.style.background = 'rgba(255,71,87,0.12)';
+      fb.style.border = '1px solid rgba(255,71,87,0.4)';
+      fb.style.color = '#ff4757';
+      fb.innerHTML = '❌ <b>Lỗi nhận diện mã:</b> Bạn đang dán <b>OAuth 2.0 Client ID</b> (hoặc Web Client) chứ không phải API Key!<br><br>👉 Vui lòng vào <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent-cyan); font-weight:700; text-decoration:underline;">Google AI Studio</a>, bấm <b>Create API key</b> để nhận mã bắt đầu bằng <b>AIzaSy...</b>';
+    }
+    return;
+  }
+
+  localStorage.setItem('lifeos_gemini_key', clean);
+  toast('Đã lưu Gemini API Key thành công!', 'success');
+  appendMessage('ai', '✅ **Đã kết nối Gemini API Key thành công!** Bạn có thể ra lệnh và trò chuyện tự nhiên ngay bây giờ.');
+  closeModal('mAiKeyConfig');
+};
+
+window.clearAiKey = function() {
+  const input = document.getElementById('aiKeyInput');
+  if (input) input.value = '';
+  localStorage.removeItem('lifeos_gemini_key');
+  const statusTxt = document.getElementById('aiKeyStatusText');
+  if (statusTxt) {
+    statusTxt.textContent = 'Chưa cài đặt';
+    statusTxt.style.color = 'var(--text3)';
+  }
+  const fb = document.getElementById('aiKeyTestFeedback');
+  if (fb) {
+    fb.style.display = 'block';
+    fb.style.background = 'rgba(255,255,255,0.06)';
+    fb.style.border = '1px solid var(--border)';
+    fb.style.color = 'var(--text2)';
+    fb.innerHTML = 'ℹ️ Đã xóa Key. Hãy nhập Key mới và bấm "Lưu Key".';
+  }
+  toast('Đã xóa Key', 'info');
+};
+
+window.testGeminiApiKey = async function() {
+  const input = document.getElementById('aiKeyInput');
+  const raw = input ? input.value : '';
+  const clean = cleanApiKey(raw);
+  const fb = document.getElementById('aiKeyTestFeedback');
+  const btn = document.getElementById('btnTestAiKey');
+  const txt = document.getElementById('txtTestAiKey');
+
+  if (!fb) return;
+  fb.style.display = 'block';
+
+  if (!clean) {
+    fb.style.background = 'rgba(255,183,3,0.12)';
+    fb.style.border = '1px solid rgba(255,183,3,0.4)';
+    fb.style.color = '#ffb703';
+    fb.innerHTML = '⚠️ Vui lòng dán mã API Key trước khi kiểm tra kết nối!';
+    return;
+  }
+
+  if (clean.includes('.apps.googleusercontent.com') || clean.startsWith('GOCSPX-')) {
+    fb.style.background = 'rgba(255,71,87,0.12)';
+    fb.style.border = '1px solid rgba(255,71,87,0.4)';
+    fb.style.color = '#ff4757';
+    fb.innerHTML = '❌ <b>Lỗi xác thực:</b> Mã bạn vừa nhập là <b>OAuth 2.0 Client ID</b>!<br>Google Gemini API yêu cầu <b>API Key</b> (dạng <code>AIzaSy...</code>).<br>👉 Hãy tạo key tại: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent-cyan); font-weight:700; text-decoration:underline;">aistudio.google.com/app/apikey</a>';
+    return;
+  }
+
+  fb.style.background = 'rgba(124,77,255,0.12)';
+  fb.style.border = '1px solid rgba(124,77,255,0.3)';
+  fb.style.color = 'var(--accent-light)';
+  fb.innerHTML = '⏳ Đang gửi tín hiệu kiểm tra đến Google Gemini API...';
+  if (btn) btn.disabled = true;
+  if (txt) txt.textContent = 'Đang kiểm tra...';
+
+  try {
+    const res = await callGeminiRaw(
+      [{ role: 'user', parts: [{ text: 'Trả lời ngắn gọn chữ OK' }] }],
+      'Bạn là trợ lý AI.',
+      [],
+      clean
+    );
+
+    const modelReply = res.candidates?.[0]?.content?.parts?.[0]?.text || 'OK';
+    fb.style.background = 'rgba(46,213,115,0.12)';
+    fb.style.border = '1px solid rgba(46,213,115,0.4)';
+    fb.style.color = '#2ed573';
+    fb.innerHTML = `✅ <b>Kết nối thành công!</b> API Key hoạt động hoàn hảo.<br><span style="font-size:11.5px; opacity:0.9;">Phản hồi từ Gemini: "${modelReply.trim()}"</span><br><br>👉 Hãy bấm <b>"Lưu Key"</b> để bắt đầu sử dụng.`;
+  } catch (err) {
+    fb.style.background = 'rgba(255,71,87,0.12)';
+    fb.style.border = '1px solid rgba(255,71,87,0.4)';
+    fb.style.color = '#ff4757';
+
+    const msg = err.message || '';
+    if (msg.includes('OAuth') || msg.includes('authentication credentials') || msg.includes('KEY_OAUTH_CLIENT_ERROR')) {
+      fb.innerHTML = '❌ <b>Lỗi xác thực OAuth:</b> Mã bạn dùng bị Google từ chối vì là OAuth Client chứ không phải API Key.<br><br>👉 <b>Cách khắc phục:</b> Vào <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent-cyan); font-weight:700; text-decoration:underline;">Google AI Studio</a>, bấm <b>Create API key</b> để nhận mã <code>AIzaSy...</code>';
+    } else if (msg.includes('API key not valid') || msg.includes('KEY_KHONG_HOP_LE')) {
+      fb.innerHTML = '❌ <b>API Key không hợp lệ:</b> Mã bị sai ký tự hoặc không tồn tại trong hệ thống Google.<br>Vui lòng sao chép lại chính xác từ <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent-cyan); font-weight:700; text-decoration:underline;">Google AI Studio</a>.';
+    } else if (msg.includes('PERMISSION_DENIED') || msg.includes('has not been used in project')) {
+      fb.innerHTML = '❌ <b>Chưa bật Generative Language API:</b> Dự án Google Cloud của bạn chưa kích hoạt API này. Hãy tạo một key mới trong dự án mặc định tại <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent-cyan); font-weight:700; text-decoration:underline;">Google AI Studio</a>.';
+    } else {
+      fb.innerHTML = `❌ <b>Không thể kết nối:</b> ${msg}<br>Vui lòng kiểm tra lại mạng hoặc thử tạo một API Key mới.`;
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+    if (txt) txt.textContent = 'Kiểm tra kết nối';
   }
 };
 
@@ -168,21 +353,24 @@ function appendApiKeyPromptCard() {
 
 // ── Multi-turn Gemini API Core ──
 const MODELS = [
+  'gemini-1.5-flash',
+  'gemini-2.0-flash',
+  'gemini-2.5-flash',
+  'gemini-1.5-pro',
   'gemini-3.5-flash',
-  'gemini-3.7-flash',
-  'gemini-3.8-flash',
-  'gemini-3.5-flash-lite'
+  'gemini-3.8-flash'
 ];
 
-async function callGeminiRaw(contents, systemInstruction, tools) {
-  const apiKey = getApiKey();
+async function callGeminiRaw(contents, systemInstruction, tools, customKey = null) {
+  const rawKey = customKey || getApiKey();
+  const apiKey = cleanApiKey(rawKey);
   if (!apiKey) {
     throw new Error('CHUA_CO_KEY');
   }
 
   let lastError = null;
   for (const model of MODELS) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
     const payload = {
       contents,
       systemInstruction: { parts: [{ text: systemInstruction }] }
@@ -194,18 +382,28 @@ async function callGeminiRaw(contents, systemInstruction, tools) {
     try {
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
         body: JSON.stringify(payload)
       });
 
-      if (res.status === 400 || res.status === 403) {
+      if (res.status === 400 || res.status === 401 || res.status === 403) {
         const errJson = await res.json().catch(() => ({}));
         const msg = errJson.error?.message || '';
         const msgLower = msg.toLowerCase();
-        // Only treat as key error if the error specifically mentions API key issues
-        if (msgLower.includes('api key') || msgLower.includes('api_key') || msgLower.includes('permission_denied') || msgLower.includes('has not been used in project')) {
-          throw new Error('KEY_KHONG_HOP_LE');
+        
+        if (msgLower.includes('oauth') || msgLower.includes('authentication credentials') || msgLower.includes('access token')) {
+          throw new Error('KEY_OAUTH_CLIENT_ERROR: ' + msg);
         }
+        if (msgLower.includes('api key not valid') || msgLower.includes('api_key_invalid') || msgLower.includes('invalid api key')) {
+          throw new Error('KEY_KHONG_HOP_LE: ' + msg);
+        }
+        if (msgLower.includes('permission_denied') || msgLower.includes('has not been used in project')) {
+          throw new Error('KEY_PERMISSION_DENIED: ' + msg);
+        }
+
         console.warn(`Model ${model} returned ${res.status} (${msg}), trying next...`);
         lastError = new Error(`Model ${model}: ${msg}`);
         continue;
@@ -214,11 +412,6 @@ async function callGeminiRaw(contents, systemInstruction, tools) {
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
         const msg = errJson.error?.message || `HTTP ${res.status}`;
-        const msgLower = msg.toLowerCase();
-        if (msgLower.includes('permission_denied')) {
-          throw new Error('KEY_KHONG_HOP_LE');
-        }
-        // Model not found or other errors → try next model, don't assume key is bad
         console.warn(`Model ${model} returned ${res.status} (${msg}), trying next model...`);
         lastError = new Error(msg);
         continue;
@@ -228,11 +421,11 @@ async function callGeminiRaw(contents, systemInstruction, tools) {
       return data;
     } catch (err) {
       lastError = err;
-      if (err.message === 'KEY_KHONG_HOP_LE' || err.message === 'CHUA_CO_KEY') throw err;
+      if (err.message && err.message.startsWith('KEY_')) throw err;
       console.warn(`Error calling model ${model}:`, err.message);
     }
   }
-  // All models failed — throw meaningful error instead of generic CHUA_CO_KEY
+
   throw lastError || new Error('Tất cả các model Gemini đều không phản hồi. Vui lòng thử lại sau.');
 }
 
@@ -430,25 +623,36 @@ async function processUserAiMessage(promptText) {
     if (loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
     console.error('AI Processing Error:', err);
 
-    const isKeyError = (err.message === 'CHUA_CO_KEY' || err.message === 'KEY_KHONG_HOP_LE');
+    const msg = err.message || '';
     const hasKey = !!getApiKey();
 
     // Try local heuristic execution first so actions work offline
     const localResult = await executeLocalHeuristicAi(promptText);
     if (localResult) {
       appendMessage('ai', localResult);
-    } else if (isKeyError && !hasKey) {
-      // No key at all → show key prompt
-      appendMessage('ai', 'Chào bạn! Để trò chuyện và ra lệnh ngôn ngữ tự nhiên không giới hạn cùng **LifeOS AI**, bạn chỉ cần kết nối **Gemini API Key** cá nhân (miễn phí từ Google AI Studio).');
+    } else if (msg === 'CHUA_CO_KEY' || !hasKey) {
+      appendMessage('ai', 'Chào bạn! Để trò chuyện và ra lệnh ngôn ngữ tự nhiên không giới hạn cùng **LifeOS AI**, bạn chỉ cần kết nối **Gemini API Key** cá nhân (hoàn toàn miễn phí từ Google AI Studio).');
       appendApiKeyPromptCard();
-    } else if (isKeyError && hasKey) {
-      // Key exists but invalid → tell user to re-enter
-      appendMessage('ai', '⚠️ **API Key không hợp lệ hoặc đã hết hạn.** Vui lòng kiểm tra lại Key của bạn.\n\n- Key phải được tạo tại **Google AI Studio** (aistudio.google.com)\n- Đảm bảo API "Generative Language API" đã được kích hoạt trong Google Cloud Console\n- Thử tạo Key mới nếu Key cũ bị lỗi');
+    } else if (msg.includes('KEY_OAUTH_CLIENT_ERROR') || msg.includes('authentication credentials') || msg.includes('OAuth')) {
+      appendMessage('ai', '⚠️ **Mã bạn nhập không phải là Gemini API Key hợp lệ.**\n\n' +
+        'Google báo lỗi: *Request had invalid authentication credentials. Expected OAuth 2 access token...*\n\n' +
+        '👉 **Nguyên nhân**: Bạn đã tạo nhầm mã **OAuth 2.0 Client ID** (hoặc Web Client) thay vì **API Key**.\n\n' +
+        '👉 **Cách lấy đúng API Key trong 30 giây (Miễn phí 100%):**\n' +
+        '1. Truy cập [Google AI Studio (aistudio.google.com/app/apikey)](https://aistudio.google.com/app/apikey)\n' +
+        '2. Bấm nút xanh **"Create API key"**\n' +
+        '3. Sao chép mã có dạng **`AIzaSy...`** (khoảng 39 ký tự)\n' +
+        '4. Bấm nút bên dưới để dán vào và kiểm tra kết nối ngay.');
+      appendApiKeyPromptCard();
+    } else if (msg.includes('KEY_KHONG_HOP_LE') || msg.includes('API key not valid')) {
+      appendMessage('ai', '⚠️ **API Key không hợp lệ hoặc đã hết hạn.**\n\n' +
+        'Mã bạn nhập không đúng hoặc thiếu ký tự. Key chuẩn từ Google AI Studio luôn có dạng **`AIzaSy...`**.\n\n' +
+        '👉 Bạn hãy vào [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) tạo key mới và dán lại nhé.');
+      appendApiKeyPromptCard();
+    } else if (msg.includes('KEY_PERMISSION_DENIED')) {
+      appendMessage('ai', '⚠️ **Quyền truy cập API bị từ chối:** Key của bạn chưa được kích hoạt "Generative Language API" hoặc bị giới hạn trong Google Cloud Console. Hãy tạo một key mới tại [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).');
       appendApiKeyPromptCard();
     } else {
-      // Other errors (network, rate limit, etc.) → show helpful error, NOT key prompt
-      const errMsg = err.message || 'Lỗi không xác định';
-      appendMessage('ai', `❌ **Không thể kết nối Gemini AI lúc này.**\n\n- Lỗi: *${errMsg}*\n- Có thể do mạng không ổn định, API bị quá tải hoặc đạt giới hạn request.\n- Hãy thử lại sau ít phút hoặc kiểm tra kết nối internet.`);
+      appendMessage('ai', `❌ **Không thể kết nối Gemini AI lúc này.**\n\n- Lỗi: *${msg}*\n- Có thể do mạng không ổn định hoặc dịch vụ Google đang quá tải. Hãy thử lại sau ít phút.`);
     }
   }
 }
