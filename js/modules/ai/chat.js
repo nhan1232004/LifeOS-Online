@@ -107,6 +107,7 @@ window.openAiKeyModal = function() {
   const input = document.getElementById('aiKeyInput');
   const statusTxt = document.getElementById('aiKeyStatusText');
   const feedback = document.getElementById('aiKeyTestFeedback');
+  const modelSel = document.getElementById('aiModelSelect');
   
   if (feedback) {
     feedback.style.display = 'none';
@@ -114,9 +115,14 @@ window.openAiKeyModal = function() {
   }
 
   const curKey = localStorage.getItem('lifeos_gemini_key') || '';
+  const curModel = localStorage.getItem('lifeos_ai_preferred_model') || localStorage.getItem('lifeos_ai_working_model') || 'gemini-2.0-flash';
+  
   if (input) {
     input.value = curKey;
     input.type = 'password';
+  }
+  if (modelSel) {
+    modelSel.value = curModel;
   }
   const eye = document.getElementById('btnToggleAiKeyEye');
   if (eye) eye.innerHTML = '<i data-lucide="eye" class="ic-14"></i>';
@@ -175,8 +181,14 @@ window.pasteAiKeyFromClipboard = async function() {
 
 window.saveGeminiApiKey = function() {
   const input = document.getElementById('aiKeyInput');
+  const modelSel = document.getElementById('aiModelSelect');
   const raw = input ? input.value : '';
   const clean = cleanApiKey(raw);
+
+  if (modelSel) {
+    localStorage.setItem('lifeos_ai_preferred_model', modelSel.value);
+    localStorage.setItem('lifeos_ai_working_model', modelSel.value);
+  }
 
   if (!clean) {
     localStorage.removeItem('lifeos_gemini_key');
@@ -185,7 +197,6 @@ window.saveGeminiApiKey = function() {
     return;
   }
 
-  // Detect OAuth Client ID
   if (clean.includes('.apps.googleusercontent.com') || clean.startsWith('GOCSPX-')) {
     const fb = document.getElementById('aiKeyTestFeedback');
     if (fb) {
@@ -199,8 +210,8 @@ window.saveGeminiApiKey = function() {
   }
 
   localStorage.setItem('lifeos_gemini_key', clean);
-  toast('Đã lưu Gemini API Key thành công!', 'success');
-  appendMessage('ai', '✅ **Đã kết nối Gemini API Key thành công!** Bạn có thể ra lệnh và trò chuyện tự nhiên ngay bây giờ.');
+  toast('Đã lưu cấu hình AI thành công!', 'success');
+  appendMessage('ai', `✅ **Đã kết nối Gemini API Key thành công!** (Mô hình ưu tiên: ${modelSel ? modelSel.value : 'Gemini 2.0 Flash'}). Bạn có thể trò chuyện hoặc ra lệnh ngay bây giờ.`);
   closeModal('mAiKeyConfig');
 };
 
@@ -226,6 +237,7 @@ window.clearAiKey = function() {
 
 window.testGeminiApiKey = async function() {
   const input = document.getElementById('aiKeyInput');
+  const modelSel = document.getElementById('aiModelSelect');
   const raw = input ? input.value : '';
   const clean = cleanApiKey(raw);
   const fb = document.getElementById('aiKeyTestFeedback');
@@ -254,23 +266,30 @@ window.testGeminiApiKey = async function() {
   fb.style.background = 'rgba(124,77,255,0.12)';
   fb.style.border = '1px solid rgba(124,77,255,0.3)';
   fb.style.color = 'var(--accent-light)';
-  fb.innerHTML = '⏳ Đang gửi tín hiệu kiểm tra đến Google Gemini API...';
+  fb.innerHTML = '⏳ Đang gửi tín hiệu kiểm tra tốc độ đến Google Gemini API...';
   if (btn) btn.disabled = true;
   if (txt) txt.textContent = 'Đang kiểm tra...';
 
+  const startTime = Date.now();
   try {
     const res = await callGeminiRaw(
-      [{ role: 'user', parts: [{ text: 'Trả lời ngắn gọn chữ OK' }] }],
+      [{ role: 'user', parts: [{ text: 'Trả lời đúng 1 chữ: OK' }] }],
       'Bạn là trợ lý AI.',
       [],
       clean
     );
 
+    const latency = Date.now() - startTime;
     const modelReply = res.candidates?.[0]?.content?.parts?.[0]?.text || 'OK';
+    const usedModel = localStorage.getItem('lifeos_ai_working_model') || (modelSel ? modelSel.value : 'gemini-2.0-flash');
+    
     fb.style.background = 'rgba(46,213,115,0.12)';
     fb.style.border = '1px solid rgba(46,213,115,0.4)';
     fb.style.color = '#2ed573';
-    fb.innerHTML = `✅ <b>Kết nối thành công!</b> API Key hoạt động hoàn hảo.<br><span style="font-size:11.5px; opacity:0.9;">Phản hồi từ Gemini: "${modelReply.trim()}"</span><br><br>👉 Hãy bấm <b>"Lưu Key"</b> để bắt đầu sử dụng.`;
+    fb.innerHTML = `✅ <b>Kết nối siêu tốc thành công! (${latency}ms)</b><br>
+      • Model hoạt động: <b>${usedModel}</b><br>
+      • Phản hồi: "${modelReply.trim()}"<br><br>
+      👉 Hãy bấm <b>"Lưu Key"</b> để lưu cấu hình này.`;
   } catch (err) {
     fb.style.background = 'rgba(255,71,87,0.12)';
     fb.style.border = '1px solid rgba(255,71,87,0.4)';
@@ -352,14 +371,26 @@ function appendApiKeyPromptCard() {
 }
 
 // ── Multi-turn Gemini API Core ──
-const MODELS = [
-  'gemini-1.5-flash',
-  'gemini-2.0-flash',
+// ── Multi-turn Gemini API Core (Speed-optimized: Gemini 2.0 Flash First) ──
+const ALL_MODELS = [
+  'gemini-2.0-flash',     // Fastest: < 1s latency
+  'gemini-1.5-flash',     // High speed & stability
+  'gemini-1.5-flash-8b',  // Ultra lightweight
   'gemini-2.5-flash',
   'gemini-1.5-pro',
   'gemini-3.5-flash',
   'gemini-3.8-flash'
 ];
+
+function getWindowedHistory(history, maxTurns = 6) {
+  if (!history || history.length <= maxTurns) return history;
+  let slice = history.slice(-maxTurns);
+  // Ensure we don't start on an orphaned model answer
+  while (slice.length > 0 && slice[0].role !== 'user') {
+    slice.shift();
+  }
+  return slice.length > 0 ? slice : history.slice(-2);
+}
 
 async function callGeminiRaw(contents, systemInstruction, tools, customKey = null) {
   const rawKey = customKey || getApiKey();
@@ -368,16 +399,32 @@ async function callGeminiRaw(contents, systemInstruction, tools, customKey = nul
     throw new Error('CHUA_CO_KEY');
   }
 
+  // Use user's chosen model or previously confirmed working model first for zero latency overhead
+  const preferredModel = localStorage.getItem('lifeos_ai_preferred_model') || localStorage.getItem('lifeos_ai_working_model') || 'gemini-2.0-flash';
+  const modelsToTry = [
+    preferredModel,
+    ...ALL_MODELS.filter(m => m !== preferredModel)
+  ];
+
   let lastError = null;
-  for (const model of MODELS) {
+  for (const model of modelsToTry) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
     const payload = {
       contents,
-      systemInstruction: { parts: [{ text: systemInstruction }] }
+      systemInstruction: { parts: [{ text: systemInstruction }] },
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1024,
+        topP: 0.95
+      }
     };
     if (tools && tools.length > 0) {
       payload.tools = [{ functionDeclarations: tools }];
     }
+
+    // 8-second timeout per model to prevent hanging
+    const controller = new AbortController();
+    const timeoutTimer = setTimeout(() => controller.abort(), 8500);
 
     try {
       const res = await fetch(url, {
@@ -386,8 +433,10 @@ async function callGeminiRaw(contents, systemInstruction, tools, customKey = nul
           'Content-Type': 'application/json',
           'x-goog-api-key': apiKey
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
+      clearTimeout(timeoutTimer);
 
       if (res.status === 400 || res.status === 401 || res.status === 403) {
         const errJson = await res.json().catch(() => ({}));
@@ -418,9 +467,17 @@ async function callGeminiRaw(contents, systemInstruction, tools, customKey = nul
       }
 
       const data = await res.json();
+      // Cache this working model so every future message calls it immediately!
+      localStorage.setItem('lifeos_ai_working_model', model);
       return data;
     } catch (err) {
+      clearTimeout(timeoutTimer);
       lastError = err;
+      if (err.name === 'AbortError') {
+        console.warn(`Model ${model} timed out after 8.5s, switching to next model...`);
+        lastError = new Error(`Model ${model} timeout`);
+        continue;
+      }
       if (err.message && err.message.startsWith('KEY_')) throw err;
       console.warn(`Error calling model ${model}:`, err.message);
     }
@@ -551,11 +608,16 @@ async function processUserAiMessage(promptText) {
   
   const loadingDiv = document.createElement('div');
   loadingDiv.style.cssText = 'align-self:flex-start; color:var(--text-mid); font-size:12.5px; font-style:italic; padding:6px 12px; display:flex; align-items:center; gap:6px;';
-  loadingDiv.innerHTML = '<span class="sync-dot" style="animation:pulse 1s infinite;"></span> Đang suy nghĩ và xử lý...';
+  loadingDiv.innerHTML = '<span class="sync-dot" style="animation:pulse 0.8s infinite; background:var(--accent-cyan);"></span> <span id="aiThinkingStatus">⚡ Đang xử lý...</span>';
   const c = document.getElementById('aiMessages');
   if (c) { c.appendChild(loadingDiv); c.scrollTop = c.scrollHeight; }
 
-  // Add user prompt to conversation
+  function updateThinkingText(text) {
+    const st = loadingDiv.querySelector('#aiThinkingStatus');
+    if (st) st.textContent = text;
+  }
+
+  // Add user prompt to conversation history
   aiChatHistory.push({
     role: 'user',
     parts: [{ text: promptText }]
@@ -565,12 +627,20 @@ async function processUserAiMessage(promptText) {
 
   try {
     let loopCount = 0;
-    const maxLoops = 5;
+    const maxLoops = 4;
     let finalModelText = '';
 
     while (loopCount < maxLoops) {
       loopCount++;
-      const data = await callGeminiRaw(aiChatHistory, systemInstruction, AI_TOOL_DECLARATIONS);
+      if (loopCount > 1) {
+        updateThinkingText('⚡ Đang hoàn tất phản hồi...');
+      } else {
+        updateThinkingText('⚡ Đang suy nghĩ...');
+      }
+
+      // Window history to keep payload lightweight and fast
+      const windowedHistory = getWindowedHistory(aiChatHistory, 6);
+      const data = await callGeminiRaw(windowedHistory, systemInstruction, AI_TOOL_DECLARATIONS);
       const candidate = data.candidates && data.candidates[0];
       if (!candidate || !candidate.content) {
         finalModelText = 'Tôi đã nhận thông tin nhưng không có phản hồi cụ thể.';
@@ -587,6 +657,7 @@ async function processUserAiMessage(promptText) {
       });
 
       if (functionCalls.length > 0) {
+        updateThinkingText('⚙️ Đang thực hiện hành động...');
         const responseParts = [];
         for (const fc of functionCalls) {
           const call = fc.functionCall;

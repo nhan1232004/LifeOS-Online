@@ -287,7 +287,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1788965647326">
+<link rel="stylesheet" href="css/style.css?v=1788967156337">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -1470,19 +1470,19 @@ window.getCurrentUser = () => currentUser;
   window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
  }
 </script>
-<script src="js/data.js?v=1788965647326"></script>
-<script src="js/workspace.js?v=1788965647326"></script>
-<script src="js/projViews.js?v=1788965647326"></script>
-<script src="js/main.js?v=1788965647326"></script>
-<script src="js/modules/todos.js?v=1788965647326"></script>
-<script src="js/modules/notes.js?v=1788965647326"></script>
-<script src="js/modules/habits.js?v=1788965647326"></script>
-<script src="js/modules/goals.js?v=1788965647326"></script>
-<script src="js/modules/journal.js?v=1788965647326"></script>
-<script src="js/modules/pomodoro.js?v=1788965647326"></script>
-<script src="js/modules/vocab.js?v=1788965647326"></script>
-<script src="js/modules/mocktests.js?v=1788965647326"></script>
-<script src="js/modules/cmd.js?v=1788965647326"></script>
+<script src="js/data.js?v=1788967156337"></script>
+<script src="js/workspace.js?v=1788967156337"></script>
+<script src="js/projViews.js?v=1788967156337"></script>
+<script src="js/main.js?v=1788967156337"></script>
+<script src="js/modules/todos.js?v=1788967156337"></script>
+<script src="js/modules/notes.js?v=1788967156337"></script>
+<script src="js/modules/habits.js?v=1788967156337"></script>
+<script src="js/modules/goals.js?v=1788967156337"></script>
+<script src="js/modules/journal.js?v=1788967156337"></script>
+<script src="js/modules/pomodoro.js?v=1788967156337"></script>
+<script src="js/modules/vocab.js?v=1788967156337"></script>
+<script src="js/modules/mocktests.js?v=1788967156337"></script>
+<script src="js/modules/cmd.js?v=1788967156337"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1909,6 +1909,21 @@ window.getCurrentUser = () => currentUser;
     </div>
    </div>
 
+   <!-- Model Selection (Speed vs Intelligence) -->
+   <div class="fg" style="margin:0;">
+    <label style="font-size:12.5px; font-weight:600; margin-bottom:6px; display:flex; justify-content:space-between;">
+     <span>Mô hình AI ưu tiên</span>
+     <span style="font-size:11px; color:var(--accent-cyan);">⚡ Siêu tốc ~1s</span>
+    </label>
+    <select id="aiModelSelect" class="inp" style="font-size:12.5px; width:100%;">
+     <option value="gemini-2.0-flash">⚡ Gemini 2.0 Flash (Nhanh nhất ~1s, khuyên dùng)</option>
+     <option value="gemini-1.5-flash">🚀 Gemini 1.5 Flash (Tốc độ cao, ổn định)</option>
+     <option value="gemini-1.5-flash-8b">⚡ Gemini 1.5 Flash-8B (Rất nhẹ, phản hồi tức thì)</option>
+     <option value="gemini-2.5-flash">✨ Gemini 2.5 Flash</option>
+     <option value="gemini-1.5-pro">🧠 Gemini 1.5 Pro (Suy luận sâu, phản hồi chậm hơn)</option>
+    </select>
+   </div>
+
    <!-- Test Connection Feedback Box -->
    <div id="aiKeyTestFeedback" style="display:none; border-radius:8px; padding:10px 14px; font-size:12.5px; line-height:1.4;"></div>
 
@@ -1964,8 +1979,8 @@ window.getCurrentUser = () => currentUser;
   </div>
  </div>
 </div>
-<script type="module" src="js/modules/ai/chat.js?v=1788965647326"></script>
-<script src="js/modules/export.js?v=1788965647326"></script>
+<script type="module" src="js/modules/ai/chat.js?v=1788967156337"></script>
+<script src="js/modules/export.js?v=1788967156337"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">
