@@ -213,8 +213,14 @@ async function persist(col,items){
  if(lbl) lbl.textContent='Đang lưu...';
  if(dot) dot.style.background='var(--amber)';
  try {
-  const clean = Array.isArray(items) ? items.filter(x => x && typeof x === 'object') : [];
-  await window.fbSaveAll(col,clean);
+   if (!Array.isArray(items)) {
+    console.error(`[LifeOS Safety Guard] persist was called with non-array for collection "${col}". Blocked to prevent data wipeout!`, items);
+    if(lbl) lbl.textContent='Đã đồng bộ';
+    if(dot) dot.style.background='var(--green)';
+    return;
+   }
+   const clean = items.filter(x => x && typeof x === 'object');
+   await window.fbSaveAll(col,clean);
   if (window.DB) window.DB[col] = clean;
   if(lbl) lbl.textContent='Đã đồng bộ';
   if(dot) dot.style.background='var(--green)';

@@ -28,12 +28,11 @@ async function toggleHabitDay(hid, dateStr) {
 async function delHabit(id) {
   const t = (window.DB.habits || []).find(x => x.id === id);
   if (!t) return;
- window.DB.habits = (window.DB.habits || []).filter(x => x.id !== id);
- await persist('habits', window.DB.habits);
- renderHabits();
- // undoManager removed - direct delete
- await persist('habits', t);
- renderHabits();
+  if (!confirm(`Bạn có chắc chắn muốn xóa thói quen "${t.name}"?`)) return;
+  window.DB.habits = (window.DB.habits || []).filter(x => x.id !== id);
+  await persist('habits', window.DB.habits);
+  renderHabits();
+  toast('Đã xóa thói quen!', 'info');
 }
 function getStreak(log) {
  let streak = 0;

@@ -287,7 +287,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1788967778585">
+<link rel="stylesheet" href="css/style.css?v=1789054142228">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -761,7 +761,8 @@ window.getCurrentUser = () => currentUser;
      <div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="sticky-note" style="width:16px;height:16px"></i> Ghi chú của tôi</div>
      <div style="display:flex;gap:8px">
       <input type="text" id="noteSearch" placeholder=" Tìm kiếm..." style="padding:6px 12px;border-radius:8px;border:1px solid var(--glass-b);background:var(--bg2);color:var(--text1);font-size:12px;width:160px">
-      <button class="btn btn-sm btn-p" onclick="openNote()">+ Ghi chú mới</button>
+      <button class="btn btn-sm btn-outline" onclick="openNotesTrash()" title="Thùng rác & Khôi phục ghi chú" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="trash-2" style="width:13px;height:13px"></i> Thùng rác</button>
+       <button class="btn btn-sm btn-p" onclick="openNote()">+ Ghi chú mới</button>
      </div>
     </div>
     <div class="notes-grid" id="notesGrid"></div>
@@ -1240,6 +1241,26 @@ window.getCurrentUser = () => currentUser;
   </div>
  </div>
 </div>
+<!-- MODAL: NOTES TRASH -->
+<div class="overlay" id="mNotesTrash" onclick="if(event.target===this)closeModal('mNotesTrash')">
+ <div class="modal" style="max-width:520px; padding:0; overflow:hidden; border-radius:14px; border:1px solid var(--border);">
+  <div class="mh" style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+   <div style="display:flex; align-items:center; gap:8px;">
+    <i data-lucide="trash-2" class="ic-18" style="color:var(--red);"></i>
+    <h3 style="margin:0; font-size:16px; font-weight:700;">Thùng rác Ghi chú</h3>
+   </div>
+   <button class="mclose" onclick="closeModal('mNotesTrash')">✕</button>
+  </div>
+  <div class="mb-body" style="padding:16px 20px; max-height:60vh; overflow-y:auto;" id="notesTrashList">
+   <!-- Rendered dynamically -->
+  </div>
+  <div style="padding:12px 20px; border-top:1px solid var(--border); background:var(--surface); display:flex; justify-content:space-between; align-items:center;">
+   <button class="btn btn-sm" style="color:var(--red); background:transparent; border:none; font-size:12px;" onclick="emptyNotesTrash()">Dọn sạch thùng rác</button>
+   <button class="btn btn-sm btn-outline" onclick="closeModal('mNotesTrash')">Đóng</button>
+  </div>
+ </div>
+</div>
+
 <!-- MODAL: NOTE -->
 <div class="overlay" id="mNote">
  <div class="modal" style="max-width:480px">
@@ -1470,19 +1491,19 @@ window.getCurrentUser = () => currentUser;
   window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
  }
 </script>
-<script src="js/data.js?v=1788967778585"></script>
-<script src="js/workspace.js?v=1788967778585"></script>
-<script src="js/projViews.js?v=1788967778585"></script>
-<script src="js/main.js?v=1788967778585"></script>
-<script src="js/modules/todos.js?v=1788967778585"></script>
-<script src="js/modules/notes.js?v=1788967778585"></script>
-<script src="js/modules/habits.js?v=1788967778585"></script>
-<script src="js/modules/goals.js?v=1788967778585"></script>
-<script src="js/modules/journal.js?v=1788967778585"></script>
-<script src="js/modules/pomodoro.js?v=1788967778585"></script>
-<script src="js/modules/vocab.js?v=1788967778585"></script>
-<script src="js/modules/mocktests.js?v=1788967778585"></script>
-<script src="js/modules/cmd.js?v=1788967778585"></script>
+<script src="js/data.js?v=1789054142228"></script>
+<script src="js/workspace.js?v=1789054142228"></script>
+<script src="js/projViews.js?v=1789054142228"></script>
+<script src="js/main.js?v=1789054142228"></script>
+<script src="js/modules/todos.js?v=1789054142228"></script>
+<script src="js/modules/notes.js?v=1789054142228"></script>
+<script src="js/modules/habits.js?v=1789054142228"></script>
+<script src="js/modules/goals.js?v=1789054142228"></script>
+<script src="js/modules/journal.js?v=1789054142228"></script>
+<script src="js/modules/pomodoro.js?v=1789054142228"></script>
+<script src="js/modules/vocab.js?v=1789054142228"></script>
+<script src="js/modules/mocktests.js?v=1789054142228"></script>
+<script src="js/modules/cmd.js?v=1789054142228"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -1977,8 +1998,8 @@ window.getCurrentUser = () => currentUser;
   </div>
  </div>
 </div>
-<script type="module" src="js/modules/ai/chat.js?v=1788967778585"></script>
-<script src="js/modules/export.js?v=1788967778585"></script>
+<script type="module" src="js/modules/ai/chat.js?v=1789054142228"></script>
+<script src="js/modules/export.js?v=1789054142228"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">

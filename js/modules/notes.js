@@ -131,16 +131,103 @@ async function saveNote() {
  toast('Đã lưu ghi chú!', 'success');
 }
 
+function saveToNotesTrash(note) {
+  try {
+    const trash = JSON.parse(localStorage.getItem('lifeos_notes_trash') || '[]');
+    trash.unshift({ ...note, deletedAt: new Date().toISOString() });
+    localStorage.setItem('lifeos_notes_trash', JSON.stringify(trash.slice(0, 30)));
+  } catch(e) {}
+}
+
 async function delNote(id) {
   const t = (window.DB.notes || []).find(x => x.id === id);
   if (!t) return;
- window.DB.notes = (window.DB.notes || []).filter(x => x.id !== id);
- await persist('notes', window.DB.notes);
- renderNotes();
- // undoManager removed - direct delete
- await persist('notes', t);
- renderNotes();
+  if (!confirm(`Bạn có chắc chắn muốn xóa ghi chú "${t.title || 'Không tiêu đề'}"?`)) return;
+
+  saveToNotesTrash(t);
+  window.DB.notes = (window.DB.notes || []).filter(x => x.id !== id);
+  await persist('notes', window.DB.notes);
+  renderNotes();
+  toast('Đã xóa ghi chú! (Đã lưu vào Thùng rác để khôi phục khi cần)', 'info');
 }
+
+function openNotesTrash() {
+  renderNotesTrash();
+  openModal('mNotesTrash');
+}
+
+function renderNotesTrash() {
+  const listEl = document.getElementById('notesTrashList');
+  if (!listEl) return;
+  let trash = [];
+  try {
+    trash = JSON.parse(localStorage.getItem('lifeos_notes_trash') || '[]');
+  } catch(e) {}
+
+  if (!trash.length) {
+    listEl.innerHTML = '<div style="text-align:center; padding:30px 10px; color:var(--text3); font-size:13px;">Thùng rác đang trống.</div>';
+    return;
+  }
+
+  listEl.innerHTML = trash.map((n, idx) => `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px; background:var(--surface);">
+      <div style="flex:1; margin-right:10px; overflow:hidden;">
+        <div style="font-weight:600; font-size:13.5px; color:var(--text1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          ${window.LifeOSData.escapeHtml(n.title || 'Không tiêu đề')}
+        </div>
+        <div style="font-size:11.5px; color:var(--text3); margin-top:3px;">
+          Đã xóa lúc: ${new Date(n.deletedAt || Date.now()).toLocaleString('vi-VN')}
+        </div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="btn btn-sm btn-p" onclick="restoreNoteFromTrash(${idx})"><i data-lucide="rotate-ccw" style="width:12px;height:12px;margin-right:4px;"></i> Khôi phục</button>
+        <button class="btn btn-sm btn-outline" style="border-color:var(--red); color:var(--red);" onclick="permanentDeleteTrashNote(${idx})"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+      </div>
+    </div>
+  `).join('');
+  if (window.lucide) window.lucide.createIcons();
+}
+
+async function restoreNoteFromTrash(idx) {
+  try {
+    const trash = JSON.parse(localStorage.getItem('lifeos_notes_trash') || '[]');
+    const item = trash.splice(idx, 1)[0];
+    if (!item) return;
+    localStorage.setItem('lifeos_notes_trash', JSON.stringify(trash));
+    delete item.deletedAt;
+    if (!window.DB.notes) window.DB.notes = [];
+    window.DB.notes.unshift(item);
+    await persist('notes', window.DB.notes);
+    renderNotes();
+    renderNotesTrash();
+    toast(`Đã khôi phục ghi chú "${item.title || 'Không tiêu đề'}"!`, 'success');
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function permanentDeleteTrashNote(idx) {
+  try {
+    const trash = JSON.parse(localStorage.getItem('lifeos_notes_trash') || '[]');
+    trash.splice(idx, 1);
+    localStorage.setItem('lifeos_notes_trash', JSON.stringify(trash));
+    renderNotesTrash();
+    toast('Đã xóa vĩnh viễn khỏi thùng rác', 'info');
+  } catch(e) {}
+}
+
+function emptyNotesTrash() {
+  if (!confirm('Bạn có chắc chắn muốn dọn sạch thùng rác ghi chú?')) return;
+  localStorage.removeItem('lifeos_notes_trash');
+  renderNotesTrash();
+  toast('Đã dọn sạch thùng rác', 'info');
+}
+
+window.openNotesTrash = openNotesTrash;
+window.renderNotesTrash = renderNotesTrash;
+window.restoreNoteFromTrash = restoreNoteFromTrash;
+window.permanentDeleteTrashNote = permanentDeleteTrashNote;
+window.emptyNotesTrash = emptyNotesTrash;
 
 function getNotePreview(bodyStr) {
  if (!bodyStr) return '';
