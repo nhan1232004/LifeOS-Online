@@ -12,7 +12,7 @@ async function saveHabit() {
  if (!name) { toast('Nhập tên thói quen', 'error'); return; }
  const icon = document.getElementById('habitIcon').value.trim() || '';
  if (!window.DB.habits) window.DB.habits = [];
- window.DB.habits.push({ id: uid(), name, icon, log: {} });
+ window.DB.habits.push({ id: uid(), name, icon, log: {}, createdAt: today() });
  await persist('habits', window.DB.habits);
  closeModal('mHabit');
  renderHabits();
@@ -34,13 +34,15 @@ async function delHabit(id) {
   renderHabits();
   toast('Đã xóa thói quen!', 'info');
 }
-function getStreak(log) {
+function getStreak(log, createdAt) {
  let streak = 0;
- const d = new Date();
- for (let i = 0; i < 365; i++) {
+ const start = new Date((createdAt || today()) + 'T00:00:00');
+ const end = new Date(today() + 'T00:00:00');
+ const d = new Date(start);
+ while (d <= end) {
   const ds = toLocalDateStr(d);
-  if (log[ds]) streak++; else if (i > 0) break;
-  d.setDate(d.getDate() - 1);
+  if (log[ds]) streak++; else streak = 0;
+  d.setDate(d.getDate() + 1);
  }
  return streak;
 }
@@ -48,9 +50,16 @@ function renderHabits() {
  const c = document.getElementById('habitsContainer'); if (!c) return;
  const habits = window.DB.habits || [];
  if (!habits.length) { c.innerHTML = '<div style="color:var(--text3);padding:30px;text-align:center">Chưa có thói quen nào. Bấm "<i data-lucide="plus" style="width:14px;height:14px;margin-right:4px"></i> Thêm thói quen" để bắt đầu!</div>'; return; }
- const days = Array.from({ length: 21 }, (_, i) => dayOff(i - 20));
+ const todayStr = today();
  c.innerHTML = habits.map(h => {
-  const streak = getStreak(h.log || {});
+  const created = h.createdAt || todayStr;
+  const startDate = new Date(created + 'T00:00:00');
+  const days = Array.from({ length: 30 }, (_, i) => {
+   const d = new Date(startDate);
+   d.setDate(d.getDate() + i);
+   return toLocalDateStr(d);
+  });
+  const streak = getStreak(h.log || {}, created);
   return `<div class="habit-card">
    <div class="hc-top">
     <div class="hc-name">${h.icon} ${h.name}</div>
@@ -62,9 +71,11 @@ function renderHabits() {
    <div class="habit-days">
     ${days.map(d => {
      const done = (h.log || {})[d];
-     const isToday = d === today();
+     const isToday = d === todayStr;
+     const isFuture = d > todayStr;
      const dt = new Date(d + 'T00:00:00');
      const label = dt.getDate() + '/' + (dt.getMonth() + 1);
+     if (isFuture) return `<div class="habit-day future" title="${label}">${label}</div>`;
      return `<div class="habit-day${done ? ' done' : ''}${isToday ? ' today' : ''}" onclick="toggleHabitDay('${h.id}','${d}')" title="${label}">${done ? '✓' : label}</div>`;
     }).join('')}
    </div>

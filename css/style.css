@@ -1154,6 +1154,7 @@ body::before {
 }
 .habit-day.done { background: rgba(0,230,118,.2); color: var(--green); border-color: rgba(0,230,118,.4); box-shadow: 0 0 8px rgba(0,230,118,.15); }
 .habit-day.today { border-color: var(--accent); }
+.habit-day.future { opacity: .35; cursor: default; pointer-events: none; }
 .habit-del { border: none; background: transparent; color: var(--text3); cursor: pointer; font-size: 14px; padding: 4px; transition: var(--t); }
 .habit-del:hover { color: var(--red); }
 
