@@ -539,6 +539,16 @@ window.openNoteSpreadsheet = function(id) {
         if (!container) return;
         container.innerHTML = '';
         
+        const isDark = localStorage.getItem('lifeos_sheet_mode') === 'dark';
+        if (isDark) {
+            container.classList.add('dark-sheet');
+        } else {
+            container.classList.remove('dark-sheet');
+        }
+        
+        const lblTheme = document.getElementById('lblSheetTheme');
+        if (lblTheme) lblTheme.textContent = isDark ? 'Nền tối' : 'Nền sáng';
+        
         const options = {
             mode: 'edit',
             showToolbar: true,
@@ -551,13 +561,13 @@ window.openNoteSpreadsheet = function(id) {
             row: { len: 80, height: 26 },
             col: { len: 26, width: 110, indexWidth: 60, minWidth: 60 },
             style: {
-                bgcolor: '#0e101f',
+                bgcolor: '#ffffff',
                 align: 'left',
                 valign: 'middle',
                 textwrap: false,
                 strike: false,
                 underline: false,
-                color: '#e2e8f0',
+                color: '#0f172a',
                 font: { name: 'Inter, sans-serif', size: 10, bold: false, italic: false }
             }
         };
@@ -577,6 +587,25 @@ window.openNoteSpreadsheet = function(id) {
         
         if (window.lucide) window.lucide.createIcons();
     }, 150);
+};
+
+window.toggleNoteSheetTheme = function() {
+    const isDark = localStorage.getItem('lifeos_sheet_mode') === 'dark';
+    const newMode = isDark ? 'light' : 'dark';
+    localStorage.setItem('lifeos_sheet_mode', newMode);
+    
+    const container = document.getElementById('noteSpreadsheetContainer');
+    const lbl = document.getElementById('lblSheetTheme');
+    if (container) {
+        if (newMode === 'dark') {
+            container.classList.add('dark-sheet');
+            if (lbl) lbl.textContent = 'Nền tối';
+        } else {
+            container.classList.remove('dark-sheet');
+            if (lbl) lbl.textContent = 'Nền sáng';
+        }
+    }
+    toast(`Đã chuyển sang ${newMode === 'dark' ? 'chế độ nền tối' : 'chế độ nền sáng chuẩn Excel'}`, 'info');
 };
 
 window.saveNoteSpreadsheet = async function() {

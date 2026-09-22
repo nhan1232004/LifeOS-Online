@@ -292,7 +292,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1790108105394">
+<link rel="stylesheet" href="css/style.css?v=1790108515663">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -1281,6 +1281,9 @@ window.getCurrentUser = () => currentUser;
     <span class="badge" id="sheetAutoSaveStatus" style="font-size: 11px; color: var(--text3);"><i data-lucide="check" style="width: 12px; height: 12px; margin-right: 3px;"></i> Sẵn sàng</span>
    </div>
    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+    <button class="btn btn-sm btn-outline" type="button" id="btnToggleSheetTheme" onclick="toggleNoteSheetTheme()" title="Chuyển đổi giao diện Sáng / Tối" style="display:inline-flex; align-items:center;">
+     <i data-lucide="sun" id="icSheetTheme" style="width: 13px; height: 13px; margin-right: 4px;"></i> <span id="lblSheetTheme">Nền sáng</span>
+    </button>
     <input type="file" id="noteSheetFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="importXLSXToNoteSheet(event)">
     <button class="btn btn-sm btn-outline" type="button" onclick="document.getElementById('noteSheetFileInput').click()" title="Mở file Excel từ máy tính (.xlsx, .xls, .csv)">
      <i data-lucide="upload" style="width: 13px; height: 13px; margin-right: 4px;"></i> Nhập Excel
@@ -1288,13 +1291,13 @@ window.getCurrentUser = () => currentUser;
     <button class="btn btn-sm btn-outline" type="button" onclick="exportCurrentNoteSheetToXLSX()" title="Tải bảng tính về máy dưới dạng Excel (.xlsx)">
      <i data-lucide="download" style="width: 13px; height: 13px; margin-right: 4px;"></i> Xuất .xlsx
     </button>
-    <button class="btn btn-sm btn-p" type="button" onclick="saveNoteSpreadsheet()" style="background: #107c41; border-color: #107c41;">
+    <button class="btn btn-sm btn-p" type="button" onclick="saveNoteSpreadsheet()" style="background: #107c41; border-color: #107c41; font-weight: 600;">
      <i data-lucide="save" style="width: 13px; height: 13px; margin-right: 4px;"></i> Lưu bảng tính
     </button>
     <button class="mclose" type="button" onclick="closeModal('mNoteSpreadsheet')">✕</button>
    </div>
   </div>
-  <div style="flex: 1; position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #0c0d19;">
+  <div style="flex: 1; position: relative; border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; overflow: hidden; background: #ffffff;">
    <div id="noteSpreadsheetContainer" style="width: 100%; height: 100%;"></div>
   </div>
  </div>
@@ -1302,7 +1305,7 @@ window.getCurrentUser = () => currentUser;
 
 <!-- MODAL: NOTE -->
 <div class="overlay" id="mNote">
- <div class="modal" style="max-width:min(720px, 96vw)">
+ <div class="modal" style="max-width:min(740px, 96vw)">
   <div class="mh"><h3 id="mNoteTitle">Ghi chú mới</h3><button class="mclose" onclick="closeModal('mNote')">✕</button></div>
   <div class="mb-body">
    <input type="hidden" id="noteId">
@@ -1317,18 +1320,24 @@ window.getCurrentUser = () => currentUser;
      <option value="excel">Bảng tính Excel chuyên sâu (Sheet)</option>
     </select></div>
    </div>
-   <div class="fg" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-    <div style="flex:1; min-width:200px;"><label>Nhãn (cách nhau bởi dấu phẩy)</label><input id="noteTags" placeholder="VD: Công việc, Ý tưởng"></div>
-    <div style="display:flex; gap:6px; margin-top:20px; flex-wrap:wrap;">
-     <button class="btn btn-outline" type="button" style="border-color:#107c41; color:#107c41;" onclick="openNoteSpreadsheet(document.getElementById('noteId').value)"><i data-lucide="sheet" style="width:14px;height:14px;margin-right:4px"></i> Chuyển sang Excel Sheet</button>
-     <button class="btn btn-outline" type="button" style="border-color:var(--accent); color:var(--accent)" onclick="insertNoteTable()"><i data-lucide="table" style="width:14px;height:14px;margin-right:4px"></i> Chèn bảng</button>
-     <button class="btn btn-outline" type="button" style="border-color:var(--primary); color:var(--primary)" onclick="aiAutoTagNote()"><i data-lucide="sparkles" style="width:14px;height:14px;margin-right:4px"></i> Gắn nhãn</button>
-     <button class="btn btn-outline" type="button" style="border-color:var(--primary); color:var(--primary)" onclick="aiContinueWriting()"><i data-lucide="pen-tool" style="width:14px;height:14px;margin-right:4px"></i> Viết tiếp</button>
+   <div class="fg" style="margin-bottom: 10px;">
+    <label>Nhãn (cách nhau bởi dấu phẩy)</label>
+    <input id="noteTags" placeholder="VD: Công việc, Ý tưởng, Học tập">
+   </div>
+   <div class="note-toolbar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding:10px 14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:14px;">
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+     <span style="font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px;">Công cụ bảng:</span>
+     <button class="btn btn-sm btn-outline" type="button" style="border-color:#107c41; color:#34d399; font-weight:600; display:inline-flex; align-items:center;" onclick="openNoteSpreadsheet(document.getElementById('noteId').value)" title="Mở bảng tính toàn màn hình với công thức và công cụ Excel"><i data-lucide="sheet" style="width:13px;height:13px;margin-right:5px"></i> Bảng tính Excel</button>
+     <button class="btn btn-sm btn-outline" type="button" style="border-color:var(--accent); color:#c4b5fd; font-weight:600; display:inline-flex; align-items:center;" onclick="insertNoteTable()" title="Chèn bảng biểu đơn giản vào ghi chú"><i data-lucide="table" style="width:13px;height:13px;margin-right:5px"></i> Chèn bảng</button>
+    </div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+     <button class="btn btn-sm btn-outline" type="button" style="border-color:rgba(255,255,255,0.15); color:var(--text2); display:inline-flex; align-items:center;" onclick="aiAutoTagNote()"><i data-lucide="sparkles" style="width:13px;height:13px;margin-right:4px"></i> Gắn nhãn AI</button>
+     <button class="btn btn-sm btn-outline" type="button" style="border-color:rgba(255,255,255,0.15); color:var(--text2); display:inline-flex; align-items:center;" onclick="aiContinueWriting()"><i data-lucide="pen-tool" style="width:13px;height:13px;margin-right:4px"></i> Viết tiếp AI</button>
     </div>
    </div>
    <div class="fg">
     <label>Nội dung</label>
-    <div id="noteBody" class="input" style="min-height:220px; max-height:480px; overflow-y:auto; overflow-x:auto; padding:12px; outline:none; background:var(--bg)"></div>
+    <div id="noteBody" class="input" style="min-height:260px; max-height:480px; overflow-y:auto; overflow-x:auto; padding:16px; outline:none; background:#0c0d1c; border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#f8fafc; font-size:14px; line-height:1.65;"></div>
     <div id="noteBacklinks" style="display:none; margin-top:15px; padding:10px; background:var(--surface-1); border-radius:6px; border:1px solid var(--border)">
      <h4 style="margin:0 0 8px 0; font-size:12px; color:var(--text2); display:flex; align-items:center; gap:4px"><i data-lucide="link" style="width:12px;height:12px"></i> Backlinks (Nhắc đến ghi chú này)</h4>
      <div id="noteBacklinksList" style="display:flex; flex-direction:column; gap:6px"></div>
@@ -1539,7 +1548,7 @@ window.getCurrentUser = () => currentUser;
 <script src="js/projViews.js?v=1789054142228"></script>
 <script src="js/main.js?v=1789054142228"></script>
 <script src="js/modules/todos.js?v=1789054142228"></script>
-<script src="js/modules/notes.js?v=1790108105394"></script>
+<script src="js/modules/notes.js?v=1790108515663"></script>
 <script src="js/modules/habits.js?v=1790106537206"></script>
 <script src="js/modules/goals.js?v=1789054142228"></script>
 <script src="js/modules/journal.js?v=1789054142228"></script>
