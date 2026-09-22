@@ -26,6 +26,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@editorjs/quote@2.6.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/@editorjs/code@2.9.3"></script>
 <script src="https://cdn.jsdelivr.net/npm/@editorjs/table@2.4.1"></script>
+<!-- SheetJS & x-data-spreadsheet for Excel-like Sheets -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/x-data-spreadsheet@1.1.9/dist/xspreadsheet.css">
+<script src="https://cdn.jsdelivr.net/npm/x-data-spreadsheet@1.1.9/dist/xspreadsheet.js"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -288,7 +292,7 @@ window.enterDemoMode = function enterDemoMode() {
 window.getCurrentUser = () => currentUser;
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1790107286525">
+<link rel="stylesheet" href="css/style.css?v=1790108105394">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -760,10 +764,11 @@ window.getCurrentUser = () => currentUser;
    <div class="page" id="p-notes">
     <div class="page-toolbar">
      <div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="sticky-note" style="width:16px;height:16px"></i> Ghi chú của tôi</div>
-     <div style="display:flex;gap:8px">
+     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <input type="text" id="noteSearch" placeholder=" Tìm kiếm..." style="padding:6px 12px;border-radius:8px;border:1px solid var(--glass-b);background:var(--bg2);color:var(--text1);font-size:12px;width:160px">
       <button class="btn btn-sm btn-outline" onclick="openNotesTrash()" title="Thùng rác & Khôi phục ghi chú" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="trash-2" style="width:13px;height:13px"></i> Thùng rác</button>
-       <button class="btn btn-sm btn-p" onclick="openNote()">+ Ghi chú mới</button>
+      <button class="btn btn-sm btn-outline" onclick="openNoteSpreadsheet()" style="border-color:#107c41;color:#107c41;display:inline-flex;align-items:center;gap:4px;font-weight:600" title="Tạo bảng tính Excel mới"><i data-lucide="sheet" style="width:13px;height:13px"></i> + Bảng tính Excel</button>
+      <button class="btn btn-sm btn-p" onclick="openNote()">+ Ghi chú mới</button>
      </div>
     </div>
     <div class="notes-grid" id="notesGrid"></div>
@@ -1262,6 +1267,39 @@ window.getCurrentUser = () => currentUser;
  </div>
 </div>
 
+<!-- MODAL: NOTE SPREADSHEET (EXCEL MODE) -->
+<div class="overlay" id="mNoteSpreadsheet" style="z-index: 1050;" onclick="if(event.target===this)closeModal('mNoteSpreadsheet')">
+ <div class="modal" style="max-width: 98vw; width: 98vw; height: 94vh; max-height: 94vh; display: flex; flex-direction: column; padding: 14px 18px;">
+  <div class="mh" style="margin-bottom: 8px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+   <div style="display: flex; align-items: center; gap: 10px; flex: 1; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #107c41; font-size: 15px;">
+     <i data-lucide="sheet" style="width: 20px; height: 20px;"></i>
+     <span id="mNoteSheetModalLabel">Bảng tính Excel</span>
+    </div>
+    <input type="hidden" id="noteSheetId">
+    <input type="text" id="noteSheetTitle" placeholder="Tiêu đề bảng tính..." style="flex: 1; max-width: 320px; min-width: 180px; padding: 5px 12px; font-size: 13px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg2); color: var(--text1);">
+    <span class="badge" id="sheetAutoSaveStatus" style="font-size: 11px; color: var(--text3);"><i data-lucide="check" style="width: 12px; height: 12px; margin-right: 3px;"></i> Sẵn sàng</span>
+   </div>
+   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+    <input type="file" id="noteSheetFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="importXLSXToNoteSheet(event)">
+    <button class="btn btn-sm btn-outline" type="button" onclick="document.getElementById('noteSheetFileInput').click()" title="Mở file Excel từ máy tính (.xlsx, .xls, .csv)">
+     <i data-lucide="upload" style="width: 13px; height: 13px; margin-right: 4px;"></i> Nhập Excel
+    </button>
+    <button class="btn btn-sm btn-outline" type="button" onclick="exportCurrentNoteSheetToXLSX()" title="Tải bảng tính về máy dưới dạng Excel (.xlsx)">
+     <i data-lucide="download" style="width: 13px; height: 13px; margin-right: 4px;"></i> Xuất .xlsx
+    </button>
+    <button class="btn btn-sm btn-p" type="button" onclick="saveNoteSpreadsheet()" style="background: #107c41; border-color: #107c41;">
+     <i data-lucide="save" style="width: 13px; height: 13px; margin-right: 4px;"></i> Lưu bảng tính
+    </button>
+    <button class="mclose" type="button" onclick="closeModal('mNoteSpreadsheet')">✕</button>
+   </div>
+  </div>
+  <div style="flex: 1; position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #0c0d19;">
+   <div id="noteSpreadsheetContainer" style="width: 100%; height: 100%;"></div>
+  </div>
+ </div>
+</div>
+
 <!-- MODAL: NOTE -->
 <div class="overlay" id="mNote">
  <div class="modal" style="max-width:min(720px, 96vw)">
@@ -1276,11 +1314,13 @@ window.getCurrentUser = () => currentUser;
      <option value="journal">Nhật ký (Journal)</option>
      <option value="project">Kế hoạch Dự án</option>
      <option value="tracker">Bảng quản lý (Table)</option>
+     <option value="excel">Bảng tính Excel chuyên sâu (Sheet)</option>
     </select></div>
    </div>
    <div class="fg" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
     <div style="flex:1; min-width:200px;"><label>Nhãn (cách nhau bởi dấu phẩy)</label><input id="noteTags" placeholder="VD: Công việc, Ý tưởng"></div>
     <div style="display:flex; gap:6px; margin-top:20px; flex-wrap:wrap;">
+     <button class="btn btn-outline" type="button" style="border-color:#107c41; color:#107c41;" onclick="openNoteSpreadsheet(document.getElementById('noteId').value)"><i data-lucide="sheet" style="width:14px;height:14px;margin-right:4px"></i> Chuyển sang Excel Sheet</button>
      <button class="btn btn-outline" type="button" style="border-color:var(--accent); color:var(--accent)" onclick="insertNoteTable()"><i data-lucide="table" style="width:14px;height:14px;margin-right:4px"></i> Chèn bảng</button>
      <button class="btn btn-outline" type="button" style="border-color:var(--primary); color:var(--primary)" onclick="aiAutoTagNote()"><i data-lucide="sparkles" style="width:14px;height:14px;margin-right:4px"></i> Gắn nhãn</button>
      <button class="btn btn-outline" type="button" style="border-color:var(--primary); color:var(--primary)" onclick="aiContinueWriting()"><i data-lucide="pen-tool" style="width:14px;height:14px;margin-right:4px"></i> Viết tiếp</button>
@@ -1499,7 +1539,7 @@ window.getCurrentUser = () => currentUser;
 <script src="js/projViews.js?v=1789054142228"></script>
 <script src="js/main.js?v=1789054142228"></script>
 <script src="js/modules/todos.js?v=1789054142228"></script>
-<script src="js/modules/notes.js?v=1790107286525"></script>
+<script src="js/modules/notes.js?v=1790108105394"></script>
 <script src="js/modules/habits.js?v=1790106537206"></script>
 <script src="js/modules/goals.js?v=1789054142228"></script>
 <script src="js/modules/journal.js?v=1789054142228"></script>

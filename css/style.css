@@ -1205,6 +1205,61 @@ body::before {
   background: transparent !important;
 }
 
+/* LifeOS Excel Spreadsheet (x-data-spreadsheet) Theme */
+#mNoteSpreadsheet .modal {
+  background: #0f1021 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6) !important;
+}
+.x-spreadsheet {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  background: #0c0d19 !important;
+  color: #e2e8f0 !important;
+}
+.x-spreadsheet-toolbar {
+  background: #15172b !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 4px 6px !important;
+}
+.x-spreadsheet-toolbar-btn {
+  color: #cbd5e1 !important;
+  border-radius: 4px !important;
+  transition: all 0.15s ease !important;
+}
+.x-spreadsheet-toolbar-btn:hover,
+.x-spreadsheet-toolbar-btn.active {
+  background: rgba(16, 124, 65, 0.25) !important;
+  color: #4ade80 !important;
+}
+.x-spreadsheet-dropdown-title {
+  color: #cbd5e1 !important;
+}
+.x-spreadsheet-dropdown-content {
+  background: #1a1d36 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 6px !important;
+  color: #e2e8f0 !important;
+}
+.x-spreadsheet-bottombar {
+  background: #15172b !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #94a3b8 !important;
+}
+.x-spreadsheet-menu li a {
+  color: #e2e8f0 !important;
+}
+.x-spreadsheet-menu li a:hover {
+  background: rgba(16, 124, 65, 0.25) !important;
+  color: #4ade80 !important;
+}
+.x-spreadsheet-contextmenu {
+  background: #1a1d36 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 6px !important;
+}
+
 
 /* ═══════════════════════════════════════════════════════════
   HABITS

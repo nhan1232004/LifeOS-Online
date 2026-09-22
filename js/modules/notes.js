@@ -241,6 +241,7 @@ function getNotePreview(bodyStr) {
    const data = JSON.parse(bodyStr);
    if (data.blocks && data.blocks.length > 0) {
     const firstBlock = data.blocks[0];
+    if (firstBlock.type === 'header' && data.blocks[1] && data.blocks[1].data?.text) return data.blocks[1].data.text;
     if (firstBlock.type === 'paragraph' || firstBlock.type === 'header') return firstBlock.data.text;
     if (firstBlock.type === 'list') return (firstBlock.data.items && firstBlock.data.items.length > 0) ? '- ' + firstBlock.data.items[0] : '';
     if (firstBlock.type === 'checklist') return (firstBlock.data.items && firstBlock.data.items.length > 0) ? '☑ ' + firstBlock.data.items[0].text : '';
@@ -261,14 +262,22 @@ function renderNotes() {
  const notes = (window.DB.notes || []).filter(n =>
   !q || (n.title || '').toLowerCase().includes(q) || getNotePreview(n.body).toLowerCase().includes(q)
  );
- grid.innerHTML = notes.length ? notes.map(n => `
-  <div class="note-card" role="button" tabindex="0" style="border-top-color:${window.LifeOSData.escapeAttr(n.color || '#7c4dff')}" onclick="openNote('${window.LifeOSData.escapeAttr(n.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNote('${window.LifeOSData.escapeAttr(n.id)}')}">
+ grid.innerHTML = notes.length ? notes.map(n => {
+  const isSheet = n.isSheet || (n.sheetData && n.sheetData.length > 0);
+  const clickHandler = isSheet ? `openNoteSpreadsheet('${window.LifeOSData.escapeAttr(n.id)}')` : `openNote('${window.LifeOSData.escapeAttr(n.id)}')`;
+  const sheetBadge = isSheet ? `<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#107c41;background:rgba(16,124,65,0.18);padding:2px 7px;border-radius:4px;margin-bottom:6px;"><i data-lucide="sheet" style="width:11px;height:11px"></i> Bảng tính Excel</div>` : '';
+  const cardBorderColor = isSheet ? '#107c41' : (n.color || '#7c4dff');
+  return `
+  <div class="note-card" role="button" tabindex="0" style="border-top-color:${window.LifeOSData.escapeAttr(cardBorderColor)}" onclick="${clickHandler}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${clickHandler}}">
    <button class="nc-del" aria-label="Xóa ghi chú" onclick="event.stopPropagation();delNote('${window.LifeOSData.escapeAttr(n.id)}')">✕</button>
+   ${sheetBadge}
    <div class="nc-title">${window.LifeOSData.escapeHtml(n.title || 'Không tiêu đề')}</div>
    <div class="nc-body">${getNotePreview(n.body).substring(0, 100).replace(/</g,'&lt;')}</div>
    <div class="nc-date">${fmtDate(n.date)}</div>
   </div>
- `).join('') : '<div style="color:var(--text3);padding:30px;text-align:center">Chưa có ghi chú nào. Bấm "+ Ghi chú mới" để bắt đầu!</div>';
+  `;
+ }).join('') : '<div style="color:var(--text3);padding:30px;text-align:center">Chưa có ghi chú nào. Bấm "+ Ghi chú mới" để bắt đầu!</div>';
+ if (window.lucide) window.lucide.createIcons();
 }
 document.getElementById('noteSearch')?.addEventListener('input', renderNotes);
 
@@ -326,7 +335,17 @@ const noteTemplates = {
 };
 
 async function applyNoteTemplate(type) {
-    if(!type || !noteEditor) return;
+    if(!type) return;
+    
+    if (type === 'excel') {
+        const id = document.getElementById('noteId')?.value;
+        document.getElementById('noteTemplate').value = '';
+        closeModal('mNote');
+        openNoteSpreadsheet(id);
+        return;
+    }
+    
+    if(!noteEditor) return;
     
     // Check if editor is empty before applying
     let currentData = { blocks: [] };
@@ -468,3 +487,239 @@ window.insertNoteTable = async function() {
         if (window.toast) toast('Không thể chèn bảng', 'error');
     }
 };
+
+/* ════════════════════════════════════════════════════════════
+   EXCEL SPREADSHEET CONTROLLER (x-data-spreadsheet & SheetJS)
+════════════════════════════════════════════════════════════ */
+let currentNoteSpreadsheet = null;
+
+function getSampleSpreadsheetData() {
+    return [{
+        name: 'Kế hoạch & Dữ liệu',
+        styles: [],
+        rows: {
+            0: { cells: { 0: { text: 'STT' }, 1: { text: 'Nội dung / Hạng mục' }, 2: { text: 'Số lượng' }, 3: { text: 'Đơn giá' }, 4: { text: 'Thành tiền' }, 5: { text: 'Trạng thái' }, 6: { text: 'Ghi chú' } } },
+            1: { cells: { 0: { text: '1' }, 1: { text: 'Thiết bị & Công cụ' }, 2: { text: '2' }, 3: { text: '150000' }, 4: { text: '=C2*D2' }, 5: { text: 'Hoàn thành' }, 6: { text: 'Đã thanh toán' } } },
+            2: { cells: { 0: { text: '2' }, 1: { text: 'Tài liệu học tập & Khóa học' }, 2: { text: '1' }, 3: { text: '250000' }, 4: { text: '=C3*D3' }, 5: { text: 'Đang làm' }, 6: { text: 'Hạn cuối tuần này' } } },
+            3: { cells: { 0: { text: '3' }, 1: { text: 'Dịch vụ Cloud / Hosting' }, 2: { text: '1' }, 3: { text: '500000' }, 4: { text: '=C4*D4' }, 5: { text: 'Cần làm' }, 6: { text: 'Gia hạn tháng sau' } } },
+            4: { cells: { 0: { text: 'Tổng cộng' }, 1: { text: '' }, 2: { text: '' }, 3: { text: '' }, 4: { text: '=SUM(E2:E4)' }, 5: { text: '' }, 6: { text: '' } } }
+        }
+    }];
+}
+
+window.openNoteSpreadsheet = function(id) {
+    if (typeof x_spreadsheet === 'undefined') {
+        if (window.toast) toast('Đang tải thư viện bảng tính, vui lòng thử lại sau giây lát...', 'info');
+        return;
+    }
+    
+    // Đóng modal ghi chú thường nếu đang mở
+    closeModal('mNote');
+    
+    const idEl = document.getElementById('noteSheetId');
+    const titleEl = document.getElementById('noteSheetTitle');
+    const statusEl = document.getElementById('sheetAutoSaveStatus');
+    
+    let note = null;
+    if (id) {
+        note = (window.DB.notes || []).find(x => x.id === id);
+    }
+    
+    const activeId = note ? note.id : uid();
+    const activeTitle = note ? (note.title || 'Bảng tính không tiêu đề') : ('Bảng tính ' + new Date().toLocaleDateString('vi-VN'));
+    
+    if (idEl) idEl.value = activeId;
+    if (titleEl) titleEl.value = activeTitle;
+    if (statusEl) statusEl.innerHTML = '<i data-lucide="check" style="width:12px;height:12px;margin-right:3px;"></i> Sẵn sàng';
+    
+    openModal('mNoteSpreadsheet');
+    
+    setTimeout(() => {
+        const container = document.getElementById('noteSpreadsheetContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const options = {
+            mode: 'edit',
+            showToolbar: true,
+            showGrid: true,
+            showContextmenu: true,
+            view: {
+                height: () => container.clientHeight || (window.innerHeight * 0.8),
+                width: () => container.clientWidth || (window.innerWidth * 0.95)
+            },
+            row: { len: 80, height: 26 },
+            col: { len: 26, width: 110, indexWidth: 60, minWidth: 60 },
+            style: {
+                bgcolor: '#0e101f',
+                align: 'left',
+                valign: 'middle',
+                textwrap: false,
+                strike: false,
+                underline: false,
+                color: '#e2e8f0',
+                font: { name: 'Inter, sans-serif', size: 10, bold: false, italic: false }
+            }
+        };
+        
+        currentNoteSpreadsheet = x_spreadsheet('#noteSpreadsheetContainer', options);
+        
+        if (note && note.sheetData && Array.isArray(note.sheetData) && note.sheetData.length > 0) {
+            currentNoteSpreadsheet.loadData(note.sheetData);
+        } else {
+            currentNoteSpreadsheet.loadData(getSampleSpreadsheetData());
+        }
+        
+        currentNoteSpreadsheet.change(() => {
+            const st = document.getElementById('sheetAutoSaveStatus');
+            if (st) st.innerHTML = '<span style="color:var(--amber);font-weight:600">● Chưa lưu</span>';
+        });
+        
+        if (window.lucide) window.lucide.createIcons();
+    }, 150);
+};
+
+window.saveNoteSpreadsheet = async function() {
+    if (!currentNoteSpreadsheet) return;
+    const id = document.getElementById('noteSheetId')?.value || uid();
+    const title = document.getElementById('noteSheetTitle')?.value.trim() || 'Bảng tính không tiêu đề';
+    
+    let sheetData = [];
+    try {
+        sheetData = currentNoteSpreadsheet.getData();
+    } catch(e) {
+        console.error('Error getting sheet data:', e);
+    }
+    
+    if (!window.DB.notes) window.DB.notes = [];
+    const idx = window.DB.notes.findIndex(x => x.id === id);
+    
+    const bodyObj = {
+        time: Date.now(),
+        blocks: [
+            { type: 'header', data: { text: title, level: 2 } },
+            { type: 'paragraph', data: { text: `📊 <i>Bảng tính Excel chuyên sâu (${sheetData.length || 1} trang tính)</i>` } }
+        ]
+    };
+    
+    const existing = idx >= 0 ? window.DB.notes[idx] : null;
+    const note = {
+        id,
+        title,
+        body: JSON.stringify(bodyObj),
+        sheetData,
+        isSheet: true,
+        color: '#107c41',
+        date: today(),
+        tags: existing ? (existing.tags || ['Bảng tính']) : ['Bảng tính']
+    };
+    
+    if (idx >= 0) window.DB.notes[idx] = note;
+    else window.DB.notes.unshift(note);
+    
+    await persist('notes', window.DB.notes);
+    renderNotes();
+    
+    const statusEl = document.getElementById('sheetAutoSaveStatus');
+    if (statusEl) {
+        statusEl.innerHTML = '<i data-lucide="check" style="width:12px;height:12px;margin-right:3px;"></i> Đã lưu ' + new Date().toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
+    }
+    if (window.lucide) window.lucide.createIcons();
+    toast('Đã lưu bảng tính thành công!', 'success');
+};
+
+window.exportCurrentNoteSheetToXLSX = function() {
+    if (!currentNoteSpreadsheet) {
+        toast('Chưa mở bảng tính để xuất', 'error');
+        return;
+    }
+    if (typeof XLSX === 'undefined') {
+        toast('Thư viện Excel đang nạp, vui lòng thử lại...', 'error');
+        return;
+    }
+    try {
+        const data = currentNoteSpreadsheet.getData();
+        const wb = XLSX.utils.book_new();
+        
+        data.forEach((sheet, idx) => {
+            const wsData = [];
+            const maxRow = (sheet.rows && (sheet.rows.len || Object.keys(sheet.rows).length)) || 40;
+            const maxCol = 26;
+            
+            for (let r = 0; r < maxRow; r++) {
+                const rowData = [];
+                const row = sheet.rows ? sheet.rows[r] : null;
+                for (let c = 0; c < maxCol; c++) {
+                    const cell = row && row.cells ? row.cells[c] : null;
+                    rowData.push(cell ? (cell.text ?? '') : '');
+                }
+                wsData.push(rowData);
+            }
+            while (wsData.length > 1 && wsData[wsData.length - 1].every(x => x === '' || x === null || x === undefined)) {
+                wsData.pop();
+            }
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, sheet.name || ('Sheet' + (idx + 1)));
+        });
+        
+        const title = document.getElementById('noteSheetTitle')?.value.trim() || 'LifeOS_BangTinh';
+        XLSX.writeFile(wb, `${title}.xlsx`);
+        toast('Đã tải xuống file Excel .xlsx thành công!', 'success');
+    } catch(err) {
+        console.error('Export Excel error:', err);
+        toast('Có lỗi khi xuất file Excel', 'error');
+    }
+};
+
+window.importXLSXToNoteSheet = function(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    if (!currentNoteSpreadsheet) {
+        toast('Chưa mở bảng tính', 'error');
+        return;
+    }
+    if (typeof XLSX === 'undefined') {
+        toast('Thư viện Excel đang nạp...', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetsData = [];
+            
+            workbook.SheetNames.forEach(sheetName => {
+                const sheet = workbook.Sheets[sheetName];
+                const roa = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                const rowsObj = { len: Math.max(roa.length + 10, 40) };
+                
+                roa.forEach((row, rIdx) => {
+                    const cellsObj = {};
+                    (row || []).forEach((cellVal, cIdx) => {
+                        cellsObj[cIdx] = { text: String(cellVal ?? '') };
+                    });
+                    rowsObj[rIdx] = { cells: cellsObj };
+                });
+                sheetsData.push({ name: sheetName, rows: rowsObj });
+            });
+            
+            currentNoteSpreadsheet.loadData(sheetsData);
+            
+            const titleInput = document.getElementById('noteSheetTitle');
+            if (titleInput) {
+                const baseName = file.name.replace(/\.[^/.]+$/, "");
+                titleInput.value = baseName;
+            }
+            toast(`Đã nhập dữ liệu từ file "${file.name}"!`, 'success');
+        } catch(err) {
+            console.error('Import XLSX error:', err);
+            toast('Không thể đọc file Excel này', 'error');
+        } finally {
+            event.target.value = '';
+        }
+    };
+    reader.readAsArrayBuffer(file);
+};
+
