@@ -56,7 +56,12 @@ async function openNote(id) {
     list: window.EditorjsList || window.NestedList || window.List,
     checklist: Checklist,
     quote: Quote,
-    code: CodeTool
+    code: CodeTool,
+    table: {
+     class: Table,
+     inlineToolbar: true,
+     config: { rows: 3, cols: 3, withHeadings: true }
+    }
    }
   });
  }
@@ -239,6 +244,7 @@ function getNotePreview(bodyStr) {
     if (firstBlock.type === 'paragraph' || firstBlock.type === 'header') return firstBlock.data.text;
     if (firstBlock.type === 'list') return (firstBlock.data.items && firstBlock.data.items.length > 0) ? '- ' + firstBlock.data.items[0] : '';
     if (firstBlock.type === 'checklist') return (firstBlock.data.items && firstBlock.data.items.length > 0) ? '☑ ' + firstBlock.data.items[0].text : '';
+    if (firstBlock.type === 'table') return '📊 Bảng dữ liệu';
     return '[Nội dung]';
    }
   } catch(e) {}
@@ -300,6 +306,21 @@ const noteTemplates = {
             { type: 'list', data: { style: 'unordered', items: ['Tính năng 1', 'Tính năng 2'] } },
             { type: 'header', data: { text: 'Tài liệu tham khảo', level: 3 } },
             { type: 'paragraph', data: { text: 'Link 1:' } }
+        ]
+    },
+    tracker: {
+        time: Date.now(),
+        blocks: [
+            { type: 'header', data: { text: 'Bảng quản lý', level: 2 } },
+            { type: 'table', data: {
+                withHeadings: true,
+                content: [
+                    ['STT', 'Nội dung', 'Trạng thái', 'Ghi chú'],
+                    ['1', '', '', ''],
+                    ['2', '', '', ''],
+                    ['3', '', '', '']
+                ]
+            }}
         ]
     }
 };
@@ -413,5 +434,37 @@ window.aiContinueWriting = async function(event) {
             btn.innerHTML = oldText;
             btn.disabled = false;
         }
+    }
+};
+
+window.insertNoteTable = async function() {
+    if (!noteEditor) return;
+    try {
+        let data = { blocks: [] };
+        try {
+            data = await noteEditor.save();
+        } catch(e) {}
+        if (!data.blocks) data.blocks = [];
+        data.blocks.push({
+            type: 'table',
+            data: {
+                withHeadings: true,
+                content: [
+                    ['STT', 'Tiêu đề / Công việc', 'Chi tiết / Ghi chú'],
+                    ['1', '', ''],
+                    ['2', '', ''],
+                    ['3', '', '']
+                ]
+            }
+        });
+        await noteEditor.render(data);
+        if (window.toast) toast('Đã chèn bảng mới vào ghi chú!', 'success');
+        setTimeout(() => {
+            const bodyEl = document.getElementById('noteBody');
+            if (bodyEl) bodyEl.scrollTop = bodyEl.scrollHeight;
+        }, 100);
+    } catch(err) {
+        console.error('Insert table error:', err);
+        if (window.toast) toast('Không thể chèn bảng', 'error');
     }
 };

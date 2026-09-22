@@ -1136,6 +1136,76 @@ body::before {
 .nc-color { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: var(--t); }
 .nc-color:hover, .nc-color.active { border-color: #fff; transform: scale(1.15); }
 
+/* EditorJS Table / Spreadsheet Styles */
+.tc-wrap {
+  --color-background: var(--surface);
+  --color-text-secondary: var(--text2);
+  --color-border: var(--border);
+  margin: 14px 0 !important;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.tc-table {
+  border-left: 1px solid var(--border) !important;
+}
+.tc-row {
+  border-bottom: 1px solid var(--border) !important;
+}
+.tc-row:after {
+  display: none !important;
+}
+.tc-cell {
+  border-right: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  padding: 8px 10px !important;
+  min-height: 36px;
+  background: var(--bg2);
+}
+.tc-cell:focus {
+  background: rgba(124, 77, 255, 0.08) !important;
+  outline: 1px solid var(--accent) !important;
+}
+.tc-table--heading .tc-row:first-child .tc-cell {
+  background: var(--surface) !important;
+  font-weight: 700 !important;
+  color: var(--accent) !important;
+}
+.tc-add-column, .tc-add-row {
+  color: var(--text2) !important;
+  border-color: var(--border) !important;
+  background: var(--surface) !important;
+  transition: var(--t);
+}
+.tc-add-column:hover, .tc-add-row:hover {
+  background: rgba(124, 77, 255, 0.2) !important;
+  color: var(--accent) !important;
+}
+.tc-toolbox__toggler {
+  color: var(--text2) !important;
+}
+.tc-toolbox__toggler:hover {
+  color: var(--accent) !important;
+}
+.tc-popover {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4) !important;
+  color: var(--text) !important;
+  border-radius: 8px !important;
+}
+.tc-popover__item {
+  color: var(--text) !important;
+}
+.tc-popover__item:hover {
+  background: rgba(124, 77, 255, 0.15) !important;
+  color: var(--accent) !important;
+}
+.tc-popover__item-icon {
+  background: transparent !important;
+}
+
+
 /* ═══════════════════════════════════════════════════════════
   HABITS
 ═══════════════════════════════════════════════════════════ */

@@ -144,6 +144,16 @@ window.exportNoteMarkdown = function() {
                 else if (b.type === 'code') md += '```\n' + b.data.code + '\n```\n\n';
                 else if (b.type === 'quote') md += '> ' + b.data.text + '\n\n';
                 else if (b.type === 'delimiter') md += '---\n\n';
+                else if (b.type === 'table' && b.data && b.data.content && b.data.content.length > 0) {
+                    const rows = b.data.content;
+                    rows.forEach((row, rIdx) => {
+                        md += '| ' + row.map(cell => (cell || '').replace(/\|/g, '\\|').replace(/\n/g, ' ')).join(' | ') + ' |\n';
+                        if (rIdx === 0 && b.data.withHeadings) {
+                            md += '| ' + row.map(() => '---').join(' | ') + ' |\n';
+                        }
+                    });
+                    md += '\n';
+                }
             });
         }
     } catch (e) {
