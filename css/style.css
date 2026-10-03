@@ -286,6 +286,127 @@ body::before {
 .btn-demo:hover { background: rgba(124,77,255,.2); }
 .lcard-note { font-size: 11px; color: var(--text3); margin-top: 14px; line-height: 1.6; }
 
+/* Auth Component Extensions */
+.platform-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  transition: var(--t);
+}
+.platform-badge.mobile {
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+}
+.platform-badge.web {
+  background: rgba(124, 77, 255, 0.12);
+  color: #b388ff;
+  border: 1px solid rgba(124, 77, 255, 0.3);
+}
+.auth-tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid var(--glass-b);
+}
+.auth-tab {
+  flex: 1;
+  padding: 9px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+.auth-tab.active {
+  background: var(--surface2);
+  color: var(--text1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 18px 0 14px;
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+.auth-divider::before {
+  margin-right: 12px;
+}
+.auth-divider::after {
+  margin-left: 12px;
+}
+.btn-guest-entry {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(124,77,255,0.12), rgba(0,229,255,0.08));
+  border: 1px solid rgba(124,77,255,0.3);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  color: inherit;
+}
+.btn-guest-entry:hover, .btn-guest-entry:active {
+  background: linear-gradient(135deg, rgba(124,77,255,0.22), rgba(0,229,255,0.15));
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.btn-guest-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 12px;
+  box-shadow: 0 4px 12px rgba(124,77,255,0.4);
+}
+.btn-guest-content {
+  flex: 1;
+  min-width: 0;
+}
+.btn-guest-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text1);
+  margin-bottom: 2px;
+}
+.btn-guest-desc {
+  font-size: 11px;
+  color: var(--text2);
+}
+.btn-guest-arrow {
+  color: var(--text3);
+  margin-left: 8px;
+}
+
 /* ═══════════════════════════════════════════════════════════
   APP SHELL
 ═══════════════════════════════════════════════════════════ */

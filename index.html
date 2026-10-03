@@ -34,8 +34,17 @@
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
- from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { 
+ getAuth, 
+ GoogleAuthProvider, 
+ signInWithPopup, 
+ signOut, 
+ onAuthStateChanged,
+ signInWithEmailAndPassword,
+ createUserWithEmailAndPassword,
+ sendPasswordResetEmail,
+ updateProfile
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, collection, query, where, deleteDoc, orderBy, limit, addDoc, serverTimestamp }
  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
@@ -50,22 +59,180 @@ const firebaseConfig = {
  measurementId: "G-QR34BV0C0X"
 };
 
+window.isNativePlatform = function() {
+ return (typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform()) ||
+        window.location.protocol === 'capacitor:' ||
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1';
+};
+
 window.DEMO_MODE = false;
 let app, auth, db, functions, currentUser = null; window.currentUser = null;
 if (!window.DEMO_MODE) { app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); functions = getFunctions(app); }
 
 window.signInGoogle = async () => {
- if (window.DEMO_MODE) { enterDemoMode(); return; }
- try { await signInWithPopup(auth, new GoogleAuthProvider()); }
- catch(e) { toast('Đăng nhập thất bại','error'); }
+ if (window.DEMO_MODE) { window.continueAsGuest(); return; }
+ if (window.isNativePlatform()) {
+  if (typeof openModal === 'function') openModal('mNativeAuthAdvice');
+  else if (window.toast) window.toast('Trên ứng dụng di động, vui lòng dùng Email/Mật khẩu hoặc Dùng ngay để trải nghiệm tốt nhất!', 'info');
+  return;
+ }
+ try {
+  const res = await signInWithPopup(auth, new GoogleAuthProvider());
+  localStorage.setItem('lifeos_active_session', 'auth');
+  if (window.toast) window.toast('Đăng nhập Google thành công!', 'success');
+ } catch(e) {
+  console.warn('[LifeOS Auth] Google Sign-in error:', e);
+  if (e.code === 'auth/popup-closed-by-user') {
+   // user cancelled popup
+  } else if (e.code === 'auth/popup-blocked') {
+   if (window.toast) window.toast('Trình duyệt đã chặn cửa sổ đăng nhập. Vui lòng cho phép popup.', 'warning');
+  } else if (e.code === 'auth/missing-initial-state' || (e.message && e.message.includes('initial state'))) {
+   if (typeof openModal === 'function') openModal('mNativeAuthAdvice');
+   else if (window.toast) window.toast('Môi trường ứng dụng chặn popup web. Vui lòng sử dụng Email hoặc Dùng ngay.', 'info');
+  } else {
+   if (window.toast) window.toast('Đăng nhập thất bại: ' + (e.message || e.code), 'error');
+  }
+ }
 };
+
+window.signInEmail = async (email, password) => {
+ if (!email || !password) {
+  if (window.toast) window.toast('Vui lòng nhập Email và Mật khẩu', 'warning');
+  return false;
+ }
+ try {
+  const res = await signInWithEmailAndPassword(auth, email.trim(), password);
+  localStorage.setItem('lifeos_active_session', 'auth');
+  window.DEMO_MODE = false;
+  currentUser = res.user;
+  window.currentUser = res.user;
+  if (window.toast) window.toast('Đăng nhập thành công!', 'success');
+  return true;
+ } catch(err) {
+  console.error('[LifeOS Auth] Email sign in error:', err);
+  let msg = 'Đăng nhập thất bại';
+  if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+   msg = 'Email hoặc mật khẩu không chính xác';
+  } else if (err.code === 'auth/invalid-email') {
+   msg = 'Địa chỉ email không hợp lệ';
+  } else if (err.code === 'auth/too-many-requests') {
+   msg = 'Quá nhiều lần thử. Vui lòng đợi trong giây lát';
+  } else if (err.message) {
+   msg = err.message;
+  }
+  if (window.toast) window.toast(msg, 'error');
+  return false;
+ }
+};
+
+window.signUpEmail = async (name, email, password) => {
+ if (!email || !password) {
+  if (window.toast) window.toast('Vui lòng nhập đầy đủ thông tin', 'warning');
+  return false;
+ }
+ if (password.length < 6) {
+  if (window.toast) window.toast('Mật khẩu cần tối thiểu 6 ký tự', 'warning');
+  return false;
+ }
+ try {
+  const res = await createUserWithEmailAndPassword(auth, email.trim(), password);
+  if (name && name.trim()) {
+   await updateProfile(res.user, { displayName: name.trim() });
+  }
+  localStorage.setItem('lifeos_active_session', 'auth');
+  window.DEMO_MODE = false;
+  currentUser = res.user;
+  window.currentUser = res.user;
+  if (window.toast) window.toast('Tạo tài khoản thành công!', 'success');
+  return true;
+ } catch(err) {
+  console.error('[LifeOS Auth] Email sign up error:', err);
+  let msg = 'Đăng ký thất bại';
+  if (err.code === 'auth/email-already-in-use') {
+   msg = 'Email này đã được sử dụng. Vui lòng chọn Đăng nhập';
+  } else if (err.code === 'auth/weak-password') {
+   msg = 'Mật khẩu quá yếu (cần tối thiểu 6 ký tự)';
+  } else if (err.code === 'auth/invalid-email') {
+   msg = 'Địa chỉ email không hợp lệ';
+  } else if (err.message) {
+   msg = err.message;
+  }
+  if (window.toast) window.toast(msg, 'error');
+  return false;
+ }
+};
+
+window.resetPassword = async (email) => {
+ if (!email) {
+  if (window.toast) window.toast('Vui lòng nhập Email để nhận liên kết đặt lại mật khẩu', 'warning');
+  return false;
+ }
+ try {
+  await sendPasswordResetEmail(auth, email.trim());
+  if (window.toast) window.toast('Đã gửi email khôi phục mật khẩu! Vui lòng kiểm tra hộp thư.', 'success');
+  return true;
+ } catch(err) {
+  console.error('[LifeOS Auth] Password reset error:', err);
+  let msg = 'Gửi email thất bại';
+  if (err.code === 'auth/user-not-found') {
+   msg = 'Không tìm thấy tài khoản với email này';
+  } else if (err.code === 'auth/invalid-email') {
+   msg = 'Địa chỉ email không hợp lệ';
+  }
+  if (window.toast) window.toast(msg, 'error');
+  return false;
+ }
+};
+
+window.continueAsGuest = function() {
+ localStorage.setItem('lifeos_active_session', 'guest');
+ window.DEMO_MODE = true;
+ currentUser = { displayName: 'Người dùng Khách', email: 'local@lifeos.app', uid: 'guest' };
+ window.currentUser = currentUser;
+ showApp(currentUser);
+};
+
+window.enterDemoMode = function() {
+ window.continueAsGuest();
+};
+
 window.signOutApp = async () => {
- if (window.DEMO_MODE) { showLogin(); currentUser = null; window.currentUser = null; return; }
- await signOut(auth);
+ localStorage.removeItem('lifeos_active_session');
+ if (window.DEMO_MODE) {
+  window.DEMO_MODE = false;
+  currentUser = null;
+  window.currentUser = null;
+  showLogin();
+  return;
+ }
+ try { await signOut(auth); } catch(e){}
+ currentUser = null;
+ window.currentUser = null;
+ showLogin();
 };
+
 if (!window.DEMO_MODE) {
- onAuthStateChanged(auth, u => { currentUser = u; window.currentUser = u; u ? showApp(u) : showLogin(); });
-} else { showLogin(); }
+ onAuthStateChanged(auth, u => {
+  if (u) {
+   localStorage.setItem('lifeos_active_session', 'auth');
+   currentUser = u;
+   window.currentUser = u;
+   showApp(u);
+  } else {
+   const savedSession = localStorage.getItem('lifeos_active_session');
+   if (savedSession === 'guest') {
+    window.continueAsGuest();
+   } else {
+    currentUser = null;
+    window.currentUser = null;
+    showLogin();
+   }
+  }
+ });
+} else {
+ showLogin();
+}
 
 const LOCAL_KEY = 'lifeos_v4';
 function demoLoad() { try { const d = localStorage.getItem(LOCAL_KEY); if(d) { const parsed=JSON.parse(d); return window.LifeOSData?.normalize(parsed) || parsed; } } catch{} return buildDefault(); }
@@ -294,18 +461,113 @@ async function showApp(user) {
  
  if (typeof renderWorkspaceSwitcher === 'function') renderWorkspaceSwitcher();
  if (window.initNotifications) window.initNotifications();
+
+ const typeBadge = document.getElementById('settingsAccountTypeBadge');
+ const typeDesc = document.getElementById('settingsAccountDesc');
+ const authBtn = document.getElementById('btnSettingsAuthAction');
+ if (window.DEMO_MODE) {
+  if (typeBadge) { typeBadge.textContent = 'Khách / Offline'; typeBadge.style.color = 'var(--amber)'; }
+  if (typeDesc) typeDesc.textContent = 'Bạn đang sử dụng ứng dụng ở chế độ Khách (dữ liệu lưu trên máy).';
+  if (authBtn) authBtn.innerHTML = '<i data-lucide="cloud" style="width:13px;height:13px;margin-right:4px"></i> Đăng nhập để đồng bộ Cloud';
+ } else {
+  if (typeBadge) { typeBadge.textContent = 'Đồng bộ Cloud'; typeBadge.style.color = 'var(--green)'; }
+  if (typeDesc) typeDesc.textContent = 'Đã đăng nhập: ' + (user.email || user.displayName || 'Tài khoản đám mây');
+  if (authBtn) authBtn.innerHTML = '<i data-lucide="log-out" style="width:13px;height:13px;margin-right:4px"></i> Đăng xuất';
+ }
+
  setTimeout(() => { if (window.lucide) window.lucide.createIcons(); }, 100);
 }
 function showLogin() {
  document.getElementById('loginScreen').style.display='flex';
  document.getElementById('appShell').style.display='none';
+ if (typeof updatePlatformBadge === 'function') updatePlatformBadge();
 }
 window.enterDemoMode = function enterDemoMode() {
- window.DEMO_MODE = true;
- currentUser={displayName:'Demo User',email:'demo@lifeos.app',uid:'demo'}; window.currentUser = currentUser;
- showApp(currentUser);
-}
+ window.continueAsGuest();
+};
 window.getCurrentUser = () => currentUser;
+
+window.switchAuthTab = function(tab) {
+ const tabLogin = document.getElementById('tabLogin');
+ const tabReg = document.getElementById('tabRegister');
+ const formSignIn = document.getElementById('formSignIn');
+ const formReg = document.getElementById('formRegister');
+ if (!tabLogin || !tabReg) return;
+
+ if (tab === 'register') {
+  tabLogin.classList.remove('active');
+  tabReg.classList.add('active');
+  if (formSignIn) formSignIn.style.display = 'none';
+  if (formReg) formReg.style.display = 'block';
+ } else {
+  tabReg.classList.remove('active');
+  tabLogin.classList.add('active');
+  if (formReg) formReg.style.display = 'none';
+  if (formSignIn) formSignIn.style.display = 'block';
+ }
+ if (window.lucide) window.lucide.createIcons();
+};
+
+window.handleEmailSignIn = async function(e) {
+ e.preventDefault();
+ const btn = document.getElementById('btnSubmitLogin');
+ const email = document.getElementById('authEmail')?.value;
+ const pass = document.getElementById('authPassword')?.value;
+ if (!email || !pass) return;
+
+ const origHtml = btn.innerHTML;
+ btn.disabled = true;
+ btn.innerHTML = '<span class="sync-dot" style="animation:pulse 0.8s infinite; background:#fff; display:inline-block; margin-right:6px;"></span> Đang xử lý...';
+ try {
+  await window.signInEmail(email, pass);
+ } finally {
+  btn.disabled = false;
+  btn.innerHTML = origHtml;
+  if (window.lucide) window.lucide.createIcons();
+ }
+};
+
+window.handleEmailRegister = async function(e) {
+ e.preventDefault();
+ const btn = document.getElementById('btnSubmitRegister');
+ const name = document.getElementById('authRegName')?.value;
+ const email = document.getElementById('authRegEmail')?.value;
+ const pass = document.getElementById('authRegPassword')?.value;
+ if (!email || !pass) return;
+
+ const origHtml = btn.innerHTML;
+ btn.disabled = true;
+ btn.innerHTML = '<span class="sync-dot" style="animation:pulse 0.8s infinite; background:#fff; display:inline-block; margin-right:6px;"></span> Đang đăng ký...';
+ try {
+  await window.signUpEmail(name, email, pass);
+ } finally {
+  btn.disabled = false;
+  btn.innerHTML = origHtml;
+  if (window.lucide) window.lucide.createIcons();
+ }
+};
+
+window.handleForgotPassword = async function() {
+ const currentEmail = document.getElementById('authEmail')?.value || '';
+ const email = prompt('Nhập địa chỉ Email của bạn để nhận liên kết đặt lại mật khẩu:', currentEmail);
+ if (email && email.trim()) {
+  await window.resetPassword(email.trim());
+ }
+};
+
+function updatePlatformBadge() {
+ const badge = document.getElementById('platformBadge');
+ if (!badge) return;
+ if (window.isNativePlatform && window.isNativePlatform()) {
+  badge.innerHTML = '<i data-lucide="smartphone" class="ic-14"></i> <span>Bản Ứng Dụng Di Động</span>';
+  badge.className = 'platform-badge mobile';
+ } else {
+  badge.innerHTML = '<i data-lucide="globe" class="ic-14"></i> <span>Phiên Bản Web Cloud</span>';
+  badge.className = 'platform-badge web';
+ }
+ if (window.lucide) window.lucide.createIcons();
+}
+document.addEventListener('DOMContentLoaded', updatePlatformBadge);
 </script>
 
 <link rel="stylesheet" href="css/style.css?v=1790108515663">
@@ -328,19 +590,110 @@ window.getCurrentUser = () => currentUser;
  <div class="lcard">
   <div class="lcard-logo"><i data-lucide="zap" style="width:32px;height:32px"></i></div>
   <div class="lcard-title gradient-text">LifeOS</div>
-  <div class="lcard-sub">Quản lý lịch, dự án và tài chính cá nhân<br>Sync real-time mọi thiết bị</div>
-  <div class="lcard-features">
-   <div class="lcard-feat"><div class="lcard-feat-ico"><i data-lucide="calendar" class="ic-18"></i></div><span>Lịch & sự kiện – tháng / tuần</span></div>
-   <div class="lcard-feat"><div class="lcard-feat-ico"><i data-lucide="check-square" class="ic-18"></i></div><span>Quản lý dự án Kanban board</span></div>
-   <div class="lcard-feat"><div class="lcard-feat-ico"><i data-lucide="wallet" class="ic-18"></i></div><span>Theo dõi thu chi cá nhân</span></div>
-   <div class="lcard-feat"><div class="lcard-feat-ico"><i data-lucide="cloud" class="ic-18"></i></div><span>Lưu tự động – mở ở bất cứ đâu</span></div>
+  <div class="lcard-sub" style="margin-bottom:12px">Không gian quản lý cuộc sống & công việc toàn diện</div>
+  <div id="platformBadge" class="platform-badge mobile"><i data-lucide="smartphone" class="ic-14"></i> <span>Bản Ứng Dụng Di Động</span></div>
+
+  <!-- AUTH TABS -->
+  <div class="auth-tabs">
+   <button type="button" class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Đăng nhập</button>
+   <button type="button" class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Đăng ký mới</button>
   </div>
-  <button class="btn-google" onclick="signInGoogle()">
-   <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.5 2.3 30.1 0 24 0 14.6 0 6.6 5.5 2.6 13.5l7.8 6C12.4 13 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.9 7.2l7.6 5.9C43.8 37 46.5 31 46.5 24z"/><path fill="#FBBC05" d="M10.4 28.5c-.5-1.5-.8-3-.8-4.5s.3-3 .8-4.5l-7.8-6C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.5l7.8-6z"/><path fill="#34A853" d="M24 48c6.1 0 11.2-2 14.9-5.4l-7.6-5.9c-2.1 1.4-4.7 2.3-7.3 2.3-6.3 0-11.6-4.2-13.6-9.9l-7.8 6C6.6 42.5 14.6 48 24 48z"/></svg>
-   Đăng nhập với Google
+
+  <!-- SIGN IN FORM -->
+  <form id="formSignIn" onsubmit="handleEmailSignIn(event)">
+   <div class="fg" style="text-align:left; margin-bottom:12px;">
+    <label style="font-size:12px; font-weight:600; color:var(--text2); display:flex; align-items:center; gap:6px;">
+     <i data-lucide="mail" class="ic-14"></i> Email
+    </label>
+    <input type="email" id="authEmail" class="inp" placeholder="name@example.com" required autocomplete="email" style="min-height:44px;">
+   </div>
+   <div class="fg" style="text-align:left; margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+     <label style="font-size:12px; font-weight:600; color:var(--text2); display:flex; align-items:center; gap:6px;">
+      <i data-lucide="lock" class="ic-14"></i> Mật khẩu
+     </label>
+     <a href="javascript:void(0)" onclick="handleForgotPassword()" style="font-size:11.5px; color:var(--accent); text-decoration:none;">Quên mật khẩu?</a>
+    </div>
+    <input type="password" id="authPassword" class="inp" placeholder="••••••••" required autocomplete="current-password" style="min-height:44px;">
+   </div>
+   <button type="submit" id="btnSubmitLogin" class="btn btn-p btn-full" style="min-height:46px; font-size:14px; font-weight:700; border-radius:12px; box-shadow:0 4px 16px rgba(124,77,255,0.35);">
+    <i data-lucide="log-in" class="ic-16" style="margin-right:6px"></i> Đăng nhập vào LifeOS
+   </button>
+  </form>
+
+  <!-- REGISTER FORM -->
+  <form id="formRegister" onsubmit="handleEmailRegister(event)" style="display:none;">
+   <div class="fg" style="text-align:left; margin-bottom:12px;">
+    <label style="font-size:12px; font-weight:600; color:var(--text2); display:flex; align-items:center; gap:6px;">
+     <i data-lucide="user" class="ic-14"></i> Họ và tên
+    </label>
+    <input type="text" id="authRegName" class="inp" placeholder="Họ tên của bạn" required autocomplete="name" style="min-height:44px;">
+   </div>
+   <div class="fg" style="text-align:left; margin-bottom:12px;">
+    <label style="font-size:12px; font-weight:600; color:var(--text2); display:flex; align-items:center; gap:6px;">
+     <i data-lucide="mail" class="ic-14"></i> Email
+    </label>
+    <input type="email" id="authRegEmail" class="inp" placeholder="name@example.com" required autocomplete="email" style="min-height:44px;">
+   </div>
+   <div class="fg" style="text-align:left; margin-bottom:16px;">
+    <label style="font-size:12px; font-weight:600; color:var(--text2); display:flex; align-items:center; gap:6px;">
+     <i data-lucide="lock" class="ic-14"></i> Mật khẩu (tối thiểu 6 ký tự)
+    </label>
+    <input type="password" id="authRegPassword" class="inp" placeholder="••••••••" minlength="6" required autocomplete="new-password" style="min-height:44px;">
+   </div>
+   <button type="submit" id="btnSubmitRegister" class="btn btn-p btn-full" style="min-height:46px; font-size:14px; font-weight:700; border-radius:12px; box-shadow:0 4px 16px rgba(124,77,255,0.35);">
+    <i data-lucide="user-plus" class="ic-16" style="margin-right:6px"></i> Tạo tài khoản mới
+   </button>
+  </form>
+
+  <!-- DIVIDER -->
+  <div class="auth-divider">
+   <span>HOẶC</span>
+  </div>
+
+  <!-- INSTANT / GUEST ENTRY BUTTON -->
+  <button type="button" class="btn-guest-entry" onclick="continueAsGuest()">
+   <div class="btn-guest-icon"><i data-lucide="zap" class="ic-18"></i></div>
+   <div class="btn-guest-content">
+    <div class="btn-guest-title">Dùng ngay không cần đăng nhập</div>
+    <div class="btn-guest-desc">Trải nghiệm tức thì • Lưu offline an toàn trên máy</div>
+   </div>
+   <i data-lucide="chevron-right" class="ic-16 btn-guest-arrow"></i>
   </button>
-  <button class="btn-demo" onclick="enterDemoMode()"><i data-lucide="play" style="width:16px;height:16px;margin-right:6px"></i> Dùng thử (Demo mode)</button>
-  <div class="lcard-note">🔒 Bảo mật bởi Firebase. Chúng tôi không lưu mật khẩu.</div>
+
+  <!-- GOOGLE BUTTON (Web preferred, mobile secondary) -->
+  <button type="button" class="btn-google" id="btnGoogleAuth" onclick="signInGoogle()" style="margin-top:10px;">
+   <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.5 2.3 30.1 0 24 0 14.6 0 6.6 5.5 2.6 13.5l7.8 6C12.4 13 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.9 7.2l7.6 5.9C43.8 37 46.5 31 46.5 24z"/><path fill="#FBBC05" d="M10.4 28.5c-.5-1.5-.8-3-.8-4.5s.3-3 .8-4.5l-7.8-6C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.5l7.8-6z"/><path fill="#34A853" d="M24 48c6.1 0 11.2-2 14.9-5.4l-7.6-5.9c-2.1 1.4-4.7 2.3-7.3 2.3-6.3 0-11.6-4.2-13.6-9.9l-7.8 6C6.6 42.5 14.6 48 24 48z"/></svg>
+   <span>Đăng nhập với Google</span>
+  </button>
+
+  <div class="lcard-note" style="margin-top:16px;">
+   🔒 Dữ liệu bảo mật bởi Firebase • Hoạt động độc lập cả Online & Offline
+  </div>
+ </div>
+</div>
+
+<!-- NATIVE AUTH ADVICE MODAL (FOR MOBILE USERS CLICKING GOOGLE) -->
+<div class="overlay" id="mNativeAuthAdvice" onclick="if(event.target===this)closeModal('mNativeAuthAdvice')">
+ <div class="modal" style="max-width:400px; text-align:center; padding:24px 20px;">
+  <div style="width:52px; height:52px; border-radius:14px; background:rgba(0,229,255,0.12); color:var(--accent-cyan); display:flex; align-items:center; justify-content:center; margin:0 auto 14px;">
+   <i data-lucide="smartphone" class="ic-24"></i>
+  </div>
+  <h3 style="font-size:16.5px; font-weight:800; margin-bottom:8px;">Trải nghiệm Ứng dụng Di động</h3>
+  <p style="font-size:13px; color:var(--text2); line-height:1.5; margin-bottom:16px;">
+   Để ứng dụng hoạt động độc lập và mượt mà nhất (không bị phụ thuộc vào cửa sổ trình duyệt bên ngoài), bạn có thể:
+  </p>
+  <div style="display:flex; flex-direction:column; gap:10px; text-align:left; margin-bottom:18px;">
+   <div style="display:flex; gap:10px; align-items:flex-start; padding:10px 12px; background:var(--surface); border-radius:10px; border:1px solid var(--border);">
+    <i data-lucide="mail" class="ic-18" style="color:var(--accent); margin-top:2px; flex-shrink:0;"></i>
+    <div style="font-size:12.5px;"><strong>Đăng nhập bằng Email & Mật khẩu:</strong> Tạo tài khoản trực tiếp trong app, lưu đồng bộ đám mây an toàn.</div>
+   </div>
+   <div style="display:flex; gap:10px; align-items:flex-start; padding:10px 12px; background:var(--surface); border-radius:10px; border:1px solid var(--border);">
+    <i data-lucide="zap" class="ic-18" style="color:var(--accent-cyan); margin-top:2px; flex-shrink:0;"></i>
+    <div style="font-size:12.5px;"><strong>Dùng ngay không cần đăng nhập:</strong> Sử dụng toàn bộ 14 tính năng ngay lập tức, lưu cục bộ an toàn trên điện thoại.</div>
+   </div>
+  </div>
+  <button class="btn btn-p btn-full" style="min-height:44px;" onclick="closeModal('mNativeAuthAdvice')">Đã hiểu</button>
  </div>
 </div>
 
@@ -2039,6 +2392,16 @@ window.getCurrentUser = () => currentUser;
  <div class="modal" style="max-width:480px">
   <div class="mh"><h3 style="display:flex;align-items:center;gap:8px"><i data-lucide="settings" style="width:18px;height:18px;color:var(--primary)"></i> Cài đặt &amp; Dữ liệu</h3><button class="mclose" onclick="closeSettings()">✕</button></div>
   <div class="mb-body" style="display:flex;flex-direction:column;gap:14px">
+   <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+     <div style="display:flex;align-items:center;gap:6px"><i data-lucide="user-check" style="width:14px;height:14px;color:var(--accent)"></i> Tài khoản & Đồng bộ</div>
+     <span id="settingsAccountTypeBadge" class="badge" style="background:rgba(124,77,255,0.15);color:var(--accent);">Khách / Offline</span>
+    </div>
+    <p id="settingsAccountDesc" style="font-size:12px;color:var(--text2);margin-bottom:10px">Bạn đang sử dụng ứng dụng ở chế độ Khách (dữ liệu lưu trên thiết bị).</p>
+    <div style="display:flex; gap:8px;">
+     <button type="button" class="btn btn-p btn-sm" id="btnSettingsAuthAction" onclick="closeSettings(); signOutApp();"><i data-lucide="log-in" style="width:13px;height:13px;margin-right:4px"></i> Đăng nhập / Chuyển tài khoản</button>
+    </div>
+   </div>
    <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
     <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="sparkles" style="width:14px;height:14px;color:var(--accent)"></i> Cấu hình Google Gemini AI Key</div>
     <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Kích hoạt trợ lý AI thông minh bằng Gemini API Key (miễn phí từ Google AI Studio).</p>
