@@ -45,6 +45,8 @@ class FinanceRepository(
     }
 
     suspend fun deleteTransaction(id: String) = withContext(Dispatchers.IO) {
+        cloudSyncRepo?.recordDeletedItem(id, "income")
+        cloudSyncRepo?.recordDeletedItem(id, "expense")
         transactionDao.deleteById(id)
         cloudSyncRepo?.triggerAutoSync("finance")
     }
@@ -87,6 +89,7 @@ class FinanceRepository(
     }
 
     suspend fun deleteGoal(id: String) = withContext(Dispatchers.IO) {
+        cloudSyncRepo?.recordDeletedItem(id, "goals")
         goalDao.deleteById(id)
         cloudSyncRepo?.triggerAutoSync("goals")
     }

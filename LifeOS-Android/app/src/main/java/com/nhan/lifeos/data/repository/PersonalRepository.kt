@@ -51,6 +51,7 @@ class PersonalRepository(
     }
 
     suspend fun deleteNote(id: String) = withContext(Dispatchers.IO) {
+        cloudSyncRepo?.recordDeletedItem(id, "notes")
         noteDao.deleteById(id)
         cloudSyncRepo?.triggerAutoSync("notes")
     }
@@ -113,6 +114,7 @@ class PersonalRepository(
     }
 
     suspend fun deleteHabit(id: String) = withContext(Dispatchers.IO) {
+        cloudSyncRepo?.recordDeletedItem(id, "habits")
         habitDao.deleteById(id)
         cloudSyncRepo?.triggerAutoSync("habits")
     }
@@ -134,6 +136,7 @@ class PersonalRepository(
     }
 
     suspend fun deleteJournal(id: String) = withContext(Dispatchers.IO) {
+        cloudSyncRepo?.recordDeletedItem(id, "journal")
         journalDao.deleteById(id)
         cloudSyncRepo?.triggerAutoSync("journal")
     }

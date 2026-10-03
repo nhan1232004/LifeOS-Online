@@ -39,6 +39,7 @@ class MockTestRepository(
     }
 
     suspend fun deleteMockTest(id: String) {
+        cloudSyncRepo?.recordDeletedItem(id, "mocktests")
         database.mockTestDao().deleteMockTest(id)
         cloudSyncRepo?.triggerAutoSync("mocktests")
     }

@@ -57,6 +57,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,6 +81,7 @@ fun AuthScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val authService = remember { FirebaseAuthService() }
+    val context = LocalContext.current
 
     var isRegisterMode by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf("") }
@@ -399,12 +403,20 @@ fun AuthScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Google Login button (with advice dialog on mobile)
+                    // Google / Gmail Login button
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(14.dp))
-                            .clickable { showGoogleAdviceDialog = true },
+                            .clickable {
+                                val authUrl = "https://dashboard-39cf8.web.app/auth-bridge.html"
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(authUrl))
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    errorMessage = "Không thể mở trình duyệt: ${e.message}"
+                                }
+                            },
                         shape = RoundedCornerShape(14.dp),
                         colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceDark),
                         border = androidx.compose.foundation.BorderStroke(1.dp, LifeOSGlassBorder)
@@ -412,14 +424,21 @@ fun AuthScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 12.dp),
+                                .padding(vertical = 13.dp, horizontal = 16.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Đăng nhập với Google",
+                                text = "G",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 18.sp,
+                                color = LifeOSCyan
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Đăng nhập bằng Gmail / Google",
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Bold,
                                 color = LifeOSTextHigh
                             )
                         }

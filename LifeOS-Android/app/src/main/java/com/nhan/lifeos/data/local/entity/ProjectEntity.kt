@@ -11,6 +11,7 @@ data class ProjectEntity(
     val status: String = "Cần làm", // "Cần làm", "Đang làm", "Hoàn thành"
     val priority: String = "mid",   // "high", "mid", "low"
     val budget: Long = 0L,
+    val progress: Int = 0,          // 0 - 100%
     val due: String = "",           // "YYYY-MM-DD"
     val desc: String = "",
     val tags: List<String> = emptyList(),

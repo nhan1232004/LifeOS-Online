@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.nhan.lifeos.data.local.converter.Converters
+import com.nhan.lifeos.data.local.dao.DeletedItemDao
 import com.nhan.lifeos.data.local.dao.EventDao
 import com.nhan.lifeos.data.local.dao.GoalDao
 import com.nhan.lifeos.data.local.dao.HabitDao
@@ -17,6 +18,7 @@ import com.nhan.lifeos.data.local.dao.ProjectTaskDao
 import com.nhan.lifeos.data.local.dao.TodoDao
 import com.nhan.lifeos.data.local.dao.TransactionDao
 import com.nhan.lifeos.data.local.dao.VocabDao
+import com.nhan.lifeos.data.local.entity.DeletedItemEntity
 import com.nhan.lifeos.data.local.entity.EventEntity
 import com.nhan.lifeos.data.local.entity.GoalEntity
 import com.nhan.lifeos.data.local.entity.HabitEntity
@@ -41,9 +43,10 @@ import com.nhan.lifeos.data.local.entity.VocabEntity
         GoalEntity::class,
         JournalEntity::class,
         VocabEntity::class,
-        MockTestEntity::class
+        MockTestEntity::class,
+        DeletedItemEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -59,6 +62,7 @@ abstract class LifeOSDatabase : RoomDatabase() {
     abstract fun journalDao(): JournalDao
     abstract fun vocabDao(): VocabDao
     abstract fun mockTestDao(): MockTestDao
+    abstract fun deletedItemDao(): DeletedItemDao
 
     companion object {
         @Volatile

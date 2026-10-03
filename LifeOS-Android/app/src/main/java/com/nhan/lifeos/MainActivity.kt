@@ -79,17 +79,54 @@ import com.nhan.lifeos.ui.todos.TodosScreen
 import com.nhan.lifeos.ui.todos.TodosViewModel
 import com.nhan.lifeos.ui.vocab.VocabScreen
 import com.nhan.lifeos.ui.vocab.VocabViewModel
+import android.content.Intent
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private val preferencesRepository by lazy { UserPreferencesRepository(this) }
+    private val database by lazy { LifeOSDatabase.getDatabase(this) }
+    private val cloudSyncRepo by lazy { CloudSyncRepository(database, preferencesRepository) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        handleAuthIntent(intent)
         enableEdgeToEdge()
         setContent {
             LifeOSTheme {
                 MainRootScreen()
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleAuthIntent(intent)
+    }
+
+    private fun handleAuthIntent(intent: Intent?) {
+        val uri = intent?.data ?: return
+        if (uri.scheme == "lifeos" && uri.host == "auth-callback") {
+            val uid = uri.getQueryParameter("uid") ?: return
+            val email = uri.getQueryParameter("email") ?: ""
+            val name = uri.getQueryParameter("name") ?: ""
+            val idToken = uri.getQueryParameter("idToken") ?: ""
+            val refreshToken = uri.getQueryParameter("refreshToken") ?: ""
+
+            lifecycleScope.launch {
+                preferencesRepository.setUserSession(
+                    email = email,
+                    displayName = name.ifBlank { email.substringBefore("@") },
+                    userId = uid,
+                    idToken = idToken,
+                    refreshToken = refreshToken
+                )
+                // Trigger full sync immediately
+                val userSession = preferencesRepository.userSessionFlow.first()
+                cloudSyncRepo.syncAll(userSession)
             }
         }
     }

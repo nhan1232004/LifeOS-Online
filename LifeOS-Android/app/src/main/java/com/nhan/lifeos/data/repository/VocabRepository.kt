@@ -43,6 +43,7 @@ class VocabRepository(
     }
 
     suspend fun deleteVocab(id: String) = withContext(Dispatchers.IO) {
+        cloudSyncRepo?.recordDeletedItem(id, "vocab")
         vocabDao.deleteById(id)
         cloudSyncRepo?.triggerAutoSync("vocab")
     }

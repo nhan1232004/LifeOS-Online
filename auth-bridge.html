@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập LifeOS qua Google</title>
+  <style>
+    :root {
+      --bg: #07070f;
+      --card: #121224;
+      --primary: #7c4dff;
+      --cyan: #00e5ff;
+      --text: #ffffff;
+      --text-muted: #8b8ba7;
+      --border: rgba(124, 77, 255, 0.2);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 24px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .logo {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 25px rgba(124, 77, 255, 0.4);
+    }
+    h1 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    p { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+    .btn-google {
+      background: white;
+      color: #1f1f1f;
+    }
+    .btn-google:hover { background: #f1f1f1; }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      margin-top: 12px;
+      display: none;
+    }
+    .status-box {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(124, 77, 255, 0.1);
+      border: 1px solid rgba(124, 77, 255, 0.2);
+      font-size: 13px;
+      color: var(--cyan);
+      display: none;
+    }
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="logo">⚡</div>
+    <h1>Đăng nhập LifeOS Mobile</h1>
+    <p>Xác thực bảo mật qua tài khoản Google / Gmail để tự động đồng bộ dữ liệu với ứng dụng Android.</p>
+
+    <button id="btnGoogle" class="btn btn-google" onclick="doGoogleLogin()">
+      <svg width="20" height="20" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.15C3.26 21.36 7.33 24 12 24z"/>
+        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.24C.45 8.15 0 9.99 0 12s.45 3.85 1.24 5.42l4.04-3.15z"/>
+        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.24 6.58l4.04 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+      </svg>
+      <span>Tiếp tục với Google</span>
+    </button>
+
+    <div id="statusBox" class="status-box"></div>
+    <a id="btnDeepLink" class="btn btn-primary" href="#">Mở ứng dụng LifeOS</a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOv1gI7x-9ljsrabTCH6qnsmXtteEtMO0",
+      authDomain: "dashboard-39cf8.firebaseapp.com",
+      projectId: "dashboard-39cf8",
+      appId: "1:994043078937:web:c0f5d999d4580ac1377d88"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const btnGoogle = document.getElementById('btnGoogle');
+    const statusBox = document.getElementById('statusBox');
+    const btnDeepLink = document.getElementById('btnDeepLink');
+
+    function setStatus(msg) {
+      statusBox.style.display = 'block';
+      statusBox.innerHTML = msg;
+    }
+
+    async function handleUserSuccess(user) {
+      setStatus('<div class="spinner"></div><div style="margin-top:6px;">Đăng nhập thành công! Đang chuyển tiếp về LifeOS App...</div>');
+      btnGoogle.style.display = 'none';
+
+      try {
+        const idToken = await user.getIdToken();
+        const refreshToken = user.refreshToken || '';
+        const uid = encodeURIComponent(user.uid);
+        const email = encodeURIComponent(user.email || '');
+        const name = encodeURIComponent(user.displayName || '');
+
+        const deepLinkUrl = `lifeos://auth-callback?uid=${uid}&email=${email}&name=${name}&idToken=${encodeURIComponent(idToken)}&refreshToken=${encodeURIComponent(refreshToken)}`;
+        btnDeepLink.href = deepLinkUrl;
+        btnDeepLink.style.display = 'flex';
+
+        // Auto trigger redirect to native app
+        window.location.href = deepLinkUrl;
+
+        // Fallback after 2.5 seconds
+        setTimeout(() => {
+          setStatus('Nếu ứng dụng chưa tự mở, vui lòng nhấn nút <b>"Mở ứng dụng LifeOS"</b> bên dưới.');
+        }, 2500);
+      } catch (err) {
+        setStatus('Lỗi tạo mã xác thực: ' + err.message);
+      }
+    }
+
+    window.doGoogleLogin = async function() {
+      setStatus('<div class="spinner"></div><div style="margin-top:6px;">Đang kết nối tài khoản Google...</div>');
+      try {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        const result = await signInWithPopup(auth, provider);
+        if (result.user) {
+          await handleUserSuccess(result.user);
+        }
+      } catch (err) {
+        console.error('Google Sign-in error:', err);
+        setStatus('Đăng nhập không thành công: ' + (err.message || 'Hủy bởi người dùng'));
+      }
+    };
+
+    // Auto check if already signed in
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await handleUserSuccess(user);
+      }
+    });
+  </script>
+</body>
+</html>
