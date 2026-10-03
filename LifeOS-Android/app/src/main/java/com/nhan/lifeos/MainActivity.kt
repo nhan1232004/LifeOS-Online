@@ -41,6 +41,7 @@ import com.nhan.lifeos.data.local.LifeOSDatabase
 import com.nhan.lifeos.data.preferences.UserPreferencesRepository
 import com.nhan.lifeos.data.preferences.UserSession
 import com.nhan.lifeos.data.repository.FinanceRepository
+import com.nhan.lifeos.data.repository.PersonalRepository
 import com.nhan.lifeos.data.repository.TaskTimeRepository
 import com.nhan.lifeos.ui.auth.AuthScreen
 import com.nhan.lifeos.ui.calendar.CalendarScreen
@@ -49,7 +50,15 @@ import com.nhan.lifeos.ui.finance.FinanceScreen
 import com.nhan.lifeos.ui.finance.FinanceViewModel
 import com.nhan.lifeos.ui.goals.GoalsScreen
 import com.nhan.lifeos.ui.goals.GoalsViewModel
+import com.nhan.lifeos.ui.habits.HabitsScreen
+import com.nhan.lifeos.ui.habits.HabitsViewModel
+import com.nhan.lifeos.ui.journal.JournalScreen
+import com.nhan.lifeos.ui.journal.JournalViewModel
 import com.nhan.lifeos.ui.more.MoreScreen
+import com.nhan.lifeos.ui.notes.NotesScreen
+import com.nhan.lifeos.ui.notes.NotesViewModel
+import com.nhan.lifeos.ui.pomodoro.PomodoroScreen
+import com.nhan.lifeos.ui.pomodoro.PomodoroViewModel
 import com.nhan.lifeos.ui.projects.ProjectsScreen
 import com.nhan.lifeos.ui.projects.ProjectsViewModel
 import com.nhan.lifeos.ui.stats.StatsScreen
@@ -153,6 +162,7 @@ fun LifeOSApp(
     val database = remember { LifeOSDatabase.getDatabase(context) }
     val taskTimeRepo = remember { TaskTimeRepository(database) }
     val financeRepo = remember { FinanceRepository(database) }
+    val personalRepo = remember { PersonalRepository(database) }
 
     val todayViewModel = remember { TodayViewModel(taskTimeRepo) }
     val todosViewModel = remember { TodosViewModel(taskTimeRepo) }
@@ -161,6 +171,10 @@ fun LifeOSApp(
     val financeViewModel = remember { FinanceViewModel(financeRepo) }
     val goalsViewModel = remember { GoalsViewModel(financeRepo) }
     val statsViewModel = remember { StatsViewModel(taskTimeRepo, financeRepo) }
+    val notesViewModel = remember { NotesViewModel(personalRepo) }
+    val habitsViewModel = remember { HabitsViewModel(personalRepo) }
+    val journalViewModel = remember { JournalViewModel(personalRepo) }
+    val pomodoroViewModel = remember { PomodoroViewModel() }
 
     val navController = rememberNavController()
 
@@ -211,6 +225,30 @@ fun LifeOSApp(
             composable("stats") {
                 StatsScreen(
                     viewModel = statsViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("notes") {
+                NotesScreen(
+                    viewModel = notesViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("habits") {
+                HabitsScreen(
+                    viewModel = habitsViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("journal") {
+                JournalScreen(
+                    viewModel = journalViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("pomodoro") {
+                PomodoroScreen(
+                    viewModel = pomodoroViewModel,
                     onBack = { navController.popBackStack() }
                 )
             }
