@@ -14,6 +14,7 @@ import com.nhan.lifeos.data.local.dao.NoteDao
 import com.nhan.lifeos.data.local.dao.ProjectDao
 import com.nhan.lifeos.data.local.dao.TodoDao
 import com.nhan.lifeos.data.local.dao.TransactionDao
+import com.nhan.lifeos.data.local.dao.VocabDao
 import com.nhan.lifeos.data.local.entity.EventEntity
 import com.nhan.lifeos.data.local.entity.GoalEntity
 import com.nhan.lifeos.data.local.entity.HabitEntity
@@ -22,6 +23,7 @@ import com.nhan.lifeos.data.local.entity.NoteEntity
 import com.nhan.lifeos.data.local.entity.ProjectEntity
 import com.nhan.lifeos.data.local.entity.TodoEntity
 import com.nhan.lifeos.data.local.entity.TransactionEntity
+import com.nhan.lifeos.data.local.entity.VocabEntity
 
 @Database(
     entities = [
@@ -32,9 +34,10 @@ import com.nhan.lifeos.data.local.entity.TransactionEntity
         HabitEntity::class,
         ProjectEntity::class,
         GoalEntity::class,
-        JournalEntity::class
+        JournalEntity::class,
+        VocabEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -47,6 +50,7 @@ abstract class LifeOSDatabase : RoomDatabase() {
     abstract fun projectDao(): ProjectDao
     abstract fun goalDao(): GoalDao
     abstract fun journalDao(): JournalDao
+    abstract fun vocabDao(): VocabDao
 
     companion object {
         @Volatile

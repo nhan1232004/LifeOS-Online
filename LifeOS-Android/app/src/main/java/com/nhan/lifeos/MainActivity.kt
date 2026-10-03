@@ -43,6 +43,9 @@ import com.nhan.lifeos.data.preferences.UserSession
 import com.nhan.lifeos.data.repository.FinanceRepository
 import com.nhan.lifeos.data.repository.PersonalRepository
 import com.nhan.lifeos.data.repository.TaskTimeRepository
+import com.nhan.lifeos.data.repository.VocabRepository
+import com.nhan.lifeos.ui.ai.AiScreen
+import com.nhan.lifeos.ui.ai.AiViewModel
 import com.nhan.lifeos.ui.auth.AuthScreen
 import com.nhan.lifeos.ui.calendar.CalendarScreen
 import com.nhan.lifeos.ui.calendar.CalendarViewModel
@@ -67,6 +70,8 @@ import com.nhan.lifeos.ui.today.TodayScreen
 import com.nhan.lifeos.ui.today.TodayViewModel
 import com.nhan.lifeos.ui.todos.TodosScreen
 import com.nhan.lifeos.ui.todos.TodosViewModel
+import com.nhan.lifeos.ui.vocab.VocabScreen
+import com.nhan.lifeos.ui.vocab.VocabViewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -163,6 +168,7 @@ fun LifeOSApp(
     val taskTimeRepo = remember { TaskTimeRepository(database) }
     val financeRepo = remember { FinanceRepository(database) }
     val personalRepo = remember { PersonalRepository(database) }
+    val vocabRepo = remember { VocabRepository(database) }
 
     val todayViewModel = remember { TodayViewModel(taskTimeRepo) }
     val todosViewModel = remember { TodosViewModel(taskTimeRepo) }
@@ -175,6 +181,8 @@ fun LifeOSApp(
     val habitsViewModel = remember { HabitsViewModel(personalRepo) }
     val journalViewModel = remember { JournalViewModel(personalRepo) }
     val pomodoroViewModel = remember { PomodoroViewModel() }
+    val vocabViewModel = remember { VocabViewModel(vocabRepo) }
+    val aiViewModel = remember { AiViewModel(taskTimeRepo, financeRepo, personalRepo) }
 
     val navController = rememberNavController()
 
@@ -249,6 +257,18 @@ fun LifeOSApp(
             composable("pomodoro") {
                 PomodoroScreen(
                     viewModel = pomodoroViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("vocab") {
+                VocabScreen(
+                    viewModel = vocabViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("ai") {
+                AiScreen(
+                    viewModel = aiViewModel,
                     onBack = { navController.popBackStack() }
                 )
             }
