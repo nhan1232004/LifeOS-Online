@@ -1,6 +1,7 @@
 package com.nhan.lifeos.ui.mocktests
 
 import androidx.compose.foundation.background
+import com.nhan.lifeos.ui.common.LifeOSDateField
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -399,13 +400,10 @@ private fun AddMockTestDialog(
                     colors = customDialogTextFieldColors(),
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
+                LifeOSDateField(
                     value = date,
                     onValueChange = { date = it },
-                    label = { Text("Ngày thi (YYYY-MM-DD)") },
-                    singleLine = true,
-                    colors = customDialogTextFieldColors(),
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Ngày thi"
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

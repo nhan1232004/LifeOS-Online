@@ -1,6 +1,8 @@
 package com.nhan.lifeos.ui.calendar
 
 import androidx.compose.foundation.background
+import com.nhan.lifeos.ui.common.LifeOSDateField
+import com.nhan.lifeos.ui.common.LifeOSTimeField
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -622,51 +624,31 @@ private fun EventFormDialog(
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
+                    LifeOSDateField(
                         value = dateStartVal,
                         onValueChange = { dateStartVal = it },
-                        label = { Text("Bắt đầu") },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = LifeOSPrimary,
-                            unfocusedBorderColor = LifeOSGlassBorder
-                        ),
+                        label = "Ngày bắt đầu",
                         modifier = Modifier.weight(1f)
                     )
-                    OutlinedTextField(
+                    LifeOSDateField(
                         value = dateEndVal,
                         onValueChange = { dateEndVal = it },
-                        label = { Text("Kết thúc") },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = LifeOSPrimary,
-                            unfocusedBorderColor = LifeOSGlassBorder
-                        ),
+                        label = "Ngày kết thúc",
                         modifier = Modifier.weight(1f)
                     )
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
+                    LifeOSTimeField(
                         value = timeStartVal,
                         onValueChange = { timeStartVal = it },
-                        label = { Text("Giờ (VD: 09:00)") },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = LifeOSPrimary,
-                            unfocusedBorderColor = LifeOSGlassBorder
-                        ),
+                        label = "Giờ bắt đầu",
                         modifier = Modifier.weight(1f)
                     )
-                    OutlinedTextField(
+                    LifeOSTimeField(
                         value = timeEndVal,
                         onValueChange = { timeEndVal = it },
-                        label = { Text("Đến (VD: 10:30)") },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = LifeOSPrimary,
-                            unfocusedBorderColor = LifeOSGlassBorder
-                        ),
+                        label = "Giờ kết thúc",
                         modifier = Modifier.weight(1f)
                     )
                 }

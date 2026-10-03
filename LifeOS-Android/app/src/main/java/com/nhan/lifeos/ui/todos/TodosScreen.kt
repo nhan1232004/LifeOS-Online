@@ -1,6 +1,7 @@
 package com.nhan.lifeos.ui.todos
 
 import androidx.compose.foundation.background
+import com.nhan.lifeos.ui.common.LifeOSDateField
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -324,14 +325,10 @@ private fun AddTodoDialog(
                     }
                 }
 
-                OutlinedTextField(
+                LifeOSDateField(
                     value = date,
                     onValueChange = { date = it },
-                    label = { Text("Ngày thực hiện (YYYY-MM-DD)") },
-                    singleLine = true,
-                    colors = customTodoDialogColors(),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Ngày thực hiện"
                 )
 
                 OutlinedTextField(

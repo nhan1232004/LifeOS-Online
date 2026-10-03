@@ -25,10 +25,13 @@ data class UserSession(
     val phoneNumber: String = "",
     val bio: String = "",
     val jobTitle: String = "",
-    val birthday: String = ""
+    val birthday: String = "",
+    val geminiApiKey: String = "",
+    val geminiModel: String = "gemini-2.0-flash"
 ) {
     val isLoggedIn: Boolean get() = isGuestMode || userEmail.isNotBlank()
     val canSyncOnline: Boolean get() = !isGuestMode && userId.isNotBlank() && idToken.isNotBlank()
+    val hasGeminiKey: Boolean get() = geminiApiKey.isNotBlank()
 }
 
 class UserPreferencesRepository(private val context: Context) {
@@ -46,6 +49,8 @@ class UserPreferencesRepository(private val context: Context) {
         val BIO = stringPreferencesKey("bio")
         val JOB_TITLE = stringPreferencesKey("job_title")
         val BIRTHDAY = stringPreferencesKey("birthday")
+        val GEMINI_API_KEY = stringPreferencesKey("gemini_api_key")
+        val GEMINI_MODEL = stringPreferencesKey("gemini_model")
     }
 
     val userSessionFlow: Flow<UserSession> = context.dataStore.data.map { preferences ->
@@ -61,6 +66,8 @@ class UserPreferencesRepository(private val context: Context) {
         val bio = preferences[PreferencesKeys.BIO] ?: ""
         val job = preferences[PreferencesKeys.JOB_TITLE] ?: ""
         val bday = preferences[PreferencesKeys.BIRTHDAY] ?: ""
+        val apiKey = preferences[PreferencesKeys.GEMINI_API_KEY] ?: ""
+        val model = preferences[PreferencesKeys.GEMINI_MODEL] ?: "gemini-2.0-flash"
         UserSession(
             isGuestMode = isGuest,
             userEmail = email,
@@ -73,7 +80,9 @@ class UserPreferencesRepository(private val context: Context) {
             phoneNumber = phone,
             bio = bio,
             jobTitle = job,
-            birthday = bday
+            birthday = bday,
+            geminiApiKey = apiKey,
+            geminiModel = model
         )
     }
 
@@ -137,6 +146,19 @@ class UserPreferencesRepository(private val context: Context) {
             preferences[PreferencesKeys.JOB_TITLE] = jobTitle
             preferences[PreferencesKeys.BIRTHDAY] = birthday
             if (workspace.isNotBlank()) preferences[PreferencesKeys.ACTIVE_WORKSPACE] = workspace
+        }
+    }
+
+    suspend fun setGeminiConfig(apiKey: String, model: String = "gemini-2.0-flash") {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.GEMINI_API_KEY] = apiKey.trim()
+            preferences[PreferencesKeys.GEMINI_MODEL] = model.trim().ifBlank { "gemini-2.0-flash" }
+        }
+    }
+
+    suspend fun clearGeminiKey() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(PreferencesKeys.GEMINI_API_KEY)
         }
     }
 

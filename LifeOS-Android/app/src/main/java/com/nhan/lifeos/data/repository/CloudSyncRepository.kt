@@ -9,6 +9,7 @@ import com.nhan.lifeos.data.local.entity.JournalEntity
 import com.nhan.lifeos.data.local.entity.MockTestEntity
 import com.nhan.lifeos.data.local.entity.NoteEntity
 import com.nhan.lifeos.data.local.entity.ProjectEntity
+import com.nhan.lifeos.data.local.entity.ProjectMessageEntity
 import com.nhan.lifeos.data.local.entity.ProjectTaskEntity
 import com.nhan.lifeos.data.local.entity.TodoEntity
 import com.nhan.lifeos.data.local.entity.TransactionEntity
@@ -91,6 +92,12 @@ class CloudSyncRepository(
                         dFinance.await() + dNotes.await() + dHabits.await() +
                         dGoals.await() + dJournal.await() + dVocab.await() +
                         dProjTasks.await() + dMockTests.await()
+
+                // Sync messages for all projects
+                val projs = database.projectDao().getAllProjects().first()
+                projs.forEach { p ->
+                    syncProjectMessages(p.id, uid, token, refresh, onRefreshed)
+                }
             }
 
             val now = System.currentTimeMillis()
@@ -135,6 +142,10 @@ class CloudSyncRepository(
                     "journal" -> syncJournal(uid, token, refresh, onRefreshed)
                     "vocab" -> syncVocab(uid, token, refresh, onRefreshed)
                     "mocktests" -> syncMockTests(uid, token, refresh, onRefreshed)
+                    "project_chat", "messages" -> {
+                        val projs = database.projectDao().getAllProjects().first()
+                        projs.forEach { p -> syncProjectMessages(p.id, uid, token, refresh, onRefreshed) }
+                    }
                     else -> syncAll(session)
                 }
                 preferencesRepository.updateLastSyncedAt(System.currentTimeMillis())
@@ -313,7 +324,13 @@ class CloudSyncRepository(
     // ─── 3. Projects ──────────────────────────────────────────────────────────
     private suspend fun syncProjects(uid: String, token: String, refresh: String, onRefreshed: suspend (String, String) -> Unit): Int {
         val remoteRes = syncService.getCollectionItems("projects", uid, token, refresh, onRefreshed)
-        val remoteItems = remoteRes.getOrDefault(emptyList())
+        val remoteItems = remoteRes.getOrDefault(emptyList()).toMutableList()
+
+        // Also fetch any shared projects where this user is in memberUids
+        val sharedRes = syncService.getSharedProjectsForUser(uid, token, refresh, onRefreshed)
+        val sharedItems = sharedRes.getOrDefault(emptyList())
+        remoteItems.addAll(sharedItems)
+
         val remoteMap = remoteItems.filter { it.optString("id").isNotBlank() }.associateBy { it.getString("id") }
 
         val localItems = database.projectDao().getAllProjects().first().toMutableList()
@@ -356,7 +373,7 @@ class CloudSyncRepository(
         }
 
         val pushList = localMap.values.map { p ->
-            JSONObject().apply {
+            val projJson = JSONObject().apply {
                 put("id", p.id)
                 put("name", p.name)
                 put("status", p.status)
@@ -367,8 +384,13 @@ class CloudSyncRepository(
                 put("desc", p.desc)
                 put("tags", JSONArray(p.tags))
                 put("members", JSONArray(p.members))
+                put("memberUids", JSONArray().put(uid))
+                put("ownerUid", uid)
                 put("updatedAt", p.updatedAt)
             }
+            // Also sync to shared_projects root collection for multi-user collaboration
+            syncService.saveSharedProject(projJson, token, refresh, onRefreshed)
+            projJson
         }
         syncService.setCollectionItems("projects", uid, pushList, token, refresh, onRefreshed)
 
@@ -1112,4 +1134,81 @@ class CloudSyncRepository(
         updatedAt = json.optLong("updatedAt", System.currentTimeMillis()),
         isSynced = true
     )
+
+    // ─── 11. Project Chat Messages & Invitations ──────────────────────────────
+
+    fun triggerProjectChatSync(projId: String) {
+        syncScope.launch {
+            try {
+                val session = preferencesRepository.userSessionFlow.first()
+                if (!session.canSyncOnline) return@launch
+                val uid = session.userId
+                val token = session.idToken
+                val refresh = session.refreshToken
+                val onRefreshed: suspend (String, String) -> Unit = { newToken, newRefresh ->
+                    preferencesRepository.updateTokens(newToken, newRefresh)
+                }
+                syncProjectMessages(projId, uid, token, refresh, onRefreshed)
+            } catch (_: Exception) {}
+        }
+    }
+
+    private suspend fun syncProjectMessages(
+        projId: String,
+        uid: String,
+        token: String,
+        refresh: String,
+        onRefreshed: suspend (String, String) -> Unit
+    ) {
+        val remoteRes = syncService.getSharedProjectMessages(projId, token, refresh, onRefreshed)
+        val remoteMsgs = remoteRes.getOrDefault(emptyList())
+        remoteMsgs.forEach { msg ->
+            database.projectMessageDao().insertMessage(msg)
+        }
+    }
+
+    suspend fun sendProjectChatMessage(
+        projId: String,
+        senderEmail: String,
+        senderName: String,
+        text: String
+    ) = withContext(Dispatchers.IO) {
+        val session = preferencesRepository.userSessionFlow.first()
+        val msg = ProjectMessageEntity(
+            projId = projId,
+            senderEmail = senderEmail,
+            senderName = senderName.ifBlank { senderEmail.substringBefore("@") },
+            text = text.trim(),
+            timestamp = System.currentTimeMillis()
+        )
+        // 1. Save locally for instant offline UI update
+        database.projectMessageDao().insertMessage(msg)
+
+        // 2. Sync to cloud Firestore if online
+        if (session.canSyncOnline) {
+            val uid = session.userId
+            val token = session.idToken
+            val refresh = session.refreshToken
+            val onRefreshed: suspend (String, String) -> Unit = { newToken, newRefresh ->
+                preferencesRepository.updateTokens(newToken, newRefresh)
+            }
+            syncService.sendSharedProjectMessage(projId, msg, uid, token, refresh, onRefreshed)
+            // Trigger refresh
+            syncProjectMessages(projId, uid, token, refresh, onRefreshed)
+        }
+    }
+
+    suspend fun inviteProjectMember(
+        projId: String,
+        email: String
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        val session = preferencesRepository.userSessionFlow.first()
+        if (!session.canSyncOnline) return@withContext Result.failure(Exception("Bạn cần đăng nhập để mời thành viên"))
+        val token = session.idToken
+        val refresh = session.refreshToken
+        val onRefreshed: suspend (String, String) -> Unit = { newToken, newRefresh ->
+            preferencesRepository.updateTokens(newToken, newRefresh)
+        }
+        syncService.inviteProjectMember(projId, email, token, refresh, onRefreshed)
+    }
 }

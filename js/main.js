@@ -1740,13 +1740,13 @@ function renderOverview(){
   BADGES
 ──────────────────────────────────────────────────────── */
 function updateBadges(){
- const pending=(window.DB.todos||[]).filter(t=>!t.done).length;
- const doing=(window.DB.projects||[]).filter(p=>p.status==='Đang làm').length;
- ['badgeProj'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=doing;});
- ['badgeTodo'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=pending;});
+ const pending = (window.DB.todos || []).filter(t => !t.done).length;
+ const totalProj = (window.DB.projects || []).length;
+ ['badgeProj'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = totalProj; });
+ ['badgeTodo'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = pending; });
  // Mobile badges
- const mb1=document.getElementById('mBadgeProj'); if(mb1){mb1.textContent=doing;mb1.style.display=doing>0?'flex':'none';}
- const mb2=document.getElementById('mBadgeTodo'); if(mb2){mb2.textContent=pending;mb2.style.display=pending>0?'flex':'none';}
+ const mb1 = document.getElementById('mBadgeProj'); if (mb1) { mb1.textContent = totalProj; mb1.style.display = totalProj > 0 ? 'flex' : 'none'; }
+ const mb2 = document.getElementById('mBadgeTodo'); if (mb2) { mb2.textContent = pending; mb2.style.display = pending > 0 ? 'flex' : 'none'; }
 }
 
 /* ────────────────────────────────────────────────────────

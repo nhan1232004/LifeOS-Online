@@ -1,6 +1,7 @@
 package com.nhan.lifeos.ui.goals
 
 import androidx.compose.foundation.background
+import com.nhan.lifeos.ui.common.LifeOSDateField
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -527,16 +528,10 @@ fun AddGoalDialog(
                     )
                 )
 
-                OutlinedTextField(
+                LifeOSDateField(
                     value = deadlineText,
                     onValueChange = { deadlineText = it },
-                    label = { Text("Hạn chót (YYYY-MM-DD)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = LifeOSCyan,
-                        unfocusedBorderColor = LifeOSGlassBorder
-                    )
+                    label = "Hạn chót mục tiêu"
                 )
 
                 OutlinedTextField(

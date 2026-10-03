@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import com.nhan.lifeos.ui.common.LifeOSDateField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowDownward
@@ -676,16 +677,10 @@ fun AddTransactionDialog(
                 }
 
                 // Date & Note
-                OutlinedTextField(
+                LifeOSDateField(
                     value = dateText,
                     onValueChange = { dateText = it },
-                    label = { Text("Ngày (YYYY-MM-DD)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = LifeOSPrimary,
-                        unfocusedBorderColor = LifeOSGlassBorder
-                    )
+                    label = "Ngày giao dịch"
                 )
 
                 OutlinedTextField(

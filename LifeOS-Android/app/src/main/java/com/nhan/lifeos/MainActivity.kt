@@ -251,7 +251,7 @@ fun LifeOSApp(
     val pomodoroViewModel = remember { PomodoroViewModel() }
     val vocabViewModel = remember { VocabViewModel(vocabRepo) }
     val mockTestsViewModel = remember { MockTestsViewModel(mockTestRepo) }
-    val aiViewModel = remember { AiViewModel(taskTimeRepo, financeRepo, personalRepo) }
+    val aiViewModel = remember { AiViewModel(taskTimeRepo, financeRepo, personalRepo, preferencesRepo) }
     val settingsViewModel = remember { SettingsViewModel(database) }
 
     val navController = rememberNavController()
@@ -283,6 +283,7 @@ fun LifeOSApp(
                 MoreScreen(
                     userSession = userSession,
                     cloudSyncRepo = cloudSyncRepo,
+                    taskTimeRepo = taskTimeRepo,
                     onSignOut = onSignOut,
                     onNavigateToFeature = { route ->
                         navController.navigate(route)

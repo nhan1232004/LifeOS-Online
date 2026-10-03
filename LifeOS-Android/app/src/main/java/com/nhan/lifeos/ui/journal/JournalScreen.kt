@@ -1,6 +1,7 @@
 package com.nhan.lifeos.ui.journal
 
 import androidx.compose.foundation.background
+import com.nhan.lifeos.ui.common.LifeOSDateField
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -303,16 +304,10 @@ fun AddJournalDialog(
                     }
                 }
 
-                OutlinedTextField(
+                LifeOSDateField(
                     value = dateText,
                     onValueChange = { dateText = it },
-                    label = { Text("Ngày (YYYY-MM-DD)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFFCE93D8),
-                        unfocusedBorderColor = LifeOSGlassBorder
-                    )
+                    label = "Ngày viết nhật ký"
                 )
 
                 OutlinedTextField(

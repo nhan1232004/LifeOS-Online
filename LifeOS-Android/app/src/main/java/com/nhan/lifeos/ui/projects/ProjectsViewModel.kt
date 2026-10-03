@@ -180,4 +180,8 @@ class ProjectsViewModel(private val repository: TaskTimeRepository) : ViewModel(
             repository.sendProjectMessage(projId, senderEmail, senderName, text)
         }
     }
+
+    fun syncProjectChat(projId: String) {
+        repository.syncProjectChat(projId)
+    }
 }

@@ -149,6 +149,7 @@ class TaskTimeRepository(
                 isSynced = false
             )
             projectDao.insertProject(updated)
+            cloudSyncRepo?.inviteProjectMember(project.id, trimmed)
             cloudSyncRepo?.triggerAutoSync("projects")
         }
     }
@@ -168,14 +169,22 @@ class TaskTimeRepository(
 
     suspend fun sendProjectMessage(projId: String, senderEmail: String, senderName: String, text: String) {
         if (text.isBlank()) return
-        val msg = ProjectMessageEntity(
-            projId = projId,
-            senderEmail = senderEmail,
-            senderName = senderName.ifBlank { senderEmail.substringBefore("@") },
-            text = text.trim(),
-            timestamp = System.currentTimeMillis()
-        )
-        projectMessageDao.insertMessage(msg)
+        if (cloudSyncRepo != null) {
+            cloudSyncRepo.sendProjectChatMessage(projId, senderEmail, senderName, text)
+        } else {
+            val msg = ProjectMessageEntity(
+                projId = projId,
+                senderEmail = senderEmail,
+                senderName = senderName.ifBlank { senderEmail.substringBefore("@") },
+                text = text.trim(),
+                timestamp = System.currentTimeMillis()
+            )
+            projectMessageDao.insertMessage(msg)
+        }
+    }
+
+    fun syncProjectChat(projId: String) {
+        cloudSyncRepo?.triggerProjectChatSync(projId)
     }
 
     suspend fun insertProjectTask(

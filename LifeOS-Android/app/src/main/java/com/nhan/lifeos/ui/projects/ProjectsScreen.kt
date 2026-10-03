@@ -1,6 +1,7 @@
 package com.nhan.lifeos.ui.projects
 
 import androidx.compose.foundation.background
+import com.nhan.lifeos.ui.common.LifeOSDateField
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -960,16 +961,10 @@ private fun ProjectFormDialog(
                     }
                 }
 
-                OutlinedTextField(
+                LifeOSDateField(
                     value = due,
                     onValueChange = { due = it },
-                    label = { Text("Hạn chót (YYYY-MM-DD)") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = LifeOSPrimary,
-                        unfocusedBorderColor = LifeOSGlassBorder
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Hạn chót dự án"
                 )
 
                 OutlinedTextField(
@@ -1073,16 +1068,10 @@ private fun AddTaskDialog(
                     }
                 }
 
-                OutlinedTextField(
+                LifeOSDateField(
                     value = due,
                     onValueChange = { due = it },
-                    label = { Text("Hạn chót (YYYY-MM-DD)") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = LifeOSPrimary,
-                        unfocusedBorderColor = LifeOSGlassBorder
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Hạn chót nhiệm vụ"
                 )
             }
         },
@@ -1118,6 +1107,14 @@ private fun ProjectChatDialog(
     var inputText by remember { mutableStateOf("") }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     val timeFmt = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+
+    androidx.compose.runtime.LaunchedEffect(project.id) {
+        viewModel.syncProjectChat(project.id)
+        while (true) {
+            kotlinx.coroutines.delay(3000L)
+            viewModel.syncProjectChat(project.id)
+        }
+    }
 
     androidx.compose.runtime.LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {

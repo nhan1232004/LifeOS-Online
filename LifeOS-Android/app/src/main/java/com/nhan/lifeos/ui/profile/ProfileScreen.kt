@@ -1,6 +1,7 @@
 package com.nhan.lifeos.ui.profile
 
 import android.widget.Toast
+import com.nhan.lifeos.ui.common.showDatePicker
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -327,13 +328,21 @@ fun ProfileScreen(
         OutlinedTextField(
             value = birthday,
             onValueChange = { birthday = it },
-            label = { Text("Ngày sinh (YYYY-MM-DD)") },
-            placeholder = { Text("2000-01-01") },
+            label = { Text("Ngày sinh") },
+            placeholder = { Text("Chọn ngày sinh") },
+            readOnly = true,
             leadingIcon = {
                 Icon(Icons.Rounded.Cake, contentDescription = null, tint = LifeOSAmber)
             },
+            trailingIcon = {
+                IconButton(onClick = { showDatePicker(context, birthday) { birthday = it } }) {
+                    Icon(Icons.Rounded.Cake, contentDescription = "Chọn ngày sinh", tint = LifeOSAmber)
+                }
+            },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDatePicker(context, birthday) { birthday = it } },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = LifeOSAmber,

@@ -1,6 +1,9 @@
 package com.nhan.lifeos.ui.more
 
 import androidx.compose.foundation.background
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.nhan.lifeos.data.repository.TaskTimeRepository
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -85,12 +88,16 @@ data class MoreModuleItem(
 fun MoreScreen(
     userSession: UserSession = UserSession(),
     cloudSyncRepo: CloudSyncRepository? = null,
+    taskTimeRepo: TaskTimeRepository? = null,
     onSignOut: () -> Unit = {},
     onNavigateToFeature: (String) -> Unit = {}
 ) {
+    val projects = taskTimeRepo?.allProjects?.collectAsState(initial = emptyList())?.value ?: emptyList()
+    val projSubtitle = if (projects.isNotEmpty()) "${projects.size} dự án hiện có" else "Quản lý tiến độ theo cột"
+
     val modules = listOf(
         MoreModuleItem("Hồ sơ cá nhân", "Chỉnh sửa thông tin & Bio", Icons.Rounded.Person, Color(0xFF64B5F6)),
-        MoreModuleItem("Dự án Kanban", "Quản lý tiến độ theo cột", Icons.Rounded.FolderSpecial, LifeOSPrimary),
+        MoreModuleItem("Dự án Kanban", projSubtitle, Icons.Rounded.FolderSpecial, LifeOSPrimary),
         MoreModuleItem("Ghi chú", "Soạn thảo Markdown", Icons.Rounded.Description, LifeOSAmber),
         MoreModuleItem("Thói quen", "Ma trận & Streak", Icons.Rounded.Loop, LifeOSGreen),
         MoreModuleItem("Mục tiêu", "Theo dõi kế hoạch dài hạn", Icons.Rounded.TrackChanges, LifeOSCyan),
@@ -99,7 +106,7 @@ fun MoreScreen(
         MoreModuleItem("Từ vựng", "Flashcard 3D & TTS", Icons.Rounded.School, Color(0xFFFF80AB)),
         MoreModuleItem("Luyện thi", "IELTS / TOEIC Tracker", Icons.Rounded.EmojiEvents, Color(0xFF4DD0E1)),
         MoreModuleItem("Thống kê", "Báo cáo hiệu suất", Icons.Rounded.BarChart, Color(0xFF80D8FF)),
-        MoreModuleItem("Trợ lý AI", "Gemini 1.5 Flash Chat", Icons.Rounded.AutoAwesome, LifeOSCyan),
+        MoreModuleItem("Trợ lý AI", "Gemini AI & Personal Coach", Icons.Rounded.AutoAwesome, LifeOSCyan),
         MoreModuleItem("Cài đặt", "Sao lưu JSON & Dữ liệu", Icons.Rounded.Settings, LifeOSTextMid)
     )
 
