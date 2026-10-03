@@ -40,7 +40,7 @@ TÓM TẮT TRẠNG THÁI HIỆN TẠI:
 - Tài chính: Tổng thu ${totalInc.toLocaleString('vi-VN')}₫ | Tổng chi ${totalExp.toLocaleString('vi-VN')}₫ | Số dư: ${(totalInc - totalExp).toLocaleString('vi-VN')}₫
 - Dự án đang chạy: ${activeProjects.map(p => p.name).join(', ') || 'Không có'}
 - Thói quen theo dõi (${habits.length}): ${habits.map(h => `${h.name} (streak: ${h.streak||0} ngày)`).join(', ')}
-- Mục tiêu (${goals.length}): ${goals.map(g => `${g.title} (${g.current}/${g.target})`).join(', ')}
+- Mục tiêu (${goals.length}): ${goals.map(g => `${g.name || g.title} (${Number(g.saved || g.current || 0).toLocaleString('vi-VN')}/${Number(g.target || 0).toLocaleString('vi-VN')}₫)`).join(', ') || 'Chưa đặt mục tiêu'}
 - Ghi chú: ${notes.length} ghi chú.
 `;
 }

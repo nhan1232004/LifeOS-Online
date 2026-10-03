@@ -36,7 +36,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, deleteDoc, orderBy, limit, addDoc, serverTimestamp }
+import { getFirestore, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, collection, query, where, deleteDoc, orderBy, limit, addDoc, serverTimestamp }
  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
@@ -229,10 +229,26 @@ function listenSharedData() {
 }
 
 window.DB = {events:[],todos:[],projects:[],proj_tasks:[],income:[],expense:[],notes:[],habits:[],goals:[],journal:[],vocab:[],mocktests:[]};
-window.fbListen = fbListen; window.fbSaveAll = fbSaveAll; window.getDoc = getDoc; window.db = db; window.setDoc = setDoc; window.deleteDoc = deleteDoc; window.doc = doc; window.collection = collection; window.query = query; window.orderBy = orderBy; window.limit = limit; window.addDoc = addDoc; window.serverTimestamp = serverTimestamp; window.onSnapshot = onSnapshot;
+window.fbListen = fbListen; window.fbSaveAll = fbSaveAll; window.getDoc = getDoc; window.getDocs = getDocs; window.updateDoc = updateDoc; window.where = where; window.db = db; window.setDoc = setDoc; window.deleteDoc = deleteDoc; window.doc = doc; window.collection = collection; window.query = query; window.orderBy = orderBy; window.limit = limit; window.addDoc = addDoc; window.serverTimestamp = serverTimestamp; window.onSnapshot = onSnapshot;
 window.sendProjectInvite = async (projectId, email) => {
  if (window.DEMO_MODE || !functions) return;
  return httpsCallable(functions, 'inviteProjectMember')({ projectId, email: String(email).trim().toLowerCase() });
+};
+
+window.wipeWorkspaceData = async function() {
+ if (!confirm('⚠️ CẢNH BÁO: Bạn chắc chắn muốn xóa toàn bộ dữ liệu trong không gian làm việc này? Hành động này KHÔNG THỂ HOÀN TÁC!')) return;
+ const cols = ['events','todos','projects','proj_tasks','income','expense','notes','habits','goals','journal','vocab','mocktests'];
+ cols.forEach(col => { window.DB[col] = []; });
+ if (window.DEMO_MODE) {
+  demoSave({events:[],todos:[],projects:[],proj_tasks:[],income:[],expense:[],notes:[],habits:[],goals:[],journal:[],vocab:[],mocktests:[]});
+ } else {
+  for (const col of cols) {
+   try { await fbSaveAll(col, []); } catch(e) { console.warn('[LifeOS] Error clearing collection ' + col, e); }
+  }
+ }
+ if (typeof window.renderAll === 'function') window.renderAll();
+ if (typeof toast === 'function') toast('Đã xóa toàn bộ dữ liệu!', 'success');
+ if (typeof closeSettings === 'function') closeSettings();
 };
 
 async function showApp(user) {
@@ -2045,7 +2061,7 @@ window.getCurrentUser = () => currentUser;
    <div style="padding:16px;background:rgba(255,82,82,0.06);border-radius:10px;border:1px solid rgba(255,82,82,0.15)">
     <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--red);display:flex;align-items:center;gap:6px"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Xóa dữ liệu</div>
     <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Xóa toàn bộ dữ liệu trong workspace hiện tại. Không thể hoàn tác!</p>
-    <button class="btn btn-d btn-sm" onclick="if(confirm('Bạn chắc chắn muốn xóa toàn bộ dữ liệu?')) { window.DB={}; if(window.toast)toast('Đã xóa dữ liệu!','success'); closeSettings(); }"><i data-lucide="trash-2" style="width:13px;height:13px;margin-right:4px"></i> Xóa tất cả</button>
+    <button class="btn btn-d btn-sm" onclick="wipeWorkspaceData()"><i data-lucide="trash-2" style="width:13px;height:13px;margin-right:4px"></i> Xóa tất cả</button>
    </div>
   </div>
  </div>

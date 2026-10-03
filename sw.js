@@ -1,5 +1,28 @@
-const CACHE = 'lifeos-v6';
-const APP_SHELL = ['./', './index.html', './css/style.css', './js/data.js', './js/main.js'];
+const CACHE = 'lifeos-v7';
+const APP_SHELL = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icon.svg',
+  './css/style.css',
+  './js/data.js',
+  './js/main.js',
+  './js/workspace.js',
+  './js/projViews.js',
+  './js/modules/cmd.js',
+  './js/modules/export.js',
+  './js/modules/goals.js',
+  './js/modules/habits.js',
+  './js/modules/journal.js',
+  './js/modules/mocktests.js',
+  './js/modules/notes.js',
+  './js/modules/pomodoro.js',
+  './js/modules/todos.js',
+  './js/modules/vocab.js',
+  './js/modules/ai/chat.js',
+  './js/modules/ai/context.js',
+  './js/modules/ai/tools.js'
+];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(APP_SHELL)));
   self.skipWaiting();

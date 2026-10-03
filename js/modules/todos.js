@@ -222,3 +222,45 @@ window.addEventListener('DOMContentLoaded', () => {
   }
  }, 300);
 });
+
+let currentTodoSubtasks = [];
+function renderTodoSubtasks() {
+  const el = document.getElementById('todoSubtaskList');
+  if(!el) return;
+  if (!currentTodoSubtasks.length) {
+    el.innerHTML = '<div style="font-size:12px; color:var(--text3); font-style:italic;">Chưa có nhiệm vụ con</div>';
+    return;
+  }
+  el.innerHTML = currentTodoSubtasks.map((st, i) => `
+    <div style="display:flex; align-items:center; gap:10px; background:var(--surface); padding:6px 10px; border-radius:6px;">
+      <input type="checkbox" ${st.done ? 'checked' : ''} onchange="toggleTodoSubtask(${i})">
+      <span style="flex:1; font-size:14px; ${st.done ? 'text-decoration:line-through; color:var(--text3)' : ''}">${st.text}</span>
+      <button class="icon-btn" onclick="delTodoSubtask(${i})"><i data-lucide="trash-2" style="width:14px;height:14px;color:var(--red)"></i></button>
+    </div>
+  `).join('');
+  if(window.lucide) window.lucide.createIcons();
+}
+function addTodoSubtaskUI() {
+  const inp = document.getElementById('todoNewSubtask');
+  if (!inp) return;
+  const text = inp.value.trim();
+  if(!text) return;
+  currentTodoSubtasks.push({text, done:false});
+  inp.value = '';
+  renderTodoSubtasks();
+}
+function toggleTodoSubtask(idx) {
+  if (currentTodoSubtasks[idx]) {
+    currentTodoSubtasks[idx].done = !currentTodoSubtasks[idx].done;
+    renderTodoSubtasks();
+  }
+}
+function delTodoSubtask(idx) {
+  currentTodoSubtasks.splice(idx, 1);
+  renderTodoSubtasks();
+}
+window.renderTodoSubtasks = renderTodoSubtasks;
+window.addTodoSubtaskUI = addTodoSubtaskUI;
+window.toggleTodoSubtask = toggleTodoSubtask;
+window.delTodoSubtask = delTodoSubtask;
+

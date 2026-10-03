@@ -285,8 +285,15 @@ async function installApp() {
 }
 
 const PAGE_TITLES={today:'Hôm nay',overview:'Dashboard',calendar:'Lịch tháng',schedule:'Lịch tuần',projects:'Dự án',todos:'Việc cần làm',finance:'Thu chi',stats:'Thống kê',notes:'Ghi chú',habits:'Thói quen',goals:'Mục tiêu',journal:'Nhật ký',pomodoro:'Pomodoro',vocab:'Từ vựng',mocktests:'Mock Tests'};
+const VALID_PAGES = Object.keys(PAGE_TITLES);
 
-function nav(pg, el){
+function nav(pg, el, updateHash = true){
+ if (!VALID_PAGES.includes(pg)) pg = 'today';
+
+ if (updateHash && window.location.hash !== '#' + pg) {
+  try { history.pushState({ page: pg }, '', '#' + pg); } catch(e){}
+ }
+
  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
  document.querySelectorAll('.sb-item, .mnav-item').forEach(i => i.classList.remove('active'));
  
@@ -332,6 +339,38 @@ function nav(pg, el){
     if (window.lucide) window.lucide.createIcons();
   }, 30);
 }
+
+window.nav = nav;
+
+window.addEventListener('popstate', () => {
+ const hash = window.location.hash.replace(/^#/, '');
+ if (hash && VALID_PAGES.includes(hash)) {
+  nav(hash, null, false);
+ } else {
+  nav('today', null, false);
+ }
+});
+window.addEventListener('hashchange', () => {
+ const hash = window.location.hash.replace(/^#/, '');
+ if (hash && VALID_PAGES.includes(hash)) {
+  nav(hash, null, false);
+ }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+ const hash = window.location.hash.replace(/^#/, '');
+ if (hash && VALID_PAGES.includes(hash)) {
+  setTimeout(() => nav(hash, null, false), 150);
+ }
+});
+
+window.addEventListener('error', (e) => {
+ console.error('[LifeOS Error Caught]', e.error || e.message);
+});
+window.addEventListener('unhandledrejection', (e) => {
+ console.warn('[LifeOS Unhandled Rejection]', e.reason);
+});
+
 
 /* ────────────────────────────────────────────────────────
   MODALS

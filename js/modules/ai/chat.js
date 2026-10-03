@@ -24,6 +24,9 @@ function formatMarkdown(text) {
   // Inline Code
   html = html.replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;color:var(--accent-cyan);">$1</code>');
 
+  // Safe Links: only http/https
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--accent-cyan);text-decoration:underline;">$1</a>');
+
   // Bullet Lists
   html = html.replace(/^\s*[\-\*]\s+(.*)$/gim, '<li style="margin-left:18px;margin-bottom:4px;">$1</li>');
   

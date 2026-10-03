@@ -1,4 +1,21 @@
 {
-  "firestore": { "rules": "firestore.rules" },
-  "functions": [{ "source": "functions", "codebase": "default" }]
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default"
+    }
+  ],
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "test/**",
+      "functions/**"
+    ]
+  }
 }
