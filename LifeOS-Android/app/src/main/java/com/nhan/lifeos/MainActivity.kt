@@ -64,6 +64,8 @@ import com.nhan.lifeos.ui.pomodoro.PomodoroScreen
 import com.nhan.lifeos.ui.pomodoro.PomodoroViewModel
 import com.nhan.lifeos.ui.projects.ProjectsScreen
 import com.nhan.lifeos.ui.projects.ProjectsViewModel
+import com.nhan.lifeos.ui.settings.SettingsScreen
+import com.nhan.lifeos.ui.settings.SettingsViewModel
 import com.nhan.lifeos.ui.stats.StatsScreen
 import com.nhan.lifeos.ui.stats.StatsViewModel
 import com.nhan.lifeos.ui.today.TodayScreen
@@ -183,6 +185,7 @@ fun LifeOSApp(
     val pomodoroViewModel = remember { PomodoroViewModel() }
     val vocabViewModel = remember { VocabViewModel(vocabRepo) }
     val aiViewModel = remember { AiViewModel(taskTimeRepo, financeRepo, personalRepo) }
+    val settingsViewModel = remember { SettingsViewModel(database) }
 
     val navController = rememberNavController()
 
@@ -269,6 +272,12 @@ fun LifeOSApp(
             composable("ai") {
                 AiScreen(
                     viewModel = aiViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("settings") {
+                SettingsScreen(
+                    viewModel = settingsViewModel,
                     onBack = { navController.popBackStack() }
                 )
             }
