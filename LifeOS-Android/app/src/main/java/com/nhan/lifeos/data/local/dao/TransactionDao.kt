@@ -23,6 +23,9 @@ interface TransactionDao {
     @Query("SELECT SUM(amount) FROM transactions WHERE type = 'expense'")
     fun getTotalExpense(): Flow<Long?>
 
+    @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
+    suspend fun getTransactionById(id: String): TransactionEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: TransactionEntity)
 

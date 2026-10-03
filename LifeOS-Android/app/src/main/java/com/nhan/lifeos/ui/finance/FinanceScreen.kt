@@ -535,13 +535,13 @@ fun TransactionItemCard(
 
                 IconButton(
                     onClick = onDelete,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.DeleteOutline,
                         contentDescription = "Xóa",
-                        tint = LifeOSTextLow,
-                        modifier = Modifier.size(18.dp)
+                        tint = LifeOSRed.copy(alpha = 0.8f),
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }

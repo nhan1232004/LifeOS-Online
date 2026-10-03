@@ -1380,22 +1380,38 @@ async function addIncome(){
  const amt=parseFloat(document.getElementById('incAmt').value);
  if(!amt||amt<=0){toast('Nhập số tiền hợp lệ!','error');return;}
  const list=[...(window.DB.income||[])];
- list.unshift({id:uid(),src:document.getElementById('incSrc').value,amt,date:document.getElementById('incDate').value||today(),note:document.getElementById('incNote').value});
+ list.unshift({id:uid(),src:document.getElementById('incSrc').value,amt,date:document.getElementById('incDate').value||today(),note:document.getElementById('incNote').value,updatedAt:Date.now()});
+ window.DB.income=list;
  await persist('income',list);
  document.getElementById('incAmt').value=''; document.getElementById('incNote').value='';
+ if(window.renderAll) window.renderAll();
  toast('Đã thêm thu nhập!','success');
 }
 async function addExpense(){
  const amt=parseFloat(document.getElementById('expAmt').value);
  if(!amt||amt<=0){toast('Nhập số tiền hợp lệ!','error');return;}
  const list=[...(window.DB.expense||[])];
- list.unshift({id:uid(),cat:document.getElementById('expCat').value,amt,date:document.getElementById('expDate').value||today(),pay:document.getElementById('expPay').value,note:document.getElementById('expNote').value});
+ list.unshift({id:uid(),cat:document.getElementById('expCat').value,amt,date:document.getElementById('expDate').value||today(),pay:document.getElementById('expPay').value,note:document.getElementById('expNote').value,updatedAt:Date.now()});
+ window.DB.expense=list;
  await persist('expense',list);
  document.getElementById('expAmt').value=''; document.getElementById('expNote').value='';
+ if(window.renderAll) window.renderAll();
  toast('Đã thêm chi tiêu!','success');
 }
-async function delIncome(id){await persist('income',(window.DB.income||[]).filter(x=>x.id!==id));}
-async function delExpense(id){await persist('expense',(window.DB.expense||[]).filter(x=>x.id!==id));}
+async function delIncome(id){
+ const list=(window.DB.income||[]).filter(x=>x.id!==id);
+ window.DB.income=list;
+ await persist('income',list);
+ if(window.renderAll) window.renderAll();
+ toast('Đã xóa thu nhập!','success');
+}
+async function delExpense(id){
+ const list=(window.DB.expense||[]).filter(x=>x.id!==id);
+ window.DB.expense=list;
+ await persist('expense',list);
+ if(window.renderAll) window.renderAll();
+ toast('Đã xóa chi tiêu!','success');
+}
 
 
 function getFinMonth() {

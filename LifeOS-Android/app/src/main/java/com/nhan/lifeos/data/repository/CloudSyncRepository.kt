@@ -430,7 +430,7 @@ class CloudSyncRepository(
 
             if (tombstone != null) {
                 if (remoteUpdated > tombstone.deletedAt) {
-                    database.deletedItemDao().deleteById(id)
+                    database.deletedItemDao().deleteByIdAndCollection(id, "income")
                     val tx = parseTxJson(json, "income").copy(isSynced = true)
                     database.transactionDao().insertTransaction(tx)
                     localMap[id] = tx
@@ -454,7 +454,7 @@ class CloudSyncRepository(
 
             if (tombstone != null) {
                 if (remoteUpdated > tombstone.deletedAt) {
-                    database.deletedItemDao().deleteById(id)
+                    database.deletedItemDao().deleteByIdAndCollection(id, "expense")
                     val tx = parseTxJson(json, "expense").copy(isSynced = true)
                     database.transactionDao().insertTransaction(tx)
                     localMap[id] = tx
@@ -518,10 +518,10 @@ class CloudSyncRepository(
         }
 
         deletedIncMap.values.forEach {
-            if (!remoteIncMap.containsKey(it.id)) database.deletedItemDao().deleteById(it.id)
+            if (!remoteIncMap.containsKey(it.id)) database.deletedItemDao().deleteByIdAndCollection(it.id, "income")
         }
         deletedExpMap.values.forEach {
-            if (!remoteExpMap.containsKey(it.id)) database.deletedItemDao().deleteById(it.id)
+            if (!remoteExpMap.containsKey(it.id)) database.deletedItemDao().deleteByIdAndCollection(it.id, "expense")
         }
 
         return localMap.size

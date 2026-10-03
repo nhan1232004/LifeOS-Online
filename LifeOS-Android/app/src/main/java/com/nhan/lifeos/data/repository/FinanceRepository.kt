@@ -45,8 +45,17 @@ class FinanceRepository(
     }
 
     suspend fun deleteTransaction(id: String) = withContext(Dispatchers.IO) {
-        cloudSyncRepo?.recordDeletedItem(id, "income")
-        cloudSyncRepo?.recordDeletedItem(id, "expense")
+        val tx = transactionDao.getTransactionById(id)
+        val col = if (tx != null) {
+            if (tx.type == "income") "income" else "expense"
+        } else null
+
+        if (col != null) {
+            cloudSyncRepo?.recordDeletedItem(id, col)
+        } else {
+            cloudSyncRepo?.recordDeletedItem(id, "income")
+            cloudSyncRepo?.recordDeletedItem(id, "expense")
+        }
         transactionDao.deleteById(id)
         cloudSyncRepo?.triggerAutoSync("finance")
     }
