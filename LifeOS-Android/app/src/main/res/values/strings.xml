@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">LifeOS</string>
+    <string name="nav_today">Hôm nay</string>
+    <string name="nav_calendar">Lịch</string>
+    <string name="nav_todos">Việc làm</string>
+    <string name="nav_finance">Thu chi</string>
+    <string name="nav_more">Thêm</string>
+</resources>
