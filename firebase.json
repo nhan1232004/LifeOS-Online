@@ -14,8 +14,11 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
+      "android/**",
+      "ios/**",
       "test/**",
-      "functions/**"
+      "functions/**",
+      "scripts/**"
     ]
   }
 }

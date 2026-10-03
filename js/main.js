@@ -194,6 +194,8 @@ window.toggleTheme = function() {
  const btn = document.getElementById('themeBtn');
  if(btn) btn.innerHTML = nxt === "light" ? "<i data-lucide='moon' style='width:18px;height:18px'></i>" : "<i data-lucide='sun' style='width:18px;height:18px'></i>"; lucide.createIcons();;
  document.getElementById('meta-theme-color').setAttribute('content', nxt==='light' ? '#f4f5f8' : '#07070f');
+ if (typeof window.hapticTap === 'function') window.hapticTap();
+ if (window.LifeOSMobile?.initNativeSystemBars) window.LifeOSMobile.initNativeSystemBars();
  
  // Re-render charts to update grid/text colors
  if (window.renderAll) window.renderAll();

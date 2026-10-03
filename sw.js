@@ -19,6 +19,7 @@ const APP_SHELL = [
   './js/modules/pomodoro.js',
   './js/modules/todos.js',
   './js/modules/vocab.js',
+  './js/modules/mobile.js',
   './js/modules/ai/chat.js',
   './js/modules/ai/context.js',
   './js/modules/ai/tools.js'

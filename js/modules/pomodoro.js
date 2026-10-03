@@ -37,6 +37,10 @@ pomWorker.onmessage = function() {
    document.getElementById('pomodoroStatus').textContent = 'Hết giờ nghỉ!';
   }
   sendNotif('LifeOS Pomodoro', isWork ? 'Hoàn thành phiên tập trung.' : 'Thời gian nghỉ đã kết thúc. Vui lòng quay lại công việc.', 'pom');
+  if (typeof window.hapticSuccess === 'function') window.hapticSuccess();
+  if (typeof window.scheduleMobileNotification === 'function') {
+    window.scheduleMobileNotification('LifeOS Pomodoro', isWork ? 'Hoàn thành phiên tập trung!' : 'Hết giờ nghỉ! Quay lại công việc nào.');
+  }
   pomLeft = pomTime;
  }
  pomUpdateDisplay();
@@ -84,6 +88,7 @@ function pomUpdateDisplay() {
 }
 
 function pomToggle() {
+ if (typeof window.hapticTap === 'function') window.hapticTap();
  if (pomRunning) {
   pomWorker.postMessage('stop');
   pomRunning = false;

@@ -1,9 +1,22 @@
 {
   "scripts": {
+    "build": "node scripts/build.js",
+    "cap:sync": "npm run build && npx cap sync",
+    "cap:android": "npm run build && npx cap sync android && npx cap open android",
+    "cap:ios": "npm run build && npx cap sync ios && npx cap open ios",
     "test": "node --test test/*.test.js",
     "check": "node --check js/data.js && node --check js/main.js && node --check js/workspace.js && node --check js/projViews.js && node --check js/modules/cmd.js && node --check js/modules/todos.js && node --check js/modules/export.js && node --check sw.js && node --check functions/index.js"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/keyboard": "^8.0.6",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4",
     "jsdom": "^29.1.1",
     "playwright": "^1.61.1"
   }

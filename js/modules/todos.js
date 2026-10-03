@@ -51,6 +51,8 @@ async function toggleTodo(id){
  
  const isDoneNow = !list[i].done;
  list[i]={...list[i],done:isDoneNow};
+ if (isDoneNow && typeof window.hapticSuccess === 'function') window.hapticSuccess();
+ else if (typeof window.hapticTap === 'function') window.hapticTap();
  
  // Spawn recurring task if marked done and hasn't spawned yet
  if (isDoneNow && list[i].recurrence && !list[i].spawnedNext) {
