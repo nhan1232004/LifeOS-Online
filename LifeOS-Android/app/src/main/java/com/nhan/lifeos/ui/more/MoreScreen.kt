@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Book
@@ -147,7 +148,7 @@ fun MoreScreen(
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Logout,
+                        imageVector = Icons.AutoMirrored.Rounded.Logout,
                         contentDescription = null,
                         tint = LifeOSRed,
                         modifier = Modifier.size(16.dp)

@@ -40,14 +40,20 @@ import com.nhan.lifeos.core.navigation.Screen
 import com.nhan.lifeos.data.local.LifeOSDatabase
 import com.nhan.lifeos.data.preferences.UserPreferencesRepository
 import com.nhan.lifeos.data.preferences.UserSession
+import com.nhan.lifeos.data.repository.FinanceRepository
 import com.nhan.lifeos.data.repository.TaskTimeRepository
 import com.nhan.lifeos.ui.auth.AuthScreen
 import com.nhan.lifeos.ui.calendar.CalendarScreen
 import com.nhan.lifeos.ui.calendar.CalendarViewModel
 import com.nhan.lifeos.ui.finance.FinanceScreen
+import com.nhan.lifeos.ui.finance.FinanceViewModel
+import com.nhan.lifeos.ui.goals.GoalsScreen
+import com.nhan.lifeos.ui.goals.GoalsViewModel
 import com.nhan.lifeos.ui.more.MoreScreen
 import com.nhan.lifeos.ui.projects.ProjectsScreen
 import com.nhan.lifeos.ui.projects.ProjectsViewModel
+import com.nhan.lifeos.ui.stats.StatsScreen
+import com.nhan.lifeos.ui.stats.StatsViewModel
 import com.nhan.lifeos.ui.today.TodayScreen
 import com.nhan.lifeos.ui.today.TodayViewModel
 import com.nhan.lifeos.ui.todos.TodosScreen
@@ -146,11 +152,15 @@ fun LifeOSApp(
     val context = LocalContext.current
     val database = remember { LifeOSDatabase.getDatabase(context) }
     val taskTimeRepo = remember { TaskTimeRepository(database) }
+    val financeRepo = remember { FinanceRepository(database) }
 
     val todayViewModel = remember { TodayViewModel(taskTimeRepo) }
     val todosViewModel = remember { TodosViewModel(taskTimeRepo) }
     val calendarViewModel = remember { CalendarViewModel(taskTimeRepo) }
     val projectsViewModel = remember { ProjectsViewModel(taskTimeRepo) }
+    val financeViewModel = remember { FinanceViewModel(financeRepo) }
+    val goalsViewModel = remember { GoalsViewModel(financeRepo) }
+    val statsViewModel = remember { StatsViewModel(taskTimeRepo, financeRepo) }
 
     val navController = rememberNavController()
 
@@ -175,7 +185,7 @@ fun LifeOSApp(
                 TodosScreen(viewModel = todosViewModel)
             }
             composable(Screen.Finance.route) {
-                FinanceScreen()
+                FinanceScreen(viewModel = financeViewModel)
             }
             composable(Screen.More.route) {
                 MoreScreen(
@@ -189,6 +199,18 @@ fun LifeOSApp(
             composable("projects") {
                 ProjectsScreen(
                     viewModel = projectsViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("goals") {
+                GoalsScreen(
+                    viewModel = goalsViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("stats") {
+                StatsScreen(
+                    viewModel = statsViewModel,
                     onBack = { navController.popBackStack() }
                 )
             }
