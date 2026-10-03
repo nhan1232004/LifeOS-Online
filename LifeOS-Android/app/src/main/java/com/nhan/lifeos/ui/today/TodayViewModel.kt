@@ -55,12 +55,6 @@ class TodayViewModel(private val repository: TaskTimeRepository) : ViewModel() {
         initialValue = TodayUiState(todayDateRaw = todayRaw)
     )
 
-    init {
-        viewModelScope.launch {
-            repository.seedSampleDataIfEmpty()
-        }
-    }
-
     fun toggleTodo(id: String, done: Boolean) {
         viewModelScope.launch {
             repository.toggleTodo(id, done)

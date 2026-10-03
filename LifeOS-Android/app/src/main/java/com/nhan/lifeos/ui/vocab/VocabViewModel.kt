@@ -28,7 +28,6 @@ class VocabViewModel(private val repository: VocabRepository) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            repository.seedSampleDataIfEmpty()
             repository.allVocab.collect { list ->
                 val mastered = list.count { it.srsLevel >= 3 }
                 val learning = list.size - mastered

@@ -49,7 +49,7 @@ import com.nhan.lifeos.data.local.entity.VocabEntity
         MockTestEntity::class,
         DeletedItemEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

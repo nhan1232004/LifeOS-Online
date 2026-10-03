@@ -396,7 +396,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Xóa toàn bộ các bảng trong Room Database để bắt đầu lại từ đầu hoặc thử nghiệm lại dữ liệu mẫu.",
+                        text = "Xóa toàn bộ các bảng trong Room Database để làm sạch dữ liệu và bắt đầu lại từ đầu.",
                         style = MaterialTheme.typography.bodySmall,
                         color = LifeOSTextLow
                     )

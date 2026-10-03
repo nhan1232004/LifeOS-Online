@@ -214,39 +214,6 @@ class TaskTimeRepository(
     }
 
     suspend fun seedSampleDataIfEmpty() {
-        val existingTodos = todoDao.getAllTodos().first()
-        if (existingTodos.isNotEmpty()) return
-
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val todayStr = sdf.format(Date())
-        val cal = Calendar.getInstance()
-        cal.add(Calendar.DAY_OF_YEAR, 1)
-        val tomorrowStr = sdf.format(cal.time)
-
-        // Seed Sample Todos
-        val sampleTodos = listOf(
-            TodoEntity(id = "t1", text = "Tối ưu hóa Performance & Lighthouse LifeOS (≥ 90 score)", priority = "high", date = todayStr, note = "Kiểm tra bundle size và lazy loading", done = true),
-            TodoEntity(id = "t2", text = "Hoàn thiện bản thiết kế UI Focused Glass Jetpack Compose", priority = "high", date = todayStr, note = "Chuẩn hóa design tokens và icons", done = true),
-            TodoEntity(id = "t3", text = "Đánh giá và review Pull Request cho team", priority = "high", date = todayStr, note = "Module Kanban drag-and-drop", done = false),
-            TodoEntity(id = "t4", text = "Luyện 20 từ vựng IELTS chuyên ngành công nghệ", priority = "mid", date = todayStr, note = "Bộ flashcard LifeOS", done = false),
-            TodoEntity(id = "t5", text = "Thanh toán tiền điện & Internet tháng này", priority = "low", date = tomorrowStr, note = "Chuyển khoản qua app ngân hàng", done = false)
-        )
-        todoDao.insertAll(sampleTodos)
-
-        // Seed Sample Events
-        val sampleEvents = listOf(
-            EventEntity(id = "e1", title = "Họp chiến lược sản phẩm Q3", dateStart = todayStr, dateEnd = todayStr, timeStart = "09:00", timeEnd = "10:30", type = "work", desc = "Đánh giá tiến độ ra mắt tính năng AI và Mobile App"),
-            EventEntity(id = "e2", title = "Tập Gym & Cardio", dateStart = todayStr, dateEnd = todayStr, timeStart = "17:30", timeEnd = "19:00", type = "health", desc = "Buổi tập ngực và chạy bộ 5km"),
-            EventEntity(id = "e3", title = "Review Code cùng Senior Dev", dateStart = tomorrowStr, dateEnd = tomorrowStr, timeStart = "14:00", timeEnd = "15:00", type = "work", desc = "Kiến trúc Clean Architecture Android Native")
-        )
-        eventDao.insertAll(sampleEvents)
-
-        // Seed Sample Projects
-        val sampleProjects = listOf(
-            ProjectEntity(id = "p1", name = "LifeOS Android Native App", status = "Đang làm", priority = "high", budget = 15000000L, due = tomorrowStr, desc = "Ứng dụng quản lý toàn diện Native Jetpack Compose"),
-            ProjectEntity(id = "p2", name = "Hệ thống Quản lý Bán lẻ Cloud", status = "Cần làm", priority = "mid", budget = 45000000L, due = tomorrowStr, desc = "Dự án thương mại điện tử đồng bộ đa kênh"),
-            ProjectEntity(id = "p3", name = "Nghiên cứu Gemini 1.5 Flash AI API", status = "Hoàn thành", priority = "low", budget = 5000000L, due = todayStr, desc = "Tích hợp trợ lý AI trực tiếp vào app")
-        )
-        sampleProjects.forEach { projectDao.insertProject(it) }
+        // Sample data disabled per user request: start completely clean
     }
 }

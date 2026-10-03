@@ -22,7 +22,6 @@ class HabitsViewModel(private val repository: PersonalRepository) : ViewModel() 
 
     init {
         viewModelScope.launch {
-            repository.seedSampleDataIfEmpty()
             repository.allHabits.collect { list ->
                 val streakSum = list.sumOf { it.streak }
                 _uiState.value = HabitsUiState(

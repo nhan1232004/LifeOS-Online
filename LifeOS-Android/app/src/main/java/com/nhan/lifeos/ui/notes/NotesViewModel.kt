@@ -24,7 +24,6 @@ class NotesViewModel(private val repository: PersonalRepository) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            repository.seedSampleDataIfEmpty()
             repository.allNotes.collect { list ->
                 allNotes = list
                 filterNotes()

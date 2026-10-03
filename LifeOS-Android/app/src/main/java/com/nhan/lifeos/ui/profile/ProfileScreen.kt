@@ -262,7 +262,7 @@ fun ProfileScreen(
             value = jobTitle,
             onValueChange = { jobTitle = it },
             label = { Text("Chức danh / Nghề nghiệp") },
-            placeholder = { Text("Ví dụ: Kỹ sư phần mềm, Sinh viên...") },
+            placeholder = { Text("Nhập chức danh của bạn") },
             leadingIcon = {
                 Icon(Icons.Rounded.Work, contentDescription = null, tint = LifeOSCyan)
             },
@@ -306,7 +306,7 @@ fun ProfileScreen(
             value = phoneNumber,
             onValueChange = { phoneNumber = it },
             label = { Text("Số điện thoại") },
-            placeholder = { Text("Ví dụ: 0987 654 321") },
+            placeholder = { Text("Nhập số điện thoại") },
             leadingIcon = {
                 Icon(Icons.Rounded.Phone, contentDescription = null, tint = LifeOSGreen)
             },

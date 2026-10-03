@@ -33,7 +33,6 @@ class FinanceViewModel(private val repository: FinanceRepository) : ViewModel() 
 
     init {
         viewModelScope.launch {
-            repository.seedSampleDataIfEmpty()
             repository.getAllTransactions().collect { list ->
                 allTransactions = list
                 calculateAndEmit()

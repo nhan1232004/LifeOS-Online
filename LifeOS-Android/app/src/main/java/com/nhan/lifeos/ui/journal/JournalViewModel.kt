@@ -21,7 +21,6 @@ class JournalViewModel(private val repository: PersonalRepository) : ViewModel()
 
     init {
         viewModelScope.launch {
-            repository.seedSampleDataIfEmpty()
             repository.allJournalEntries.collect { list ->
                 _uiState.value = JournalUiState(
                     entries = list,

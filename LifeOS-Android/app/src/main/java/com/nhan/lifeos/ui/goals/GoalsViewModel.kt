@@ -24,7 +24,6 @@ class GoalsViewModel(private val repository: FinanceRepository) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            repository.seedSampleDataIfEmpty()
             repository.getAllGoals().collect { list ->
                 val completed = list.count { it.isCompleted }
                 _uiState.value = GoalsUiState(
