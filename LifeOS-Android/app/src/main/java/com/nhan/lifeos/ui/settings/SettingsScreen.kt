@@ -21,13 +21,16 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.CleaningServices
 import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Storage
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -56,14 +59,21 @@ import com.nhan.lifeos.core.designsystem.LifeOSSurfaceCard
 import com.nhan.lifeos.core.designsystem.LifeOSTextHigh
 import com.nhan.lifeos.core.designsystem.LifeOSTextLow
 import com.nhan.lifeos.core.designsystem.LifeOSTextMid
+import com.nhan.lifeos.data.preferences.UserSession
+import com.nhan.lifeos.data.repository.CloudSyncRepository
+import com.nhan.lifeos.data.repository.SyncState
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
+    cloudSyncRepo: CloudSyncRepository? = null,
+    userSession: UserSession = UserSession(),
     onBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val syncState by (cloudSyncRepo?.syncState ?: remember { MutableStateFlow(SyncState.Idle) }).collectAsState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var showResetDialog by remember { mutableStateOf(false) }
@@ -108,6 +118,121 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = LifeOSTextMid
                     )
+                }
+            }
+        }
+
+        // Cloud Sync Card (Firestore Live Sync)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard),
+                border = androidx.compose.foundation.BorderStroke(1.dp, LifeOSCyan.copy(alpha = 0.35f))
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(LifeOSCyan.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.CloudSync,
+                                contentDescription = null,
+                                tint = LifeOSCyan,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Đồng bộ Đám mây (Web & App)",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = LifeOSTextHigh
+                            )
+                            Text(
+                                text = if (userSession.canSyncOnline) "Tài khoản: ${userSession.userEmail}" else "Chế độ Khách (Offline)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = LifeOSTextMid
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    if (userSession.canSyncOnline) {
+                        val state = syncState
+                        val lastSyncStr = if (userSession.lastSyncedAt > 0L) {
+                            val sdf = java.text.SimpleDateFormat("HH:mm - dd/MM/yyyy", java.util.Locale.getDefault())
+                            "Lần đồng bộ gần nhất: " + sdf.format(java.util.Date(userSession.lastSyncedAt))
+                        } else "Chưa từng đồng bộ dữ liệu"
+
+                        Text(
+                            text = when (state) {
+                                is SyncState.Syncing -> "Đang kết nối Firestore & đồng bộ toàn bộ dữ liệu..."
+                                is SyncState.Success -> "Đồng bộ hoàn tất (${state.totalSynced} mục). Dữ liệu trên App và Web hoàn toàn trùng khớp!"
+                                is SyncState.Error -> "Lỗi đồng bộ: ${state.message}"
+                                is SyncState.Idle -> "Dữ liệu được đồng bộ 2 chiều tự động qua internet với Web LifeOS (dashboard-39cf8)."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = when (state) {
+                                is SyncState.Error -> LifeOSRed
+                                is SyncState.Success -> LifeOSGreen
+                                else -> LifeOSTextMid
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = lastSyncStr,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = LifeOSTextLow
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    cloudSyncRepo?.syncAll(userSession)
+                                }
+                            },
+                            enabled = state !is SyncState.Syncing,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = LifeOSCyan),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            if (state is SyncState.Syncing) {
+                                CircularProgressIndicator(
+                                    color = Color.Black,
+                                    strokeWidth = 2.dp,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Đang đồng bộ...", color = Color.Black, fontWeight = FontWeight.Bold)
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Rounded.Sync,
+                                    contentDescription = null,
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Đồng bộ ngay với Web", color = Color.Black, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = "Bạn đang ở chế độ Khách Offline. Hãy đăng nhập tài khoản để kích hoạt tính năng đồng bộ tự động 2 chiều qua internet với phiên bản Web trực tuyến.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LifeOSTextLow
+                        )
+                    }
                 }
             }
         }

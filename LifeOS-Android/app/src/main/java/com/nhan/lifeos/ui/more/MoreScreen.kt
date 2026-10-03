@@ -33,14 +33,21 @@ import androidx.compose.material.icons.rounded.School
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.TrackChanges
+import androidx.compose.material.icons.rounded.CloudDone
+import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,6 +67,9 @@ import com.nhan.lifeos.core.designsystem.LifeOSTextHigh
 import com.nhan.lifeos.core.designsystem.LifeOSTextLow
 import com.nhan.lifeos.core.designsystem.LifeOSTextMid
 import com.nhan.lifeos.data.preferences.UserSession
+import com.nhan.lifeos.data.repository.CloudSyncRepository
+import com.nhan.lifeos.data.repository.SyncState
+import kotlinx.coroutines.launch
 
 data class MoreModuleItem(
     val title: String,
@@ -71,6 +81,7 @@ data class MoreModuleItem(
 @Composable
 fun MoreScreen(
     userSession: UserSession = UserSession(),
+    cloudSyncRepo: CloudSyncRepository? = null,
     onSignOut: () -> Unit = {},
     onNavigateToFeature: (String) -> Unit = {}
 ) {
@@ -108,7 +119,7 @@ fun MoreScreen(
 
         // User Account Status Card
         Card(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
         ) {
@@ -159,6 +170,106 @@ fun MoreScreen(
                         style = MaterialTheme.typography.labelSmall,
                         color = LifeOSTextHigh
                     )
+                }
+            }
+        }
+
+        // Cloud Sync Status Pill
+        if (userSession.canSyncOnline && cloudSyncRepo != null) {
+            val syncState by cloudSyncRepo.syncState.collectAsState()
+            val coroutineScope = rememberCoroutineScope()
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 14.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = LifeOSCyan.copy(alpha = 0.08f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, LifeOSCyan.copy(alpha = 0.25f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    when (val state = syncState) {
+                        is SyncState.Syncing -> {
+                            CircularProgressIndicator(
+                                color = LifeOSCyan,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        is SyncState.Error -> {
+                            Icon(
+                                imageVector = Icons.Rounded.CloudOff,
+                                contentDescription = null,
+                                tint = LifeOSRed,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        else -> {
+                            Icon(
+                                imageVector = Icons.Rounded.CloudDone,
+                                contentDescription = null,
+                                tint = LifeOSCyan,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = when (val state = syncState) {
+                                is SyncState.Syncing -> "Đang đồng bộ với Web..."
+                                is SyncState.Success -> "Đã đồng bộ (${state.totalSynced} mục)"
+                                is SyncState.Error -> "Lỗi kết nối đồng bộ"
+                                is SyncState.Idle -> "Đồng bộ đám mây (Web Live)"
+                            },
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = LifeOSTextHigh
+                        )
+                        val lastSyncStr = if (userSession.lastSyncedAt > 0L) {
+                            val sdf = java.text.SimpleDateFormat("HH:mm dd/MM", java.util.Locale.getDefault())
+                            "Lần cuối: " + sdf.format(java.util.Date(userSession.lastSyncedAt))
+                        } else "Chưa đồng bộ lần nào"
+                        Text(
+                            text = if (syncState is SyncState.Error) (syncState as SyncState.Error).message else lastSyncStr,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (syncState is SyncState.Error) LifeOSRed else LifeOSTextLow,
+                            maxLines = 1
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            coroutineScope.launch {
+                                cloudSyncRepo.syncAll(userSession)
+                            }
+                        },
+                        enabled = syncState !is SyncState.Syncing,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = LifeOSCyan.copy(alpha = 0.2f)),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Sync,
+                            contentDescription = null,
+                            tint = LifeOSCyan,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Đồng bộ",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = LifeOSCyan
+                        )
+                    }
                 }
             }
         }

@@ -18,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -40,6 +41,7 @@ import com.nhan.lifeos.core.navigation.Screen
 import com.nhan.lifeos.data.local.LifeOSDatabase
 import com.nhan.lifeos.data.preferences.UserPreferencesRepository
 import com.nhan.lifeos.data.preferences.UserSession
+import com.nhan.lifeos.data.repository.CloudSyncRepository
 import com.nhan.lifeos.data.repository.FinanceRepository
 import com.nhan.lifeos.data.repository.PersonalRepository
 import com.nhan.lifeos.data.repository.TaskTimeRepository
@@ -146,9 +148,15 @@ fun MainRootScreen() {
     } else {
         // In-App Authentication Screen
         AuthScreen(
-            onSignInSuccess = { email, name ->
+            onSignInSuccess = { email, name, uid, idToken, refreshToken ->
                 coroutineScope.launch {
-                    preferencesRepository.setUserSession(email, name)
+                    preferencesRepository.setUserSession(
+                        email = email,
+                        displayName = name,
+                        userId = uid,
+                        idToken = idToken,
+                        refreshToken = refreshToken
+                    )
                 }
             },
             onContinueAsGuest = {
@@ -167,6 +175,16 @@ fun LifeOSApp(
 ) {
     val context = LocalContext.current
     val database = remember { LifeOSDatabase.getDatabase(context) }
+    val preferencesRepo = remember { UserPreferencesRepository(context) }
+    val cloudSyncRepo = remember { CloudSyncRepository(database, preferencesRepo) }
+
+    // Auto-sync with Web Firestore on app launch / login
+    LaunchedEffect(userSession.userId) {
+        if (userSession.canSyncOnline) {
+            cloudSyncRepo.syncAll(userSession)
+        }
+    }
+
     val taskTimeRepo = remember { TaskTimeRepository(database) }
     val financeRepo = remember { FinanceRepository(database) }
     val personalRepo = remember { PersonalRepository(database) }
@@ -215,6 +233,7 @@ fun LifeOSApp(
             composable(Screen.More.route) {
                 MoreScreen(
                     userSession = userSession,
+                    cloudSyncRepo = cloudSyncRepo,
                     onSignOut = onSignOut,
                     onNavigateToFeature = { route ->
                         navController.navigate(route)
@@ -278,6 +297,8 @@ fun LifeOSApp(
             composable("settings") {
                 SettingsScreen(
                     viewModel = settingsViewModel,
+                    cloudSyncRepo = cloudSyncRepo,
+                    userSession = userSession,
                     onBack = { navController.popBackStack() }
                 )
             }

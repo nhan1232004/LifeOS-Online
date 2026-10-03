@@ -33,6 +33,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +46,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,18 +68,24 @@ import com.nhan.lifeos.core.designsystem.LifeOSSurfaceDark
 import com.nhan.lifeos.core.designsystem.LifeOSTextHigh
 import com.nhan.lifeos.core.designsystem.LifeOSTextLow
 import com.nhan.lifeos.core.designsystem.LifeOSTextMid
+import com.nhan.lifeos.data.network.FirebaseAuthService
+import kotlinx.coroutines.launch
 
 @Composable
 fun AuthScreen(
-    onSignInSuccess: (email: String, name: String) -> Unit,
+    onSignInSuccess: (email: String, name: String, uid: String, idToken: String, refreshToken: String) -> Unit,
     onContinueAsGuest: () -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val authService = remember { FirebaseAuthService() }
+
     var isRegisterMode by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var fullName by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
     var showGoogleAdviceDialog by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
@@ -275,19 +283,49 @@ fun AuthScreen(
                                 return@Button
                             }
                             val name = if (isRegisterMode && fullName.isNotBlank()) fullName else email.substringBefore("@")
-                            onSignInSuccess(email.trim(), name)
+                            
+                            isLoading = true
+                            errorMessage = null
+                            coroutineScope.launch {
+                                val result = if (isRegisterMode) {
+                                    authService.signUp(email.trim(), password, name)
+                                } else {
+                                    authService.signIn(email.trim(), password)
+                                }
+                                isLoading = false
+                                if (result.success) {
+                                    onSignInSuccess(
+                                        result.email,
+                                        result.displayName,
+                                        result.userId,
+                                        result.idToken,
+                                        result.refreshToken
+                                    )
+                                } else {
+                                    errorMessage = result.errorMessage ?: "Đã có lỗi xảy ra. Vui lòng thử lại."
+                                }
+                            }
                         },
+                        enabled = !isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = LifeOSPrimary)
                     ) {
-                        Text(
-                            text = if (isRegisterMode) "Tạo tài khoản mới" else "Đăng nhập vào LifeOS",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
-                        )
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(22.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = if (isRegisterMode) "Tạo tài khoản mới" else "Đăng nhập vào LifeOS",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            )
+                        }
                     }
 
                     // Divider
@@ -404,7 +442,7 @@ fun AuthScreen(
             },
             text = {
                 Text(
-                    text = "Để ứng dụng hoạt động độc lập và mượt mà nhất (không bị phụ thuộc vào cửa sổ trình duyệt bên ngoài), bạn có thể:\n\n1. Đăng nhập bằng Email & Mật khẩu trực tiếp trong app.\n2. Chọn 'Dùng ngay không cần đăng nhập' để sử dụng toàn bộ tính năng ngay tức thì.",
+                    text = "Để ứng dụng hoạt động độc lập và mượt mà nhất (không bị phụ thuộc vào cửa sổ trình duyệt bên ngoài):\n\n1. Đăng nhập bằng Email & Mật khẩu: Dữ liệu của bạn từ phiên bản Web sẽ được đồng bộ 2 chiều tự động qua internet về máy.\n\n2. Chọn 'Dùng ngay không cần đăng nhập' để sử dụng toàn bộ tính năng với dữ liệu lưu an toàn trên máy.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = LifeOSTextMid
                 )
