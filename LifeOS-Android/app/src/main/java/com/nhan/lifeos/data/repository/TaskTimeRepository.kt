@@ -3,6 +3,7 @@ package com.nhan.lifeos.data.repository
 import com.nhan.lifeos.data.local.LifeOSDatabase
 import com.nhan.lifeos.data.local.entity.EventEntity
 import com.nhan.lifeos.data.local.entity.ProjectEntity
+import com.nhan.lifeos.data.local.entity.ProjectMessageEntity
 import com.nhan.lifeos.data.local.entity.ProjectTaskEntity
 import com.nhan.lifeos.data.local.entity.TodoEntity
 import kotlinx.coroutines.flow.Flow
@@ -21,6 +22,7 @@ class TaskTimeRepository(
     private val eventDao = database.eventDao()
     private val projectDao = database.projectDao()
     private val projectTaskDao = database.projectTaskDao()
+    private val projectMessageDao = database.projectMessageDao()
 
     val allTodos: Flow<List<TodoEntity>> = todoDao.getAllTodos()
     val allEvents: Flow<List<EventEntity>> = eventDao.getAllEvents()
@@ -93,6 +95,11 @@ class TaskTimeRepository(
         cloudSyncRepo?.triggerAutoSync("events")
     }
 
+    suspend fun updateEvent(event: EventEntity) {
+        eventDao.updateEvent(event.copy(updatedAt = System.currentTimeMillis()))
+        cloudSyncRepo?.triggerAutoSync("events")
+    }
+
     suspend fun insertProject(
         name: String,
         status: String = "Cần làm",
@@ -129,7 +136,46 @@ class TaskTimeRepository(
         cloudSyncRepo?.recordDeletedItem(id, "projects")
         projectDao.deleteById(id)
         projectTaskDao.deleteTasksByProject(id)
+        projectMessageDao.deleteMessagesForProject(id)
         cloudSyncRepo?.triggerAutoSync("projects")
+    }
+
+    suspend fun addProjectMember(project: ProjectEntity, email: String) {
+        val trimmed = email.trim().lowercase()
+        if (trimmed.isNotBlank() && !project.members.contains(trimmed)) {
+            val updated = project.copy(
+                members = project.members + trimmed,
+                updatedAt = System.currentTimeMillis(),
+                isSynced = false
+            )
+            projectDao.insertProject(updated)
+            cloudSyncRepo?.triggerAutoSync("projects")
+        }
+    }
+
+    suspend fun removeProjectMember(project: ProjectEntity, email: String) {
+        val updated = project.copy(
+            members = project.members.filter { it != email },
+            updatedAt = System.currentTimeMillis(),
+            isSynced = false
+        )
+        projectDao.insertProject(updated)
+        cloudSyncRepo?.triggerAutoSync("projects")
+    }
+
+    fun getProjectMessages(projId: String): Flow<List<ProjectMessageEntity>> =
+        projectMessageDao.getMessagesForProject(projId)
+
+    suspend fun sendProjectMessage(projId: String, senderEmail: String, senderName: String, text: String) {
+        if (text.isBlank()) return
+        val msg = ProjectMessageEntity(
+            projId = projId,
+            senderEmail = senderEmail,
+            senderName = senderName.ifBlank { senderEmail.substringBefore("@") },
+            text = text.trim(),
+            timestamp = System.currentTimeMillis()
+        )
+        projectMessageDao.insertMessage(msg)
     }
 
     suspend fun insertProjectTask(

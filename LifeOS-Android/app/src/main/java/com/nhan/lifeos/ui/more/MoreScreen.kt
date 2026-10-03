@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.FolderSpecial
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.Loop
 import androidx.compose.material.icons.rounded.Person
@@ -43,6 +44,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -87,6 +89,7 @@ fun MoreScreen(
     onNavigateToFeature: (String) -> Unit = {}
 ) {
     val modules = listOf(
+        MoreModuleItem("Hồ sơ cá nhân", "Chỉnh sửa thông tin & Bio", Icons.Rounded.Person, Color(0xFF64B5F6)),
         MoreModuleItem("Dự án Kanban", "Quản lý tiến độ theo cột", Icons.Rounded.FolderSpecial, LifeOSPrimary),
         MoreModuleItem("Ghi chú", "Soạn thảo Markdown", Icons.Rounded.Description, LifeOSAmber),
         MoreModuleItem("Thói quen", "Ma trận & Streak", Icons.Rounded.Loop, LifeOSGreen),
@@ -121,7 +124,10 @@ fun MoreScreen(
 
         // User Account Status Card
         Card(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp)
+                .clickable { onNavigateToFeature("profile") },
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
         ) {
@@ -130,14 +136,14 @@ fun MoreScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    modifier = Modifier.size(40.dp).clip(CircleShape).background(LifeOSPrimary),
+                    modifier = Modifier.size(42.dp).clip(CircleShape).background(LifeOSPrimary),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Person,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
@@ -153,24 +159,36 @@ fun MoreScreen(
                         style = MaterialTheme.typography.labelSmall,
                         color = LifeOSTextMid
                     )
+                    Text(
+                        text = "Chạm để chỉnh sửa thông tin hồ sơ →",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LifeOSCyan,
+                        fontSize = 11.sp
+                    )
                 }
+                IconButton(
+                    onClick = { onNavigateToFeature("profile") },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Edit,
+                        contentDescription = "Sửa hồ sơ",
+                        tint = LifeOSCyan,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(4.dp))
                 Button(
                     onClick = onSignOut,
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = LifeOSSurfaceDark),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.Logout,
                         contentDescription = null,
                         tint = LifeOSRed,
                         modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (userSession.isGuestMode) "Đăng nhập" else "Đăng xuất",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = LifeOSTextHigh
                     )
                 }
             }
@@ -288,7 +306,9 @@ fun MoreScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            if (module.title.contains("Kanban")) {
+                            if (module.title.contains("Hồ sơ")) {
+                                onNavigateToFeature("profile")
+                            } else if (module.title.contains("Kanban")) {
                                 onNavigateToFeature("projects")
                             } else if (module.title.contains("Ghi chú")) {
                                 onNavigateToFeature("notes")

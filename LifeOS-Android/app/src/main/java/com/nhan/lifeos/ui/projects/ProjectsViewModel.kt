@@ -158,4 +158,26 @@ class ProjectsViewModel(private val repository: TaskTimeRepository) : ViewModel(
             repository.deleteProjectTask(id)
         }
     }
+
+    fun getProjectMessages(projId: String): kotlinx.coroutines.flow.Flow<List<com.nhan.lifeos.data.local.entity.ProjectMessageEntity>> {
+        return repository.getProjectMessages(projId)
+    }
+
+    fun addMember(project: ProjectEntity, email: String) {
+        viewModelScope.launch {
+            repository.addProjectMember(project, email)
+        }
+    }
+
+    fun removeMember(project: ProjectEntity, email: String) {
+        viewModelScope.launch {
+            repository.removeProjectMember(project, email)
+        }
+    }
+
+    fun sendChatMessage(projId: String, senderEmail: String, senderName: String, text: String) {
+        viewModelScope.launch {
+            repository.sendProjectMessage(projId, senderEmail, senderName, text)
+        }
+    }
 }

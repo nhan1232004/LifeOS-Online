@@ -77,6 +77,7 @@ import com.nhan.lifeos.ui.today.TodayScreen
 import com.nhan.lifeos.ui.today.TodayViewModel
 import com.nhan.lifeos.ui.todos.TodosScreen
 import com.nhan.lifeos.ui.todos.TodosViewModel
+import com.nhan.lifeos.ui.profile.ProfileScreen
 import com.nhan.lifeos.ui.vocab.VocabScreen
 import com.nhan.lifeos.ui.vocab.VocabViewModel
 import android.content.Intent
@@ -220,12 +221,12 @@ fun LifeOSApp(
     val preferencesRepo = remember { UserPreferencesRepository(context) }
     val cloudSyncRepo = remember { CloudSyncRepository(database, preferencesRepo) }
 
-    // Auto-sync on app launch & continuous live background sync every 30s while online
+    // Auto-sync on app launch & continuous live background sync every 6s while online
     LaunchedEffect(userSession.canSyncOnline) {
         if (userSession.canSyncOnline) {
             cloudSyncRepo.syncAll(userSession)
             while (isActive) {
-                delay(30000L)
+                delay(6000L)
                 cloudSyncRepo.syncAll(userSession)
             }
         }
@@ -345,6 +346,13 @@ fun LifeOSApp(
             composable("ai") {
                 AiScreen(
                     viewModel = aiViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("profile") {
+                ProfileScreen(
+                    userSession = userSession,
+                    preferencesRepo = preferencesRepo,
                     onBack = { navController.popBackStack() }
                 )
             }

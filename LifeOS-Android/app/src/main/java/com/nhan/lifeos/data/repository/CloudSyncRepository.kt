@@ -18,6 +18,8 @@ import com.nhan.lifeos.data.preferences.UserPreferencesRepository
 import com.nhan.lifeos.data.preferences.UserSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -72,38 +74,24 @@ class CloudSyncRepository(
 
             var syncedCount = 0
 
-            // 1. Sync Todos
-            syncedCount += syncTodos(uid, token, refresh, onRefreshed)
+            coroutineScope {
+                val dTodos = async { syncTodos(uid, token, refresh, onRefreshed) }
+                val dEvents = async { syncEvents(uid, token, refresh, onRefreshed) }
+                val dProjects = async { syncProjects(uid, token, refresh, onRefreshed) }
+                val dFinance = async { syncFinance(uid, token, refresh, onRefreshed) }
+                val dNotes = async { syncNotes(uid, token, refresh, onRefreshed) }
+                val dHabits = async { syncHabits(uid, token, refresh, onRefreshed) }
+                val dGoals = async { syncGoals(uid, token, refresh, onRefreshed) }
+                val dJournal = async { syncJournal(uid, token, refresh, onRefreshed) }
+                val dVocab = async { syncVocab(uid, token, refresh, onRefreshed) }
+                val dProjTasks = async { syncProjTasks(uid, token, refresh, onRefreshed) }
+                val dMockTests = async { syncMockTests(uid, token, refresh, onRefreshed) }
 
-            // 2. Sync Events
-            syncedCount += syncEvents(uid, token, refresh, onRefreshed)
-
-            // 3. Sync Projects
-            syncedCount += syncProjects(uid, token, refresh, onRefreshed)
-
-            // 4. Sync Finance (Income & Expense)
-            syncedCount += syncFinance(uid, token, refresh, onRefreshed)
-
-            // 5. Sync Notes
-            syncedCount += syncNotes(uid, token, refresh, onRefreshed)
-
-            // 6. Sync Habits
-            syncedCount += syncHabits(uid, token, refresh, onRefreshed)
-
-            // 7. Sync Goals
-            syncedCount += syncGoals(uid, token, refresh, onRefreshed)
-
-            // 8. Sync Journal
-            syncedCount += syncJournal(uid, token, refresh, onRefreshed)
-
-            // 9. Sync Vocab
-            syncedCount += syncVocab(uid, token, refresh, onRefreshed)
-
-            // 10. Sync Proj Tasks
-            syncedCount += syncProjTasks(uid, token, refresh, onRefreshed)
-
-            // 11. Sync Mock Tests
-            syncedCount += syncMockTests(uid, token, refresh, onRefreshed)
+                syncedCount = dTodos.await() + dEvents.await() + dProjects.await() +
+                        dFinance.await() + dNotes.await() + dHabits.await() +
+                        dGoals.await() + dJournal.await() + dVocab.await() +
+                        dProjTasks.await() + dMockTests.await()
+            }
 
             val now = System.currentTimeMillis()
             preferencesRepository.updateLastSyncedAt(now)
@@ -378,6 +366,7 @@ class CloudSyncRepository(
                 put("due", p.due)
                 put("desc", p.desc)
                 put("tags", JSONArray(p.tags))
+                put("members", JSONArray(p.members))
                 put("updatedAt", p.updatedAt)
             }
         }
@@ -399,6 +388,11 @@ class CloudSyncRepository(
         if (tagsArr != null) {
             for (i in 0 until tagsArr.length()) tagsList.add(tagsArr.optString(i))
         }
+        val membersList = mutableListOf<String>()
+        val membersArr = json.optJSONArray("members")
+        if (membersArr != null) {
+            for (i in 0 until membersArr.length()) membersList.add(membersArr.optString(i))
+        }
         return ProjectEntity(
             id = json.getString("id"),
             name = json.optString("name"),
@@ -409,6 +403,7 @@ class CloudSyncRepository(
             due = json.optString("due"),
             desc = json.optString("desc"),
             tags = tagsList,
+            members = membersList,
             updatedAt = json.optLong("updatedAt", System.currentTimeMillis()),
             isSynced = true
         )

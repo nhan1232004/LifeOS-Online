@@ -15,6 +15,7 @@ data class ProjectEntity(
     val due: String = "",           // "YYYY-MM-DD"
     val desc: String = "",
     val tags: List<String> = emptyList(),
+    val members: List<String> = emptyList(),
     val updatedAt: Long = System.currentTimeMillis(),
     val isSynced: Boolean = false
 )

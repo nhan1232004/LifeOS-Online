@@ -22,14 +22,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.Group
 import androidx.compose.material.icons.rounded.MonetizationOn
+import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.ui.platform.LocalContext
+import com.nhan.lifeos.data.preferences.UserPreferencesRepository
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -76,6 +83,9 @@ import com.nhan.lifeos.core.designsystem.LifeOSTextMid
 import com.nhan.lifeos.data.local.entity.ProjectEntity
 import com.nhan.lifeos.data.local.entity.ProjectTaskEntity
 import java.text.DecimalFormat
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun ProjectsScreen(
@@ -86,6 +96,14 @@ fun ProjectsScreen(
     var showAddProjectDialog by remember { mutableStateOf(false) }
     var showEditProjectDialog by remember { mutableStateOf(false) }
     var showAddTaskDialog by remember { mutableStateOf(false) }
+    var showInviteMemberDialog by remember { mutableStateOf(false) }
+    var showChatDialog by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val prefsRepo = remember { UserPreferencesRepository(context) }
+    val sessionState by prefsRepo.userSessionFlow.collectAsState(initial = null)
+    val currentSenderEmail = sessionState?.userEmail ?: "local@lifeos.app"
+    val currentSenderName = sessionState?.displayName?.ifBlank { "Người dùng" } ?: "Người dùng"
 
     val activeProject = uiState.selectedProject
 
@@ -357,6 +375,134 @@ fun ProjectsScreen(
                                 )
                             }
                         }
+
+                        // ─── Team Members & Collaboration ───
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider(color = LifeOSGlassBorder)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Group,
+                                    contentDescription = null,
+                                    tint = LifeOSCyan,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Thành viên (${activeProject.members.size})",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = LifeOSTextMid
+                                )
+                            }
+                        }
+
+                        if (activeProject.members.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                items(activeProject.members) { email ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(LifeOSSurfaceDark)
+                                            .border(1.dp, LifeOSGlassBorder, RoundedCornerShape(12.dp))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(16.dp)
+                                                .clip(CircleShape)
+                                                .background(LifeOSPrimary),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = email.take(1).uppercase(),
+                                                color = Color.White,
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = email,
+                                            fontSize = 11.sp,
+                                            color = LifeOSTextHigh
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Icon(
+                                            imageVector = Icons.Rounded.Close,
+                                            contentDescription = "Xóa",
+                                            tint = LifeOSTextLow,
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .clickable { viewModel.removeMember(activeProject, email) }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Buttons: Mời thành viên & Chat nhóm
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { showInviteMemberDialog = true },
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = LifeOSCyan.copy(alpha = 0.15f)),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.PersonAdd,
+                                    contentDescription = null,
+                                    tint = LifeOSCyan,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Mời thành viên",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = LifeOSCyan
+                                )
+                            }
+
+                            Button(
+                                onClick = { showChatDialog = true },
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = LifeOSPrimary.copy(alpha = 0.2f)),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Forum,
+                                    contentDescription = null,
+                                    tint = LifeOSPrimary,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Chat nhóm",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = LifeOSPrimary
+                                )
+                            }
+                        }
                     }
                 }
             } else {
@@ -544,6 +690,76 @@ fun ProjectsScreen(
                 )
                 showAddTaskDialog = false
             }
+        )
+    }
+
+    // Invite Member Dialog
+    if (showInviteMemberDialog && activeProject != null) {
+        var emailInput by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showInviteMemberDialog = false },
+            title = {
+                Text(
+                    text = "Mời thành viên vào dự án",
+                    fontWeight = FontWeight.Bold,
+                    color = LifeOSTextHigh
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Dự án: ${activeProject.name}",
+                        fontSize = 13.sp,
+                        color = LifeOSCyan,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    OutlinedTextField(
+                        value = emailInput,
+                        onValueChange = { emailInput = it },
+                        label = { Text("Địa chỉ Email") },
+                        placeholder = { Text("vd: teammate@gmail.com") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = LifeOSPrimary,
+                            unfocusedBorderColor = LifeOSGlassBorder,
+                            focusedTextColor = LifeOSTextHigh,
+                            unfocusedTextColor = LifeOSTextHigh
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (emailInput.isNotBlank()) {
+                            viewModel.addMember(activeProject, emailInput.trim().lowercase())
+                            showInviteMemberDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = LifeOSPrimary)
+                ) {
+                    Text("Thêm vào dự án", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showInviteMemberDialog = false }) {
+                    Text("Hủy", color = LifeOSTextMid)
+                }
+            },
+            containerColor = LifeOSSurfaceDark
+        )
+    }
+
+    // Project Chat Dialog
+    if (showChatDialog && activeProject != null) {
+        ProjectChatDialog(
+            project = activeProject,
+            viewModel = viewModel,
+            currentUserEmail = currentSenderEmail,
+            currentUserName = currentSenderName,
+            onDismiss = { showChatDialog = false }
         )
     }
 }
@@ -887,5 +1103,228 @@ private fun AddTaskDialog(
                 Text("Hủy", color = LifeOSTextMid)
             }
         }
+    )
+}
+
+@Composable
+private fun ProjectChatDialog(
+    project: ProjectEntity,
+    viewModel: ProjectsViewModel,
+    currentUserEmail: String,
+    currentUserName: String,
+    onDismiss: () -> Unit
+) {
+    val messages by viewModel.getProjectMessages(project.id).collectAsState(initial = emptyList())
+    var inputText by remember { mutableStateOf("") }
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val timeFmt = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+
+    androidx.compose.runtime.LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(520.dp),
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(LifeOSPrimary.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Forum,
+                            contentDescription = null,
+                            tint = LifeOSPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = "Kênh chat thảo luận",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = LifeOSTextHigh
+                        )
+                        Text(
+                            text = project.name,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = LifeOSCyan
+                        )
+                    }
+                }
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(30.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Đóng",
+                        tint = LifeOSTextMid,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Messages List
+                if (messages.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Rounded.Forum,
+                                contentDescription = null,
+                                tint = LifeOSTextLow,
+                                modifier = Modifier.size(36.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Chưa có tin nhắn nào trong kênh chat này.",
+                                fontSize = 12.5.sp,
+                                color = LifeOSTextLow
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Hãy gửi tin nhắn trao đổi cùng các thành viên!",
+                                fontSize = 11.5.sp,
+                                color = LifeOSCyan
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        items(messages, key = { it.id }) { msg ->
+                            val isMe = msg.senderEmail == currentUserEmail || (currentUserEmail.isBlank() && msg.senderEmail == "local@lifeos.app")
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = if (isMe) Alignment.End else Alignment.Start
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
+                                ) {
+                                    Text(
+                                        text = if (isMe) "Bạn" else msg.senderName.ifBlank { msg.senderEmail },
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (isMe) LifeOSCyan else LifeOSTextMid
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = timeFmt.format(Date(msg.timestamp)),
+                                        fontSize = 9.5.sp,
+                                        color = LifeOSTextLow
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(
+                                            RoundedCornerShape(
+                                                topStart = 12.dp,
+                                                topEnd = 12.dp,
+                                                bottomStart = if (isMe) 12.dp else 2.dp,
+                                                bottomEnd = if (isMe) 2.dp else 12.dp
+                                            )
+                                        )
+                                        .background(if (isMe) LifeOSPrimary else LifeOSSurfaceDark)
+                                        .border(
+                                            1.dp,
+                                            if (isMe) LifeOSPrimary else LifeOSGlassBorder,
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = msg.text,
+                                        fontSize = 13.sp,
+                                        color = if (isMe) Color.White else LifeOSTextHigh
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Input Bar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = inputText,
+                        onValueChange = { inputText = it },
+                        placeholder = { Text("Nhập tin nhắn...", fontSize = 12.5.sp) },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        shape = RoundedCornerShape(20.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = LifeOSPrimary,
+                            unfocusedBorderColor = LifeOSGlassBorder,
+                            focusedTextColor = LifeOSTextHigh,
+                            unfocusedTextColor = LifeOSTextHigh
+                        )
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = {
+                            if (inputText.isNotBlank()) {
+                                viewModel.sendChatMessage(
+                                    projId = project.id,
+                                    senderEmail = currentUserEmail,
+                                    senderName = currentUserName,
+                                    text = inputText.trim()
+                                )
+                                inputText = ""
+                            }
+                        },
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(LifeOSPrimary)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.Send,
+                            contentDescription = "Gửi",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        containerColor = LifeOSSurfaceCard
     )
 }

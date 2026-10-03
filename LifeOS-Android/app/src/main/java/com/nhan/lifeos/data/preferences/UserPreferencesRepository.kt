@@ -21,7 +21,11 @@ data class UserSession(
     val idToken: String = "",
     val refreshToken: String = "",
     val lastSyncedAt: Long = 0L,
-    val activeWorkspace: String = "Personal"
+    val activeWorkspace: String = "Personal",
+    val phoneNumber: String = "",
+    val bio: String = "",
+    val jobTitle: String = "",
+    val birthday: String = ""
 ) {
     val isLoggedIn: Boolean get() = isGuestMode || userEmail.isNotBlank()
     val canSyncOnline: Boolean get() = !isGuestMode && userId.isNotBlank() && idToken.isNotBlank()
@@ -38,6 +42,10 @@ class UserPreferencesRepository(private val context: Context) {
         val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
         val LAST_SYNCED_AT = longPreferencesKey("last_synced_at")
         val ACTIVE_WORKSPACE = stringPreferencesKey("active_workspace")
+        val PHONE_NUMBER = stringPreferencesKey("phone_number")
+        val BIO = stringPreferencesKey("bio")
+        val JOB_TITLE = stringPreferencesKey("job_title")
+        val BIRTHDAY = stringPreferencesKey("birthday")
     }
 
     val userSessionFlow: Flow<UserSession> = context.dataStore.data.map { preferences ->
@@ -49,6 +57,10 @@ class UserPreferencesRepository(private val context: Context) {
         val refreshToken = preferences[PreferencesKeys.REFRESH_TOKEN] ?: ""
         val lastSynced = preferences[PreferencesKeys.LAST_SYNCED_AT] ?: 0L
         val workspace = preferences[PreferencesKeys.ACTIVE_WORKSPACE] ?: "Personal"
+        val phone = preferences[PreferencesKeys.PHONE_NUMBER] ?: ""
+        val bio = preferences[PreferencesKeys.BIO] ?: ""
+        val job = preferences[PreferencesKeys.JOB_TITLE] ?: ""
+        val bday = preferences[PreferencesKeys.BIRTHDAY] ?: ""
         UserSession(
             isGuestMode = isGuest,
             userEmail = email,
@@ -57,7 +69,11 @@ class UserPreferencesRepository(private val context: Context) {
             idToken = idToken,
             refreshToken = refreshToken,
             lastSyncedAt = lastSynced,
-            activeWorkspace = workspace
+            activeWorkspace = workspace,
+            phoneNumber = phone,
+            bio = bio,
+            jobTitle = job,
+            birthday = bday
         )
     }
 
@@ -106,6 +122,24 @@ class UserPreferencesRepository(private val context: Context) {
         }
     }
 
+    suspend fun updateProfile(
+        displayName: String,
+        phoneNumber: String = "",
+        bio: String = "",
+        jobTitle: String = "",
+        birthday: String = "",
+        workspace: String = ""
+    ) {
+        context.dataStore.edit { preferences ->
+            if (displayName.isNotBlank()) preferences[PreferencesKeys.DISPLAY_NAME] = displayName
+            preferences[PreferencesKeys.PHONE_NUMBER] = phoneNumber
+            preferences[PreferencesKeys.BIO] = bio
+            preferences[PreferencesKeys.JOB_TITLE] = jobTitle
+            preferences[PreferencesKeys.BIRTHDAY] = birthday
+            if (workspace.isNotBlank()) preferences[PreferencesKeys.ACTIVE_WORKSPACE] = workspace
+        }
+    }
+
     suspend fun clearSession() {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_GUEST_MODE] = false
@@ -115,6 +149,10 @@ class UserPreferencesRepository(private val context: Context) {
             preferences[PreferencesKeys.ID_TOKEN] = ""
             preferences[PreferencesKeys.REFRESH_TOKEN] = ""
             preferences[PreferencesKeys.LAST_SYNCED_AT] = 0L
+            preferences[PreferencesKeys.PHONE_NUMBER] = ""
+            preferences[PreferencesKeys.BIO] = ""
+            preferences[PreferencesKeys.JOB_TITLE] = ""
+            preferences[PreferencesKeys.BIRTHDAY] = ""
         }
     }
 }

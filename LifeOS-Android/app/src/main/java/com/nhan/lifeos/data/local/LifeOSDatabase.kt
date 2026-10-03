@@ -14,6 +14,7 @@ import com.nhan.lifeos.data.local.dao.JournalDao
 import com.nhan.lifeos.data.local.dao.MockTestDao
 import com.nhan.lifeos.data.local.dao.NoteDao
 import com.nhan.lifeos.data.local.dao.ProjectDao
+import com.nhan.lifeos.data.local.dao.ProjectMessageDao
 import com.nhan.lifeos.data.local.dao.ProjectTaskDao
 import com.nhan.lifeos.data.local.dao.TodoDao
 import com.nhan.lifeos.data.local.dao.TransactionDao
@@ -26,6 +27,7 @@ import com.nhan.lifeos.data.local.entity.JournalEntity
 import com.nhan.lifeos.data.local.entity.MockTestEntity
 import com.nhan.lifeos.data.local.entity.NoteEntity
 import com.nhan.lifeos.data.local.entity.ProjectEntity
+import com.nhan.lifeos.data.local.entity.ProjectMessageEntity
 import com.nhan.lifeos.data.local.entity.ProjectTaskEntity
 import com.nhan.lifeos.data.local.entity.TodoEntity
 import com.nhan.lifeos.data.local.entity.TransactionEntity
@@ -40,13 +42,14 @@ import com.nhan.lifeos.data.local.entity.VocabEntity
         HabitEntity::class,
         ProjectEntity::class,
         ProjectTaskEntity::class,
+        ProjectMessageEntity::class,
         GoalEntity::class,
         JournalEntity::class,
         VocabEntity::class,
         MockTestEntity::class,
         DeletedItemEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -58,6 +61,7 @@ abstract class LifeOSDatabase : RoomDatabase() {
     abstract fun habitDao(): HabitDao
     abstract fun projectDao(): ProjectDao
     abstract fun projectTaskDao(): ProjectTaskDao
+    abstract fun projectMessageDao(): ProjectMessageDao
     abstract fun goalDao(): GoalDao
     abstract fun journalDao(): JournalDao
     abstract fun vocabDao(): VocabDao
