@@ -16,9 +16,13 @@
       "**/node_modules/**",
       "android/**",
       "ios/**",
+      "dist/**",
       "test/**",
       "functions/**",
-      "scripts/**"
+      "scripts/**",
+      "**/*.apk",
+      "**/*.bat",
+      "**/*.exe"
     ]
   }
 }
