@@ -40,12 +40,18 @@ import com.nhan.lifeos.core.navigation.Screen
 import com.nhan.lifeos.data.local.LifeOSDatabase
 import com.nhan.lifeos.data.preferences.UserPreferencesRepository
 import com.nhan.lifeos.data.preferences.UserSession
+import com.nhan.lifeos.data.repository.TaskTimeRepository
 import com.nhan.lifeos.ui.auth.AuthScreen
 import com.nhan.lifeos.ui.calendar.CalendarScreen
+import com.nhan.lifeos.ui.calendar.CalendarViewModel
 import com.nhan.lifeos.ui.finance.FinanceScreen
 import com.nhan.lifeos.ui.more.MoreScreen
+import com.nhan.lifeos.ui.projects.ProjectsScreen
+import com.nhan.lifeos.ui.projects.ProjectsViewModel
 import com.nhan.lifeos.ui.today.TodayScreen
+import com.nhan.lifeos.ui.today.TodayViewModel
 import com.nhan.lifeos.ui.todos.TodosScreen
+import com.nhan.lifeos.ui.todos.TodosViewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -137,6 +143,15 @@ fun LifeOSApp(
     userSession: UserSession,
     onSignOut: () -> Unit
 ) {
+    val context = LocalContext.current
+    val database = remember { LifeOSDatabase.getDatabase(context) }
+    val taskTimeRepo = remember { TaskTimeRepository(database) }
+
+    val todayViewModel = remember { TodayViewModel(taskTimeRepo) }
+    val todosViewModel = remember { TodosViewModel(taskTimeRepo) }
+    val calendarViewModel = remember { CalendarViewModel(taskTimeRepo) }
+    val projectsViewModel = remember { ProjectsViewModel(taskTimeRepo) }
+
     val navController = rememberNavController()
 
     Scaffold(
@@ -151,13 +166,13 @@ fun LifeOSApp(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Today.route) {
-                TodayScreen()
+                TodayScreen(viewModel = todayViewModel)
             }
             composable(Screen.Calendar.route) {
-                CalendarScreen()
+                CalendarScreen(viewModel = calendarViewModel)
             }
             composable(Screen.Todos.route) {
-                TodosScreen()
+                TodosScreen(viewModel = todosViewModel)
             }
             composable(Screen.Finance.route) {
                 FinanceScreen()
@@ -165,7 +180,16 @@ fun LifeOSApp(
             composable(Screen.More.route) {
                 MoreScreen(
                     userSession = userSession,
-                    onSignOut = onSignOut
+                    onSignOut = onSignOut,
+                    onNavigateToFeature = { route ->
+                        navController.navigate(route)
+                    }
+                )
+            }
+            composable("projects") {
+                ProjectsScreen(
+                    viewModel = projectsViewModel,
+                    onBack = { navController.popBackStack() }
                 )
             }
         }

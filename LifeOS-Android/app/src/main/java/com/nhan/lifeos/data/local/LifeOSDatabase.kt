@@ -9,11 +9,13 @@ import com.nhan.lifeos.data.local.converter.Converters
 import com.nhan.lifeos.data.local.dao.EventDao
 import com.nhan.lifeos.data.local.dao.HabitDao
 import com.nhan.lifeos.data.local.dao.NoteDao
+import com.nhan.lifeos.data.local.dao.ProjectDao
 import com.nhan.lifeos.data.local.dao.TodoDao
 import com.nhan.lifeos.data.local.dao.TransactionDao
 import com.nhan.lifeos.data.local.entity.EventEntity
 import com.nhan.lifeos.data.local.entity.HabitEntity
 import com.nhan.lifeos.data.local.entity.NoteEntity
+import com.nhan.lifeos.data.local.entity.ProjectEntity
 import com.nhan.lifeos.data.local.entity.TodoEntity
 import com.nhan.lifeos.data.local.entity.TransactionEntity
 
@@ -23,9 +25,10 @@ import com.nhan.lifeos.data.local.entity.TransactionEntity
         EventEntity::class,
         TransactionEntity::class,
         NoteEntity::class,
-        HabitEntity::class
+        HabitEntity::class,
+        ProjectEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -35,6 +38,7 @@ abstract class LifeOSDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun noteDao(): NoteDao
     abstract fun habitDao(): HabitDao
+    abstract fun projectDao(): ProjectDao
 
     companion object {
         @Volatile

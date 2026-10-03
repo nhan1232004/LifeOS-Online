@@ -70,7 +70,8 @@ data class MoreModuleItem(
 @Composable
 fun MoreScreen(
     userSession: UserSession = UserSession(),
-    onSignOut: () -> Unit = {}
+    onSignOut: () -> Unit = {},
+    onNavigateToFeature: (String) -> Unit = {}
 ) {
     val modules = listOf(
         MoreModuleItem("Dự án Kanban", "Quản lý tiến độ theo cột", Icons.Rounded.FolderSpecial, LifeOSPrimary),
@@ -172,7 +173,29 @@ fun MoreScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .clickable { /* Navigate to module */ },
+                        .clickable {
+                            if (module.title.contains("Kanban")) {
+                                onNavigateToFeature("projects")
+                            } else if (module.title.contains("Ghi chú")) {
+                                onNavigateToFeature("notes")
+                            } else if (module.title.contains("Thói quen")) {
+                                onNavigateToFeature("habits")
+                            } else if (module.title.contains("Mục tiêu")) {
+                                onNavigateToFeature("goals")
+                            } else if (module.title.contains("Thống kê")) {
+                                onNavigateToFeature("stats")
+                            } else if (module.title.contains("Pomodoro")) {
+                                onNavigateToFeature("pomodoro")
+                            } else if (module.title.contains("Nhật ký")) {
+                                onNavigateToFeature("journal")
+                            } else if (module.title.contains("Từ vựng")) {
+                                onNavigateToFeature("vocab")
+                            } else if (module.title.contains("Trợ lý AI")) {
+                                onNavigateToFeature("ai")
+                            } else if (module.title.contains("Cài đặt")) {
+                                onNavigateToFeature("settings")
+                            }
+                        },
                     colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard),
                     shape = RoundedCornerShape(16.dp)
                 ) {

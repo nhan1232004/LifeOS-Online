@@ -1,6 +1,7 @@
 package com.nhan.lifeos.ui.today
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,44 +14,60 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.FlashOn
-import androidx.compose.material.icons.rounded.TrendingUp
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nhan.lifeos.core.designsystem.LifeOSAmber
 import com.nhan.lifeos.core.designsystem.LifeOSCyan
+import com.nhan.lifeos.core.designsystem.LifeOSGlassBorder
 import com.nhan.lifeos.core.designsystem.LifeOSGreen
 import com.nhan.lifeos.core.designsystem.LifeOSPrimary
+import com.nhan.lifeos.core.designsystem.LifeOSRed
 import com.nhan.lifeos.core.designsystem.LifeOSSurfaceCard
 import com.nhan.lifeos.core.designsystem.LifeOSTextHigh
 import com.nhan.lifeos.core.designsystem.LifeOSTextLow
 import com.nhan.lifeos.core.designsystem.LifeOSTextMid
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.nhan.lifeos.data.local.entity.EventEntity
+import com.nhan.lifeos.data.local.entity.TodoEntity
 
 @Composable
-fun TodayScreen(onNavigateToFeature: (String) -> Unit = {}) {
-    val dateFormat = SimpleDateFormat("EEEE, 'ngày' dd 'tháng' MM", Locale("vi", "VN"))
-    val currentDateStr = dateFormat.format(Date()).replaceFirstChar { it.uppercase() }
+fun TodayScreen(viewModel: TodayViewModel) {
+    val uiState by viewModel.uiState.collectAsState()
+    var showQuickAddDialog by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -75,7 +92,7 @@ fun TodayScreen(onNavigateToFeature: (String) -> Unit = {}) {
                             color = LifeOSTextHigh
                         )
                         Text(
-                            text = currentDateStr,
+                            text = uiState.currentDateFormatted.ifBlank { "Lịch trình hôm nay" },
                             style = MaterialTheme.typography.bodyMedium,
                             color = LifeOSTextMid
                         )
@@ -103,7 +120,7 @@ fun TodayScreen(onNavigateToFeature: (String) -> Unit = {}) {
                 }
             }
 
-            // Productivity KPI Card
+            // Productivity KPI Card (Connected to Real Room DB)
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -132,10 +149,10 @@ fun TodayScreen(onNavigateToFeature: (String) -> Unit = {}) {
                                 )
                             }
                             Text(
-                                text = "80%",
+                                text = "${uiState.productivityPercentage}%",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = LifeOSGreen
+                                color = if (uiState.productivityPercentage >= 80) LifeOSGreen else LifeOSAmber
                             )
                         }
 
@@ -146,8 +163,8 @@ fun TodayScreen(onNavigateToFeature: (String) -> Unit = {}) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            StatItem(label = "Việc hoàn thành", value = "4/5")
-                            StatItem(label = "Thời gian tập trung", value = "1h 45m")
+                            StatItem(label = "Việc hoàn thành", value = "${uiState.completedCount}/${uiState.totalTodoCount}")
+                            StatItem(label = "Sự kiện hôm nay", value = "${uiState.events.size}")
                             StatItem(label = "Streak thói quen", value = "12 ngày")
                         }
                     }
@@ -157,39 +174,71 @@ fun TodayScreen(onNavigateToFeature: (String) -> Unit = {}) {
             // Quick Agenda Section Title
             item {
                 Text(
-                    text = "Lịch trình sắp tới",
+                    text = "Lịch trình hôm nay (${uiState.events.size})",
                     style = MaterialTheme.typography.titleLarge,
                     color = LifeOSTextHigh,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            // Sample Native Event Card
+            if (uiState.events.isEmpty()) {
+                item {
+                    Text(
+                        text = "Không có sự kiện nào trong ngày hôm nay",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = LifeOSTextLow,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+            } else {
+                items(uiState.events, key = { it.id }) { event ->
+                    val typeColor = when (event.type) {
+                        "work" -> LifeOSPrimary
+                        "study" -> LifeOSCyan
+                        "health" -> LifeOSGreen
+                        "social" -> Color(0xFFCE93D8)
+                        else -> LifeOSAmber
+                    }
+                    val timeStr = if (event.timeStart.isNotBlank()) {
+                        if (event.timeEnd.isNotBlank()) "${event.timeStart} - ${event.timeEnd}" else event.timeStart
+                    } else "Cả ngày"
+
+                    AgendaItemCard(
+                        time = timeStr,
+                        title = event.title,
+                        type = event.type.replaceFirstChar { it.uppercase() },
+                        typeColor = typeColor
+                    )
+                }
+            }
+
+            // Today's Todos Section Title
             item {
-                AgendaItemCard(
-                    time = "09:00 - 10:30",
-                    title = "Họp chiến lược sản phẩm Q3",
-                    type = "Công việc",
-                    typeColor = LifeOSPrimary
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Việc cần làm hôm nay (${uiState.todos.size})",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = LifeOSTextHigh,
+                    fontWeight = FontWeight.Bold
                 )
             }
 
-            item {
-                AgendaItemCard(
-                    time = "14:00 - 15:00",
-                    title = "Review Code Architecture Jetpack Compose",
-                    type = "Học tập",
-                    typeColor = LifeOSCyan
-                )
-            }
-
-            item {
-                AgendaItemCard(
-                    time = "17:30 - 19:00",
-                    title = "Tập Gym & Cardio",
-                    type = "Sức khoẻ",
-                    typeColor = LifeOSGreen
-                )
+            if (uiState.todos.isEmpty()) {
+                item {
+                    Text(
+                        text = "Chưa có việc nào được giao cho ngày hôm nay",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = LifeOSTextLow,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+            } else {
+                items(uiState.todos, key = { it.id }) { todo ->
+                    TodayTodoItem(
+                        todo = todo,
+                        onToggle = { viewModel.toggleTodo(todo.id, !todo.done) }
+                    )
+                }
             }
 
             item {
@@ -199,15 +248,25 @@ fun TodayScreen(onNavigateToFeature: (String) -> Unit = {}) {
 
         // Quick Add FAB
         FloatingActionButton(
-            onClick = { /* Quick Add */ },
+            onClick = { showQuickAddDialog = true },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
             containerColor = LifeOSPrimary,
             contentColor = Color.White
         ) {
-            Icon(imageVector = Icons.Rounded.Add, contentDescription = "Thêm nhanh")
+            Icon(imageVector = Icons.Rounded.Add, contentDescription = "Thêm nhanh việc")
         }
+    }
+
+    if (showQuickAddDialog) {
+        QuickAddTodoDialog(
+            onDismiss = { showQuickAddDialog = false },
+            onConfirm = { text, pri ->
+                viewModel.addQuickTodo(text, pri)
+                showQuickAddDialog = false
+            }
+        )
     }
 }
 
@@ -265,4 +324,149 @@ private fun AgendaItemCard(
             )
         }
     }
+}
+
+@Composable
+private fun TodayTodoItem(
+    todo: TodoEntity,
+    onToggle: () -> Unit
+) {
+    val priColor = when (todo.priority.lowercase()) {
+        "high" -> LifeOSRed
+        "mid" -> LifeOSAmber
+        else -> LifeOSGreen
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onToggle() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = todo.done,
+                onCheckedChange = { onToggle() },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = LifeOSPrimary,
+                    uncheckedColor = LifeOSTextLow,
+                    checkmarkColor = Color.White
+                )
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = todo.text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = if (todo.done) LifeOSTextLow else LifeOSTextHigh,
+                    textDecoration = if (todo.done) TextDecoration.LineThrough else TextDecoration.None
+                )
+                if (todo.note.isNotBlank()) {
+                    Text(
+                        text = todo.note,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LifeOSTextLow
+                    )
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(priColor.copy(alpha = 0.15f))
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = todo.priority.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = priColor,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickAddTodoDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (text: String, priority: String) -> Unit
+) {
+    var text by remember { mutableStateOf("") }
+    var priority by remember { mutableStateOf("high") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Thêm việc hôm nay", fontWeight = FontWeight.Bold, color = LifeOSTextHigh)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("Nội dung công việc *") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = LifeOSPrimary,
+                        unfocusedBorderColor = LifeOSGlassBorder,
+                        focusedLabelColor = LifeOSPrimary,
+                        unfocusedLabelColor = LifeOSTextLow,
+                        focusedTextColor = LifeOSTextHigh,
+                        unfocusedTextColor = LifeOSTextHigh
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf("high" to "Cao", "mid" to "TB", "low" to "Thấp").forEach { (pri, label) ->
+                        val isSel = priority == pri
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSel) LifeOSPrimary else Color.White.copy(alpha = 0.05f))
+                                .clickable { priority = pri }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSel) Color.White else LifeOSTextMid
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (text.isNotBlank()) onConfirm(text.trim(), priority)
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = LifeOSPrimary)
+            ) {
+                Text("Thêm ngay", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Hủy", color = LifeOSTextMid)
+            }
+        },
+        containerColor = LifeOSSurfaceCard
+    )
 }
