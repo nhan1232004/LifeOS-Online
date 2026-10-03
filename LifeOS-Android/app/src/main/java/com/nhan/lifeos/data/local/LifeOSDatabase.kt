@@ -10,8 +10,10 @@ import com.nhan.lifeos.data.local.dao.EventDao
 import com.nhan.lifeos.data.local.dao.GoalDao
 import com.nhan.lifeos.data.local.dao.HabitDao
 import com.nhan.lifeos.data.local.dao.JournalDao
+import com.nhan.lifeos.data.local.dao.MockTestDao
 import com.nhan.lifeos.data.local.dao.NoteDao
 import com.nhan.lifeos.data.local.dao.ProjectDao
+import com.nhan.lifeos.data.local.dao.ProjectTaskDao
 import com.nhan.lifeos.data.local.dao.TodoDao
 import com.nhan.lifeos.data.local.dao.TransactionDao
 import com.nhan.lifeos.data.local.dao.VocabDao
@@ -19,8 +21,10 @@ import com.nhan.lifeos.data.local.entity.EventEntity
 import com.nhan.lifeos.data.local.entity.GoalEntity
 import com.nhan.lifeos.data.local.entity.HabitEntity
 import com.nhan.lifeos.data.local.entity.JournalEntity
+import com.nhan.lifeos.data.local.entity.MockTestEntity
 import com.nhan.lifeos.data.local.entity.NoteEntity
 import com.nhan.lifeos.data.local.entity.ProjectEntity
+import com.nhan.lifeos.data.local.entity.ProjectTaskEntity
 import com.nhan.lifeos.data.local.entity.TodoEntity
 import com.nhan.lifeos.data.local.entity.TransactionEntity
 import com.nhan.lifeos.data.local.entity.VocabEntity
@@ -33,11 +37,13 @@ import com.nhan.lifeos.data.local.entity.VocabEntity
         NoteEntity::class,
         HabitEntity::class,
         ProjectEntity::class,
+        ProjectTaskEntity::class,
         GoalEntity::class,
         JournalEntity::class,
-        VocabEntity::class
+        VocabEntity::class,
+        MockTestEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -48,9 +54,11 @@ abstract class LifeOSDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun habitDao(): HabitDao
     abstract fun projectDao(): ProjectDao
+    abstract fun projectTaskDao(): ProjectTaskDao
     abstract fun goalDao(): GoalDao
     abstract fun journalDao(): JournalDao
     abstract fun vocabDao(): VocabDao
+    abstract fun mockTestDao(): MockTestDao
 
     companion object {
         @Volatile

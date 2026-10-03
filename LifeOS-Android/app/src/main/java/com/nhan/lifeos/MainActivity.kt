@@ -43,11 +43,14 @@ import com.nhan.lifeos.data.preferences.UserPreferencesRepository
 import com.nhan.lifeos.data.preferences.UserSession
 import com.nhan.lifeos.data.repository.CloudSyncRepository
 import com.nhan.lifeos.data.repository.FinanceRepository
+import com.nhan.lifeos.data.repository.MockTestRepository
 import com.nhan.lifeos.data.repository.PersonalRepository
 import com.nhan.lifeos.data.repository.TaskTimeRepository
 import com.nhan.lifeos.data.repository.VocabRepository
 import com.nhan.lifeos.ui.ai.AiScreen
 import com.nhan.lifeos.ui.ai.AiViewModel
+import com.nhan.lifeos.ui.mocktests.MockTestsScreen
+import com.nhan.lifeos.ui.mocktests.MockTestsViewModel
 import com.nhan.lifeos.ui.auth.AuthScreen
 import com.nhan.lifeos.ui.calendar.CalendarScreen
 import com.nhan.lifeos.ui.calendar.CalendarViewModel
@@ -76,6 +79,8 @@ import com.nhan.lifeos.ui.todos.TodosScreen
 import com.nhan.lifeos.ui.todos.TodosViewModel
 import com.nhan.lifeos.ui.vocab.VocabScreen
 import com.nhan.lifeos.ui.vocab.VocabViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -178,17 +183,22 @@ fun LifeOSApp(
     val preferencesRepo = remember { UserPreferencesRepository(context) }
     val cloudSyncRepo = remember { CloudSyncRepository(database, preferencesRepo) }
 
-    // Auto-sync with Web Firestore on app launch / login
-    LaunchedEffect(userSession.userId) {
+    // Auto-sync on app launch & continuous live background sync every 30s while online
+    LaunchedEffect(userSession.canSyncOnline) {
         if (userSession.canSyncOnline) {
             cloudSyncRepo.syncAll(userSession)
+            while (isActive) {
+                delay(30000L)
+                cloudSyncRepo.syncAll(userSession)
+            }
         }
     }
 
-    val taskTimeRepo = remember { TaskTimeRepository(database) }
-    val financeRepo = remember { FinanceRepository(database) }
-    val personalRepo = remember { PersonalRepository(database) }
-    val vocabRepo = remember { VocabRepository(database) }
+    val taskTimeRepo = remember { TaskTimeRepository(database, cloudSyncRepo) }
+    val financeRepo = remember { FinanceRepository(database, cloudSyncRepo) }
+    val personalRepo = remember { PersonalRepository(database, cloudSyncRepo) }
+    val vocabRepo = remember { VocabRepository(database, cloudSyncRepo) }
+    val mockTestRepo = remember { MockTestRepository(database, cloudSyncRepo) }
 
     val todayViewModel = remember { TodayViewModel(taskTimeRepo) }
     val todosViewModel = remember { TodosViewModel(taskTimeRepo) }
@@ -202,6 +212,7 @@ fun LifeOSApp(
     val journalViewModel = remember { JournalViewModel(personalRepo) }
     val pomodoroViewModel = remember { PomodoroViewModel() }
     val vocabViewModel = remember { VocabViewModel(vocabRepo) }
+    val mockTestsViewModel = remember { MockTestsViewModel(mockTestRepo) }
     val aiViewModel = remember { AiViewModel(taskTimeRepo, financeRepo, personalRepo) }
     val settingsViewModel = remember { SettingsViewModel(database) }
 
@@ -285,6 +296,12 @@ fun LifeOSApp(
             composable("vocab") {
                 VocabScreen(
                     viewModel = vocabViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("mocktests") {
+                MockTestsScreen(
+                    viewModel = mockTestsViewModel,
                     onBack = { navController.popBackStack() }
                 )
             }

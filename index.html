@@ -1245,13 +1245,16 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
       </div>
      </div>
 
-     <!-- SUB-VIEW TABS (Kho cá nhân vs Thư viện Online) -->
+     <!-- SUB-VIEW TABS (Kho cá nhân vs Thư viện Online vs Luyện thi IELTS/TOEIC) -->
      <div class="vocab-nav-tabs" style="display:flex; gap:8px; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:10px;">
       <button class="btn btn-sm btn-p" id="btnTabVocabPersonal" onclick="switchVocabSubView('personal')" style="display:inline-flex; align-items:center; gap:6px;">
        <i data-lucide="book-open" class="ic-14"></i> <span>Từ vựng của tôi</span>
       </button>
       <button class="btn btn-sm btn-outline" id="btnTabVocabCommunity" onclick="switchVocabSubView('community')" style="display:inline-flex; align-items:center; gap:6px;">
        <i data-lucide="globe" class="ic-14" style="color:var(--accent-cyan)"></i> <span>Thư viện Online & Chia sẻ</span>
+      </button>
+      <button class="btn btn-sm btn-outline" id="btnTabVocabMockTests" onclick="switchVocabSubView('mocktests')" style="display:inline-flex; align-items:center; gap:6px;">
+       <i data-lucide="award" class="ic-14" style="color:#ffb300"></i> <span>Luyện thi (IELTS / TOEIC)</span>
       </button>
      </div>
 
@@ -1318,6 +1321,30 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
       </div>
 
      <div id="communityDecksGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;"></div>
+    </div>
+
+    <!-- 3. MOCK TESTS (IELTS / TOEIC) VIEW -->
+    <div id="vocabViewMockTests" style="display:none;">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+      <div>
+       <h3 style="margin:0; font-size:16px; font-weight:700; color:var(--text-hi);">Theo dõi điểm thi thử 4 kỹ năng</h3>
+       <p style="margin:2px 0 0 0; font-size:12px; color:var(--text-mid);">Ghi chép và trực quan hóa tiến trình cải thiện kỹ năng Nghe, Đọc, Nói, Viết</p>
+      </div>
+      <button class="btn btn-sm btn-p" onclick="openMockTest()" style="display:inline-flex; align-items:center; gap:6px;">
+       <i data-lucide="plus" class="ic-14"></i> <span>Nhập điểm bài thi</span>
+      </button>
+     </div>
+
+     <div class="card-glass" style="padding:16px; margin-bottom:20px; border-radius:12px;">
+      <div style="font-size:13px; font-weight:600; margin-bottom:12px; color:var(--text-hi); display:flex; align-items:center; gap:6px;">
+       <i data-lucide="trending-up" class="ic-14" style="color:var(--accent-light);"></i> Biểu đồ điểm thi theo thời gian
+      </div>
+      <div style="height:220px; position:relative;">
+       <canvas id="mockTestChart"></canvas>
+      </div>
+     </div>
+
+     <div id="mockTestsList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;"></div>
     </div>
    </div>
    </div> <!-- /.content -->
@@ -1791,6 +1818,49 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
    <div class="fg"><label>Nghĩa *</label><textarea id="vMean" style="min-height:50px" placeholder="Môi trường..."></textarea></div>
    <div class="fg"><label>Ví dụ</label><textarea id="vEx" style="min-height:50px" placeholder="We need to protect the environment."></textarea></div>
    <div class="form-actions"><button class="btn" onclick="closeModal('mVocab')">Hủy</button><button class="btn btn-p" onclick="saveVocab()"><i data-lucide="save" style="width:14px;height:14px;margin-right:4px"></i> Lưu</button></div>
+  </div>
+ </div>
+</div>
+
+<div class="overlay" id="mMockTest" onclick="if(event.target===this)closeModal('mMockTest')">
+ <div class="modal" style="max-width:500px">
+  <div class="mh"><h3 id="mMockTestTitle">Nhập Điểm Thi Thử</h3><button class="mclose" onclick="closeModal('mMockTest')">✕</button></div>
+  <div class="mb-body">
+   <input type="hidden" id="mockId">
+   <div class="fg">
+    <label>Tên bài thi / Đợt thi *</label>
+    <input id="mName" placeholder="VD: IELTS Mock Test Cam 18 - Test 1">
+   </div>
+   <div class="fg">
+    <label>Ngày thi</label>
+    <input type="date" id="mDate">
+   </div>
+   <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+    <div class="fg">
+     <label>Nghe (Listening)</label>
+     <input type="number" step="0.5" id="mList" placeholder="VD: 7.5">
+    </div>
+    <div class="fg">
+     <label>Đọc (Reading)</label>
+     <input type="number" step="0.5" id="mRead" placeholder="VD: 8.0">
+    </div>
+    <div class="fg">
+     <label>Nói (Speaking)</label>
+     <input type="number" step="0.5" id="mSpeak" placeholder="VD: 6.5">
+    </div>
+    <div class="fg">
+     <label>Viết (Writing)</label>
+     <input type="number" step="0.5" id="mWrite" placeholder="VD: 6.5">
+    </div>
+   </div>
+   <div class="fg">
+    <label>Ghi chú</label>
+    <textarea id="mNote" style="min-height:60px" placeholder="Điểm cần khắc phục, thời gian làm bài..."></textarea>
+   </div>
+   <div class="form-actions">
+    <button class="btn" onclick="closeModal('mMockTest')">Hủy</button>
+    <button class="btn btn-p" onclick="saveMockTest()"><i data-lucide="save" style="width:14px;height:14px;margin-right:4px"></i> Lưu kết quả</button>
+   </div>
   </div>
  </div>
 </div>

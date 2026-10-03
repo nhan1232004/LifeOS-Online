@@ -12,7 +12,10 @@ import java.util.Date
 import java.util.Locale
 import java.util.UUID
 
-class FinanceRepository(private val database: LifeOSDatabase) {
+class FinanceRepository(
+    private val database: LifeOSDatabase,
+    private val cloudSyncRepo: CloudSyncRepository? = null
+) {
     private val transactionDao = database.transactionDao()
     private val goalDao = database.goalDao()
 
@@ -38,10 +41,12 @@ class FinanceRepository(private val database: LifeOSDatabase) {
             updatedAt = System.currentTimeMillis()
         )
         transactionDao.insertTransaction(tx)
+        cloudSyncRepo?.triggerAutoSync("finance")
     }
 
     suspend fun deleteTransaction(id: String) = withContext(Dispatchers.IO) {
         transactionDao.deleteById(id)
+        cloudSyncRepo?.triggerAutoSync("finance")
     }
 
     // ─── Goals ─────────────────────────────────────────────────────────────────
@@ -68,18 +73,22 @@ class FinanceRepository(private val database: LifeOSDatabase) {
             updatedAt = System.currentTimeMillis()
         )
         goalDao.insertGoal(goal)
+        cloudSyncRepo?.triggerAutoSync("goals")
     }
 
     suspend fun updateGoal(goal: GoalEntity) = withContext(Dispatchers.IO) {
         goalDao.updateGoal(goal.copy(updatedAt = System.currentTimeMillis()))
+        cloudSyncRepo?.triggerAutoSync("goals")
     }
 
     suspend fun addToGoalProgress(id: String, amount: Long) = withContext(Dispatchers.IO) {
         goalDao.addToProgress(id, amount, System.currentTimeMillis())
+        cloudSyncRepo?.triggerAutoSync("goals")
     }
 
     suspend fun deleteGoal(id: String) = withContext(Dispatchers.IO) {
         goalDao.deleteById(id)
+        cloudSyncRepo?.triggerAutoSync("goals")
     }
 
     // ─── CSV Export ───────────────────────────────────────────────────────────

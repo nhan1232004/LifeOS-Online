@@ -14,7 +14,10 @@ import java.util.Date
 import java.util.Locale
 import java.util.UUID
 
-class PersonalRepository(private val database: LifeOSDatabase) {
+class PersonalRepository(
+    private val database: LifeOSDatabase,
+    private val cloudSyncRepo: CloudSyncRepository? = null
+) {
     private val noteDao = database.noteDao()
     private val habitDao = database.habitDao()
     private val journalDao = database.journalDao()
@@ -32,20 +35,24 @@ class PersonalRepository(private val database: LifeOSDatabase) {
             updatedAt = System.currentTimeMillis()
         )
         noteDao.insertNote(note)
+        cloudSyncRepo?.triggerAutoSync("notes")
     }
 
     suspend fun updateNote(note: NoteEntity) = withContext(Dispatchers.IO) {
         noteDao.updateNote(note.copy(updatedAt = System.currentTimeMillis()))
+        cloudSyncRepo?.triggerAutoSync("notes")
     }
 
     suspend fun togglePinNote(id: String) = withContext(Dispatchers.IO) {
         val list = noteDao.getAllNotes().first()
         val note = list.find { it.id == id } ?: return@withContext
         noteDao.updateNote(note.copy(pinned = !note.pinned, updatedAt = System.currentTimeMillis()))
+        cloudSyncRepo?.triggerAutoSync("notes")
     }
 
     suspend fun deleteNote(id: String) = withContext(Dispatchers.IO) {
         noteDao.deleteById(id)
+        cloudSyncRepo?.triggerAutoSync("notes")
     }
 
     // ─── Habits ───────────────────────────────────────────────────────────────
@@ -61,6 +68,7 @@ class PersonalRepository(private val database: LifeOSDatabase) {
             updatedAt = System.currentTimeMillis()
         )
         habitDao.insertHabit(habit)
+        cloudSyncRepo?.triggerAutoSync("habits")
     }
 
     suspend fun toggleHabitDay(id: String, date: String) = withContext(Dispatchers.IO) {
@@ -101,10 +109,12 @@ class PersonalRepository(private val database: LifeOSDatabase) {
                 updatedAt = System.currentTimeMillis()
             )
         )
+        cloudSyncRepo?.triggerAutoSync("habits")
     }
 
     suspend fun deleteHabit(id: String) = withContext(Dispatchers.IO) {
         habitDao.deleteById(id)
+        cloudSyncRepo?.triggerAutoSync("habits")
     }
 
     // ─── Journal ──────────────────────────────────────────────────────────────
@@ -120,10 +130,12 @@ class PersonalRepository(private val database: LifeOSDatabase) {
             updatedAt = System.currentTimeMillis()
         )
         journalDao.insertEntry(entry)
+        cloudSyncRepo?.triggerAutoSync("journal")
     }
 
     suspend fun deleteJournal(id: String) = withContext(Dispatchers.IO) {
         journalDao.deleteById(id)
+        cloudSyncRepo?.triggerAutoSync("journal")
     }
 
     // ─── Demo Seeding ─────────────────────────────────────────────────────────

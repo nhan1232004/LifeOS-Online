@@ -144,3 +144,8 @@ function renderMockTestChart(tests) {
   }
  });
 }
+
+window.openMockTest = openMockTest;
+window.saveMockTest = saveMockTest;
+window.delMockTest = delMockTest;
+window.renderMockTests = renderMockTests;

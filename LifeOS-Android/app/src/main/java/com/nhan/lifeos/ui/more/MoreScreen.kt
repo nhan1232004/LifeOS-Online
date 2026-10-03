@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.FolderSpecial
 import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.Loop
@@ -93,6 +94,7 @@ fun MoreScreen(
         MoreModuleItem("Pomodoro", "Foreground Service đếm giờ", Icons.Rounded.Speed, LifeOSRed),
         MoreModuleItem("Nhật ký", "Ghi lại suy nghĩ & Mood", Icons.Rounded.Book, Color(0xFFCE93D8)),
         MoreModuleItem("Từ vựng", "Flashcard 3D & TTS", Icons.Rounded.School, Color(0xFFFF80AB)),
+        MoreModuleItem("Luyện thi", "IELTS / TOEIC Tracker", Icons.Rounded.EmojiEvents, Color(0xFF4DD0E1)),
         MoreModuleItem("Thống kê", "Báo cáo hiệu suất", Icons.Rounded.BarChart, Color(0xFF80D8FF)),
         MoreModuleItem("Trợ lý AI", "Gemini 1.5 Flash Chat", Icons.Rounded.AutoAwesome, LifeOSCyan),
         MoreModuleItem("Cài đặt", "Sao lưu JSON & Dữ liệu", Icons.Rounded.Settings, LifeOSTextMid)
@@ -302,6 +304,8 @@ fun MoreScreen(
                                 onNavigateToFeature("journal")
                             } else if (module.title.contains("Từ vựng")) {
                                 onNavigateToFeature("vocab")
+                            } else if (module.title.contains("Luyện thi")) {
+                                onNavigateToFeature("mocktests")
                             } else if (module.title.contains("Trợ lý AI")) {
                                 onNavigateToFeature("ai")
                             } else if (module.title.contains("Cài đặt")) {

@@ -8,7 +8,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
-class VocabRepository(private val database: LifeOSDatabase) {
+class VocabRepository(
+    private val database: LifeOSDatabase,
+    private val cloudSyncRepo: CloudSyncRepository? = null
+) {
     private val vocabDao = database.vocabDao()
 
     val allVocab: Flow<List<VocabEntity>> = vocabDao.getAllVocab()
@@ -31,14 +34,17 @@ class VocabRepository(private val database: LifeOSDatabase) {
             updatedAt = System.currentTimeMillis()
         )
         vocabDao.insertVocab(vocab)
+        cloudSyncRepo?.triggerAutoSync("vocab")
     }
 
     suspend fun updateSrsLevel(id: String, level: Int) = withContext(Dispatchers.IO) {
         vocabDao.updateSrsLevel(id, level.coerceIn(0, 3))
+        cloudSyncRepo?.triggerAutoSync("vocab")
     }
 
     suspend fun deleteVocab(id: String) = withContext(Dispatchers.IO) {
         vocabDao.deleteById(id)
+        cloudSyncRepo?.triggerAutoSync("vocab")
     }
 
     suspend fun seedSampleDataIfEmpty() = withContext(Dispatchers.IO) {

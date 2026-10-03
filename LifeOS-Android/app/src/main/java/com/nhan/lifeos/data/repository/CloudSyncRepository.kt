@@ -5,19 +5,23 @@ import com.nhan.lifeos.data.local.entity.EventEntity
 import com.nhan.lifeos.data.local.entity.GoalEntity
 import com.nhan.lifeos.data.local.entity.HabitEntity
 import com.nhan.lifeos.data.local.entity.JournalEntity
+import com.nhan.lifeos.data.local.entity.MockTestEntity
 import com.nhan.lifeos.data.local.entity.NoteEntity
 import com.nhan.lifeos.data.local.entity.ProjectEntity
+import com.nhan.lifeos.data.local.entity.ProjectTaskEntity
 import com.nhan.lifeos.data.local.entity.TodoEntity
 import com.nhan.lifeos.data.local.entity.TransactionEntity
 import com.nhan.lifeos.data.local.entity.VocabEntity
 import com.nhan.lifeos.data.network.FirestoreSyncService
 import com.nhan.lifeos.data.preferences.UserPreferencesRepository
 import com.nhan.lifeos.data.preferences.UserSession
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -34,6 +38,7 @@ class CloudSyncRepository(
     private val preferencesRepository: UserPreferencesRepository,
     private val syncService: FirestoreSyncService = FirestoreSyncService()
 ) {
+    private val syncScope = CoroutineScope(Dispatchers.IO)
     private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle)
     val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
@@ -81,6 +86,12 @@ class CloudSyncRepository(
             // 9. Sync Vocab
             syncedCount += syncVocab(uid, token, refresh, onRefreshed)
 
+            // 10. Sync Proj Tasks
+            syncedCount += syncProjTasks(uid, token, refresh, onRefreshed)
+
+            // 11. Sync Mock Tests
+            syncedCount += syncMockTests(uid, token, refresh, onRefreshed)
+
             val now = System.currentTimeMillis()
             preferencesRepository.updateLastSyncedAt(now)
             _syncState.value = SyncState.Success(syncedCount, now)
@@ -89,6 +100,46 @@ class CloudSyncRepository(
             val msg = e.localizedMessage ?: "Lỗi kết nối khi đồng bộ dữ liệu"
             _syncState.value = SyncState.Error(msg)
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Tự động đẩy dữ liệu lên Firebase Firestore trong nền ngay khi người dùng thêm/sửa/xóa trên Android.
+     * Hoàn toàn không chặn luồng giao diện người dùng (Non-blocking).
+     */
+    fun triggerAutoSync(collectionName: String) {
+        syncScope.launch {
+            try {
+                val session = preferencesRepository.userSessionFlow.first()
+                if (!session.canSyncOnline) return@launch
+                val uid = session.userId
+                val token = session.idToken
+                val refresh = session.refreshToken
+                val onRefreshed: suspend (String, String) -> Unit = { newToken, newRefresh ->
+                    preferencesRepository.updateTokens(newToken, newRefresh)
+                }
+
+                when (collectionName) {
+                    "todos" -> syncTodos(uid, token, refresh, onRefreshed)
+                    "events" -> syncEvents(uid, token, refresh, onRefreshed)
+                    "projects" -> {
+                        syncProjects(uid, token, refresh, onRefreshed)
+                        syncProjTasks(uid, token, refresh, onRefreshed)
+                    }
+                    "proj_tasks" -> syncProjTasks(uid, token, refresh, onRefreshed)
+                    "finance", "income", "expense" -> syncFinance(uid, token, refresh, onRefreshed)
+                    "notes" -> syncNotes(uid, token, refresh, onRefreshed)
+                    "habits" -> syncHabits(uid, token, refresh, onRefreshed)
+                    "goals" -> syncGoals(uid, token, refresh, onRefreshed)
+                    "journal" -> syncJournal(uid, token, refresh, onRefreshed)
+                    "vocab" -> syncVocab(uid, token, refresh, onRefreshed)
+                    "mocktests" -> syncMockTests(uid, token, refresh, onRefreshed)
+                    else -> syncAll(session)
+                }
+                preferencesRepository.updateLastSyncedAt(System.currentTimeMillis())
+            } catch (e: Exception) {
+                // Background auto-sync safely fails if offline
+            }
         }
     }
 
@@ -545,6 +596,104 @@ class CloudSyncRepository(
             }
         }
         syncService.setCollectionItems("vocab", uid, pushList, token, refresh, onRefreshed)
+        return localMap.size
+    }
+
+    // ─── 10. Proj Tasks ───────────────────────────────────────────────────────
+    private suspend fun syncProjTasks(uid: String, token: String, refresh: String, onRefreshed: suspend (String, String) -> Unit): Int {
+        val remoteRes = syncService.getCollectionItems("proj_tasks", uid, token, refresh, onRefreshed)
+        val remoteItems = remoteRes.getOrDefault(emptyList())
+
+        val localItems = database.projectTaskDao().getAllTasks().first().toMutableList()
+        val localMap = localItems.associateBy { it.id }.toMutableMap()
+
+        remoteItems.forEach { json ->
+            val id = json.optString("id")
+            if (id.isNotBlank()) {
+                val existing = localMap[id]
+                val task = ProjectTaskEntity(
+                    id = id,
+                    projId = json.optString("projId"),
+                    text = json.optString("text"),
+                    status = json.optString("status", "Cần làm"),
+                    priority = json.optString("priority", "mid"),
+                    desc = json.optString("desc"),
+                    start = json.optString("start"),
+                    due = json.optString("due"),
+                    updatedAt = json.optLong("updatedAt", System.currentTimeMillis()),
+                    isSynced = true
+                )
+                if (existing == null || task.updatedAt >= existing.updatedAt) {
+                    database.projectTaskDao().insertTask(task)
+                    localMap[id] = task
+                }
+            }
+        }
+
+        val pushList = localMap.values.map { t ->
+            JSONObject().apply {
+                put("id", t.id)
+                put("projId", t.projId)
+                put("text", t.text)
+                put("status", t.status)
+                put("priority", t.priority)
+                put("desc", t.desc)
+                put("start", t.start)
+                put("due", t.due)
+                put("updatedAt", t.updatedAt)
+            }
+        }
+        syncService.setCollectionItems("proj_tasks", uid, pushList, token, refresh, onRefreshed)
+        return localMap.size
+    }
+
+    // ─── 11. Mock Tests ───────────────────────────────────────────────────────
+    private suspend fun syncMockTests(uid: String, token: String, refresh: String, onRefreshed: suspend (String, String) -> Unit): Int {
+        val remoteRes = syncService.getCollectionItems("mocktests", uid, token, refresh, onRefreshed)
+        val remoteItems = remoteRes.getOrDefault(emptyList())
+
+        val localItems = database.mockTestDao().getAllMockTests().first().toMutableList()
+        val localMap = localItems.associateBy { it.id }.toMutableMap()
+
+        remoteItems.forEach { json ->
+            val id = json.optString("id")
+            if (id.isNotBlank()) {
+                val existing = localMap[id]
+                val test = MockTestEntity(
+                    id = id,
+                    name = json.optString("name"),
+                    date = json.optString("date"),
+                    list = json.optDouble("list", 0.0),
+                    read = json.optDouble("read", 0.0),
+                    speak = json.optDouble("speak", 0.0),
+                    write = json.optDouble("write", 0.0),
+                    total = json.optDouble("total", 0.0),
+                    note = json.optString("note"),
+                    updatedAt = json.optLong("updatedAt", System.currentTimeMillis()),
+                    isSynced = true
+                )
+                if (existing == null || test.updatedAt >= existing.updatedAt) {
+                    database.mockTestDao().insertMockTest(test)
+                    localMap[id] = test
+                }
+            }
+        }
+
+        val pushList = localMap.values.map { m ->
+            JSONObject().apply {
+                put("id", m.id)
+                put("name", m.name)
+                put("date", m.date)
+                put("list", m.list)
+                put("read", m.read)
+                put("speak", m.speak)
+                put("write", m.write)
+                put("total", m.total)
+                put("note", m.note)
+                put("updatedAt", m.updatedAt)
+            }
+        }
+        syncService.setCollectionItems("mocktests", uid, pushList, token, refresh, onRefreshed)
         return localMap.size
     }
 }

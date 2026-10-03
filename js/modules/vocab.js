@@ -1066,21 +1066,35 @@ function switchVocabSubView(view) {
  currentVocabSubView = view;
  const btnPers = document.getElementById('btnTabVocabPersonal');
  const btnComm = document.getElementById('btnTabVocabCommunity');
+ const btnMock = document.getElementById('btnTabVocabMockTests');
  const secPers = document.getElementById('vocabViewPersonal');
  const secComm = document.getElementById('vocabViewCommunity');
+ const secMock = document.getElementById('vocabViewMockTests');
 
  if (view === 'personal') {
   if (btnPers) { btnPers.classList.add('btn-p'); btnPers.classList.remove('btn-outline'); }
   if (btnComm) { btnComm.classList.remove('btn-p'); btnComm.classList.add('btn-outline'); }
+  if (btnMock) { btnMock.classList.remove('btn-p'); btnMock.classList.add('btn-outline'); }
   if (secPers) secPers.style.display = 'block';
   if (secComm) secComm.style.display = 'none';
+  if (secMock) secMock.style.display = 'none';
   renderVocab();
- } else {
+ } else if (view === 'community') {
   if (btnComm) { btnComm.classList.add('btn-p'); btnComm.classList.remove('btn-outline'); }
   if (btnPers) { btnPers.classList.remove('btn-p'); btnPers.classList.add('btn-outline'); }
+  if (btnMock) { btnMock.classList.remove('btn-p'); btnMock.classList.add('btn-outline'); }
   if (secPers) secPers.style.display = 'none';
   if (secComm) secComm.style.display = 'block';
+  if (secMock) secMock.style.display = 'none';
   fetchAndRenderCommunityDecks();
+ } else if (view === 'mocktests') {
+  if (btnMock) { btnMock.classList.add('btn-p'); btnMock.classList.remove('btn-outline'); }
+  if (btnPers) { btnPers.classList.remove('btn-p'); btnPers.classList.add('btn-outline'); }
+  if (btnComm) { btnComm.classList.remove('btn-p'); btnComm.classList.add('btn-outline'); }
+  if (secPers) secPers.style.display = 'none';
+  if (secComm) secComm.style.display = 'none';
+  if (secMock) secMock.style.display = 'block';
+  if (window.renderMockTests) window.renderMockTests();
  }
  if (window.lucide) window.lucide.createIcons();
 }

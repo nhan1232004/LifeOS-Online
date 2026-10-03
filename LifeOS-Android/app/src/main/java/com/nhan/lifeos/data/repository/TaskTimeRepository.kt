@@ -3,6 +3,7 @@ package com.nhan.lifeos.data.repository
 import com.nhan.lifeos.data.local.LifeOSDatabase
 import com.nhan.lifeos.data.local.entity.EventEntity
 import com.nhan.lifeos.data.local.entity.ProjectEntity
+import com.nhan.lifeos.data.local.entity.ProjectTaskEntity
 import com.nhan.lifeos.data.local.entity.TodoEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -12,17 +13,23 @@ import java.util.Date
 import java.util.Locale
 import java.util.UUID
 
-class TaskTimeRepository(private val database: LifeOSDatabase) {
+class TaskTimeRepository(
+    private val database: LifeOSDatabase,
+    private val cloudSyncRepo: CloudSyncRepository? = null
+) {
     private val todoDao = database.todoDao()
     private val eventDao = database.eventDao()
     private val projectDao = database.projectDao()
+    private val projectTaskDao = database.projectTaskDao()
 
     val allTodos: Flow<List<TodoEntity>> = todoDao.getAllTodos()
     val allEvents: Flow<List<EventEntity>> = eventDao.getAllEvents()
     val allProjects: Flow<List<ProjectEntity>> = projectDao.getAllProjects()
+    val allProjectTasks: Flow<List<ProjectTaskEntity>> = projectTaskDao.getAllTasks()
 
     fun getTodosForDate(date: String): Flow<List<TodoEntity>> = todoDao.getTodosByDate(date)
     fun getEventsForDate(date: String): Flow<List<EventEntity>> = eventDao.getEventsForDate(date)
+    fun getTasksForProject(projId: String): Flow<List<ProjectTaskEntity>> = projectTaskDao.getTasksByProject(projId)
 
     suspend fun insertTodo(
         text: String,
@@ -36,19 +43,23 @@ class TaskTimeRepository(private val database: LifeOSDatabase) {
             priority = priority,
             date = date,
             note = note,
-            done = false
+            done = false,
+            updatedAt = System.currentTimeMillis()
         )
         todoDao.insertTodo(todo)
+        cloudSyncRepo?.triggerAutoSync("todos")
     }
 
     suspend fun toggleTodo(id: String, isDone: Boolean) {
         val currentTodos = todoDao.getAllTodos().first()
         val todo = currentTodos.find { it.id == id } ?: return
         todoDao.updateTodo(todo.copy(done = isDone, updatedAt = System.currentTimeMillis()))
+        cloudSyncRepo?.triggerAutoSync("todos")
     }
 
     suspend fun deleteTodo(id: String) {
         todoDao.deleteById(id)
+        cloudSyncRepo?.triggerAutoSync("todos")
     }
 
     suspend fun insertEvent(
@@ -68,13 +79,16 @@ class TaskTimeRepository(private val database: LifeOSDatabase) {
             timeStart = timeStart,
             timeEnd = timeEnd,
             type = type,
-            desc = desc
+            desc = desc,
+            updatedAt = System.currentTimeMillis()
         )
         eventDao.insertEvent(event)
+        cloudSyncRepo?.triggerAutoSync("events")
     }
 
     suspend fun deleteEvent(id: String) {
         eventDao.deleteById(id)
+        cloudSyncRepo?.triggerAutoSync("events")
     }
 
     suspend fun insertProject(
@@ -92,17 +106,56 @@ class TaskTimeRepository(private val database: LifeOSDatabase) {
             priority = priority,
             budget = budget,
             due = due,
-            desc = desc
+            desc = desc,
+            updatedAt = System.currentTimeMillis()
         )
         projectDao.insertProject(project)
+        cloudSyncRepo?.triggerAutoSync("projects")
     }
 
     suspend fun updateProjectStatus(id: String, status: String) {
         projectDao.updateProjectStatus(id, status)
+        cloudSyncRepo?.triggerAutoSync("projects")
     }
 
     suspend fun deleteProject(id: String) {
         projectDao.deleteById(id)
+        projectTaskDao.deleteTasksByProject(id)
+        cloudSyncRepo?.triggerAutoSync("projects")
+    }
+
+    suspend fun insertProjectTask(
+        projId: String,
+        text: String,
+        status: String = "Cần làm",
+        priority: String = "mid",
+        desc: String = "",
+        start: String = "",
+        due: String = ""
+    ) {
+        val task = ProjectTaskEntity(
+            id = UUID.randomUUID().toString(),
+            projId = projId,
+            text = text,
+            status = status,
+            priority = priority,
+            desc = desc,
+            start = start,
+            due = due,
+            updatedAt = System.currentTimeMillis()
+        )
+        projectTaskDao.insertTask(task)
+        cloudSyncRepo?.triggerAutoSync("proj_tasks")
+    }
+
+    suspend fun updateProjectTaskStatus(id: String, status: String) {
+        projectTaskDao.updateTaskStatus(id, status)
+        cloudSyncRepo?.triggerAutoSync("proj_tasks")
+    }
+
+    suspend fun deleteProjectTask(id: String) {
+        projectTaskDao.deleteTask(id)
+        cloudSyncRepo?.triggerAutoSync("proj_tasks")
     }
 
     suspend fun seedSampleDataIfEmpty() {
