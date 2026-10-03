@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
@@ -24,11 +25,15 @@ import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.FolderSpecial
+import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.Loop
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.School
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.TrackChanges
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -49,9 +54,11 @@ import com.nhan.lifeos.core.designsystem.LifeOSGreen
 import com.nhan.lifeos.core.designsystem.LifeOSPrimary
 import com.nhan.lifeos.core.designsystem.LifeOSRed
 import com.nhan.lifeos.core.designsystem.LifeOSSurfaceCard
+import com.nhan.lifeos.core.designsystem.LifeOSSurfaceDark
 import com.nhan.lifeos.core.designsystem.LifeOSTextHigh
 import com.nhan.lifeos.core.designsystem.LifeOSTextLow
 import com.nhan.lifeos.core.designsystem.LifeOSTextMid
+import com.nhan.lifeos.data.preferences.UserSession
 
 data class MoreModuleItem(
     val title: String,
@@ -61,7 +68,10 @@ data class MoreModuleItem(
 )
 
 @Composable
-fun MoreScreen() {
+fun MoreScreen(
+    userSession: UserSession = UserSession(),
+    onSignOut: () -> Unit = {}
+) {
     val modules = listOf(
         MoreModuleItem("Dự án Kanban", "Quản lý tiến độ theo cột", Icons.Rounded.FolderSpecial, LifeOSPrimary),
         MoreModuleItem("Ghi chú", "Soạn thảo Markdown", Icons.Rounded.Description, LifeOSAmber),
@@ -91,8 +101,65 @@ fun MoreScreen() {
             text = "Toàn bộ hệ sinh thái LifeOS trên điện thoại của bạn",
             style = MaterialTheme.typography.bodyMedium,
             color = LifeOSTextMid,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 14.dp)
         )
+
+        // User Account Status Card
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.size(40.dp).clip(CircleShape).background(LifeOSPrimary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Person,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (userSession.isGuestMode) "Chế độ Khách (Offline)" else userSession.displayName.ifBlank { "Tài khoản cá nhân" },
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = LifeOSTextHigh
+                    )
+                    Text(
+                        text = if (userSession.isGuestMode) "Dữ liệu lưu an toàn trên máy" else userSession.userEmail,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LifeOSTextMid
+                    )
+                }
+                Button(
+                    onClick = onSignOut,
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = LifeOSSurfaceDark),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Logout,
+                        contentDescription = null,
+                        tint = LifeOSRed,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (userSession.isGuestMode) "Đăng nhập" else "Đăng xuất",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LifeOSTextHigh
+                    )
+                }
+            }
+        }
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
