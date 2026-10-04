@@ -29,7 +29,7 @@ data class AiUiState(
     val messages: List<AiMessage> = emptyList(),
     val isThinking: Boolean = false,
     val apiKey: String = "",
-    val model: String = "gemini-2.0-flash",
+    val model: String = GeminiApiService.DEFAULT_MODEL,
     val isTestingKey: Boolean = false,
     val testKeyResult: String? = null,
     val isKeyValid: Boolean? = null
@@ -44,10 +44,12 @@ class AiViewModel(
 
     private val _uiState = MutableStateFlow(
         AiUiState(
+            apiKey = "",
+            model = GeminiApiService.DEFAULT_MODEL,
             messages = listOf(
                 AiMessage(
                     isUser = false,
-                    text = "Xin chào! Tôi là Trợ lý AI LifeOS 🤖. Tôi đã đồng bộ toàn bộ dữ liệu công việc, dự án, tài chính và thói quen của bạn. Tôi có thể giúp bạn lập kế hoạch, phân tích hiệu suất và cố vấn phát triển bản thân. Hôm nay bạn muốn tập trung vào điều gì?"
+                    text = "Xin chào! Tôi là Trợ lý AI LifeOS 🤖 (sử dụng Gemini Flash mới nhất). Tôi đã đồng bộ toàn bộ dữ liệu công việc, dự án, tài chính và thói quen của bạn. Tôi có thể giúp bạn lập kế hoạch, phân tích hiệu suất và cố vấn phát triển bản thân. Hôm nay bạn muốn tập trung vào điều gì?"
                 )
             )
         )
@@ -59,9 +61,15 @@ class AiViewModel(
         if (preferencesRepository != null) {
             viewModelScope.launch {
                 preferencesRepository.userSessionFlow.collect { session ->
+                    val resolvedKey = session.geminiApiKey
+                    val resolvedModel = if (session.geminiModel.contains("2.0") || session.geminiModel.contains("1.5") || session.geminiModel.isBlank()) {
+                        GeminiApiService.DEFAULT_MODEL
+                    } else {
+                        session.geminiModel
+                    }
                     _uiState.value = _uiState.value.copy(
-                        apiKey = session.geminiApiKey,
-                        model = session.geminiModel.ifBlank { "gemini-2.0-flash" }
+                        apiKey = resolvedKey,
+                        model = resolvedModel
                     )
                 }
             }
@@ -148,7 +156,11 @@ class AiViewModel(
 
         viewModelScope.launch {
             val key = _uiState.value.apiKey
-            val model = _uiState.value.model
+            val model = if (_uiState.value.model.contains("2.0") || _uiState.value.model.contains("1.5")) {
+                GeminiApiService.DEFAULT_MODEL
+            } else {
+                _uiState.value.model
+            }
 
             if (key.isNotBlank()) {
                 // Call real Gemini API

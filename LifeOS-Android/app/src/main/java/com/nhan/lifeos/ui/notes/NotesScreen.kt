@@ -1,6 +1,7 @@
 package com.nhan.lifeos.ui.notes
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.sp
 import com.nhan.lifeos.core.designsystem.LifeOSAmber
 import com.nhan.lifeos.core.designsystem.LifeOSGlassBorder
 import com.nhan.lifeos.core.designsystem.LifeOSPrimary
+import com.nhan.lifeos.core.designsystem.LifeOSRed
 import com.nhan.lifeos.core.designsystem.LifeOSSurfaceCard
 import com.nhan.lifeos.core.designsystem.LifeOSTextHigh
 import com.nhan.lifeos.core.designsystem.LifeOSTextLow
@@ -68,6 +70,7 @@ fun NotesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var editingNote by remember { mutableStateOf<NoteEntity?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -106,7 +109,7 @@ fun NotesScreen(
                             color = LifeOSTextHigh
                         )
                         Text(
-                            text = "Lưu trữ ý tưởng & kiến thức nhanh chóng",
+                            text = "Chạm vào ghi chú để xem chi tiết & chỉnh sửa",
                             style = MaterialTheme.typography.bodyMedium,
                             color = LifeOSTextMid
                         )
@@ -170,6 +173,7 @@ fun NotesScreen(
                 items(uiState.notes, key = { it.id }) { note ->
                     NoteCardItem(
                         note = note,
+                        onClick = { editingNote = note },
                         onTogglePin = { viewModel.togglePin(note.id) },
                         onDelete = { viewModel.deleteNote(note.id) }
                     )
@@ -204,17 +208,36 @@ fun NotesScreen(
                 }
             )
         }
+
+        // Detail & Edit Note Dialog
+        editingNote?.let { noteToEdit ->
+            EditNoteDialog(
+                note = noteToEdit,
+                onDismiss = { editingNote = null },
+                onSave = { updated ->
+                    viewModel.updateNote(updated)
+                    editingNote = null
+                },
+                onDelete = {
+                    viewModel.deleteNote(noteToEdit.id)
+                    editingNote = null
+                }
+            )
+        }
     }
 }
 
 @Composable
 fun NoteCardItem(
     note: NoteEntity,
+    onClick: () -> Unit,
     onTogglePin: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (note.pinned) Color(0xFF1B1B2F) else LifeOSSurfaceCard
@@ -294,6 +317,128 @@ fun NoteCardItem(
             }
         }
     }
+}
+
+@Composable
+fun EditNoteDialog(
+    note: NoteEntity,
+    onDismiss: () -> Unit,
+    onSave: (NoteEntity) -> Unit,
+    onDelete: () -> Unit
+) {
+    var titleText by remember { mutableStateOf(note.title) }
+    var contentText by remember { mutableStateOf(note.content) }
+    var tagsText by remember { mutableStateOf(note.tags.joinToString(", ")) }
+    var pinned by remember { mutableStateOf(note.pinned) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Chi tiết & Chỉnh sửa",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = LifeOSTextHigh
+                )
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Rounded.DeleteOutline,
+                        contentDescription = "Xóa ghi chú",
+                        tint = LifeOSRed
+                    )
+                }
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = titleText,
+                    onValueChange = { titleText = it },
+                    label = { Text("Tiêu đề ghi chú") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = LifeOSAmber,
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+
+                OutlinedTextField(
+                    value = contentText,
+                    onValueChange = { contentText = it },
+                    label = { Text("Nội dung ghi chú") },
+                    minLines = 6,
+                    maxLines = 14,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = LifeOSAmber,
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+
+                OutlinedTextField(
+                    value = tagsText,
+                    onValueChange = { tagsText = it },
+                    label = { Text("Thẻ phân loại (cách nhau bởi dấu phẩy)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = LifeOSAmber,
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Checkbox(
+                        checked = pinned,
+                        onCheckedChange = { pinned = it },
+                        colors = CheckboxDefaults.colors(checkedColor = LifeOSAmber)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Ghim lên đầu trang",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = LifeOSTextHigh
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val tagsList = tagsText.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                    onSave(
+                        note.copy(
+                            title = titleText.trim(),
+                            content = contentText.trim(),
+                            tags = tagsList,
+                            pinned = pinned,
+                            updatedAt = System.currentTimeMillis(),
+                            isSynced = false
+                        )
+                    )
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = LifeOSAmber)
+            ) {
+                Text("Lưu thay đổi", color = Color.Black, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Đóng", color = LifeOSTextMid)
+            }
+        },
+        containerColor = Color(0xFF141424),
+        shape = RoundedCornerShape(20.dp)
+    )
 }
 
 @Composable

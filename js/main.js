@@ -339,6 +339,7 @@ function nav(pg, el, updateHash = true){
       setTimeout(() => { if (typeof scrollWeekToCurrentTime === 'function') scrollWeekToCurrentTime(); }, 60);
     }
     if (window.lucide) window.lucide.createIcons();
+    try { updateBadges(); } catch(e) {}
   }, 30);
 }
 
@@ -1748,6 +1749,7 @@ function updateBadges(){
  const mb1 = document.getElementById('mBadgeProj'); if (mb1) { mb1.textContent = totalProj; mb1.style.display = totalProj > 0 ? 'flex' : 'none'; }
  const mb2 = document.getElementById('mBadgeTodo'); if (mb2) { mb2.textContent = pending; mb2.style.display = pending > 0 ? 'flex' : 'none'; }
 }
+window.updateBadges = updateBadges;
 
 /* ────────────────────────────────────────────────────────
   CHARTS
@@ -2814,3 +2816,11 @@ window.saveQuickIncome = async function() {
   toast('Đã ghi nhận khoản thu ' + fmt(amt) + ' ₫!', 'success');
   if (window.renderAll) window.renderAll();
 };
+
+try { updateBadges(); } catch(e){}
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    try { updateBadges(); } catch(e){}
+  });
+}
+

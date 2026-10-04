@@ -54,6 +54,12 @@ class NotesViewModel(private val repository: PersonalRepository) : ViewModel() {
         }
     }
 
+    fun updateNote(note: NoteEntity) {
+        viewModelScope.launch {
+            repository.updateNote(note)
+        }
+    }
+
     private fun filterNotes() {
         val q = _uiState.value.searchQuery.trim().lowercase()
         val filtered = if (q.isBlank()) {

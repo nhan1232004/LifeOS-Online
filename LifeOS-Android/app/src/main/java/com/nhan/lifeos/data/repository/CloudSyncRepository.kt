@@ -611,6 +611,7 @@ class CloudSyncRepository(
                 put("id", n.id)
                 put("title", n.title)
                 put("content", n.content)
+                put("body", n.content)
                 put("tags", JSONArray(n.tags))
                 put("pinned", n.pinned)
                 put("updatedAt", n.updatedAt)
@@ -634,10 +635,16 @@ class CloudSyncRepository(
         if (tagsArr != null) {
             for (i in 0 until tagsArr.length()) tagsList.add(tagsArr.optString(i))
         }
+        val noteContent = if (json.has("content") && json.optString("content").isNotBlank()) {
+            json.optString("content")
+        } else if (json.has("body")) {
+            json.optString("body")
+        } else ""
+
         return NoteEntity(
             id = json.getString("id"),
             title = json.optString("title"),
-            content = json.optString("content"),
+            content = noteContent,
             tags = tagsList,
             pinned = json.optBoolean("pinned", false),
             updatedAt = json.optLong("updatedAt", System.currentTimeMillis()),

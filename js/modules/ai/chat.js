@@ -118,8 +118,8 @@ window.openAiKeyModal = function() {
   }
 
   const curKey = localStorage.getItem('lifeos_gemini_key') || '';
-  let curModel = localStorage.getItem('lifeos_ai_preferred_model') || localStorage.getItem('lifeos_ai_working_model') || 'gemini-2.0-flash';
-  if (curModel.includes('3.') || curModel.includes('pro')) curModel = 'gemini-2.0-flash';
+  let curModel = localStorage.getItem('lifeos_ai_preferred_model') || localStorage.getItem('lifeos_ai_working_model') || 'gemini-flash-latest';
+  if (curModel.includes('2.0') || curModel.includes('1.5')) curModel = 'gemini-flash-latest';
   
   if (input) {
     input.value = curKey;
@@ -379,16 +379,18 @@ function appendApiKeyPromptCard() {
 // Clean up any deprecated/problematic cached models
 try {
   const curSaved = localStorage.getItem('lifeos_ai_working_model') || localStorage.getItem('lifeos_ai_preferred_model');
-  if (curSaved && (curSaved.includes('3.') || curSaved.includes('2.5') || curSaved.includes('pro'))) {
-    localStorage.setItem('lifeos_ai_working_model', 'gemini-2.0-flash');
-    localStorage.setItem('lifeos_ai_preferred_model', 'gemini-2.0-flash');
+  if (curSaved && (curSaved.includes('2.0') || curSaved.includes('1.5'))) {
+    localStorage.setItem('lifeos_ai_working_model', 'gemini-flash-latest');
+    localStorage.setItem('lifeos_ai_preferred_model', 'gemini-flash-latest');
   }
 } catch(e) {}
 
 const ALL_MODELS = [
-  'gemini-2.0-flash',     // Fastest (< 1s, highly intelligent)
-  'gemini-1.5-flash',     // Standard, 100% reliable across all keys
-  'gemini-1.5-flash-8b'   // Ultra lightweight fallback
+  'gemini-flash-latest',
+  'gemini-3.8-flash',
+  'gemini-3.7-flash',
+  'gemini-3.5-flash',
+  'gemini-pro-latest'
 ];
 
 function getWindowedHistory(history, maxTurns = 6) {
@@ -407,9 +409,9 @@ async function callGeminiRaw(contents, systemInstruction, tools, customKey = nul
     throw new Error('CHUA_CO_KEY');
   }
 
-  let preferredModel = localStorage.getItem('lifeos_ai_preferred_model') || localStorage.getItem('lifeos_ai_working_model') || 'gemini-2.0-flash';
-  if (preferredModel.includes('3.') || preferredModel.includes('pro')) {
-    preferredModel = 'gemini-2.0-flash';
+  let preferredModel = localStorage.getItem('lifeos_ai_preferred_model') || localStorage.getItem('lifeos_ai_working_model') || 'gemini-flash-latest';
+  if (preferredModel.includes('2.0') || preferredModel.includes('1.5')) {
+    preferredModel = 'gemini-flash-latest';
   }
 
   const modelsToTry = [
@@ -685,7 +687,7 @@ async function processUserAiMessage(promptText) {
         }
 
         aiChatHistory.push({
-          role: 'user',
+          role: 'function',
           parts: responseParts
         });
       } else {

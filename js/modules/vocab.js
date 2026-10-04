@@ -529,7 +529,7 @@ Return ONLY a valid JSON array of objects without any markdown fences, backticks
 Text to analyze:
 ${textSnippet}`;
 
-   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

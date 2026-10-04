@@ -374,6 +374,7 @@ function listenSharedData() {
    projs.forEach(p => map.set(p.id, p));
    window.DB.projects = Array.from(map.values());
    if(window.renderAll) window.renderAll();
+   if(typeof window.updateBadges === 'function') window.updateBadges();
   }, err => {
    console.warn("[LifeOS] Firestore shared_projects:", err.code || err.message);
   });
@@ -439,13 +440,14 @@ async function showApp(user) {
    fbListen(col, items => { window.DB[col]=items; window.renderAll&&window.renderAll(); });
   });
   fbListen('projects', items => {
-   if (Array.isArray(items) && items.length > 0) {
-    const map = new Map();
-    (window.DB.projects || []).forEach(p => map.set(p.id, p));
+   const map = new Map();
+   (window.DB.projects || []).forEach(p => map.set(p.id, p));
+   if (Array.isArray(items)) {
     items.forEach(p => map.set(p.id, p));
-    window.DB.projects = Array.from(map.values());
-    if (window.renderAll) window.renderAll();
    }
+   window.DB.projects = Array.from(map.values());
+   if (window.renderAll) window.renderAll();
+   if (typeof window.updateBadges === 'function') window.updateBadges();
   });
   fbListen('proj_tasks', items => {
    if (Array.isArray(items) && items.length > 0) {
@@ -2429,9 +2431,10 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
      <span style="font-size:11px; color:var(--accent-cyan);">⚡ Siêu tốc ~1s</span>
     </label>
     <select id="aiModelSelect" class="inp" style="font-size:12.5px; width:100%;">
-     <option value="gemini-2.0-flash">⚡ Gemini 2.0 Flash (Nhanh nhất ~1s, khuyên dùng)</option>
-     <option value="gemini-1.5-flash">🚀 Gemini 1.5 Flash (Tốc độ cao, 100% ổn định)</option>
-     <option value="gemini-1.5-flash-8b">⚡ Gemini 1.5 Flash-8B (Siêu nhẹ, phản hồi tức thì)</option>
+     <option value="gemini-flash-latest">⚡ Gemini Flash Mới nhất (Nhanh nhất ~1s, khuyên dùng)</option>
+     <option value="gemini-3.8-flash">🔥 Gemini 3.8 Flash (Mô hình mới 2026)</option>
+     <option value="gemini-3.5-flash">✨ Gemini 3.5 Flash (Ổn định cao)</option>
+     <option value="gemini-pro-latest">🧠 Gemini Pro Mới nhất (Suy luận chuyên sâu)</option>
     </select>
    </div>
 

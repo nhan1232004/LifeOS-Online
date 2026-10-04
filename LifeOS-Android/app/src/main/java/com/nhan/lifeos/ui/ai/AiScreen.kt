@@ -148,7 +148,7 @@ fun AiScreen(
                         )
                     }
                     Text(
-                        text = if (uiState.apiKey.isNotBlank()) "Gemini 2.0 Flash • Trực tuyến" else "Cố vấn cá nhân nội bộ",
+                        text = if (uiState.apiKey.isNotBlank()) "Gemini Flash • Trực tuyến" else "Cố vấn cá nhân nội bộ",
                         style = MaterialTheme.typography.bodySmall,
                         color = if (uiState.apiKey.isNotBlank()) LifeOSGreen else LifeOSTextMid
                     )
@@ -421,18 +421,27 @@ fun GeminiKeyConfigDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     FilterChip(
-                        selected = selectedModel == "gemini-2.0-flash",
-                        onClick = { selectedModel = "gemini-2.0-flash" },
-                        label = { Text("2.0 Flash (Nhanh)") },
+                        selected = selectedModel == "gemini-flash-latest",
+                        onClick = { selectedModel = "gemini-flash-latest" },
+                        label = { Text("Flash mới nhất") },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = LifeOSCyan.copy(alpha = 0.2f),
                             selectedLabelColor = LifeOSCyan
                         )
                     )
                     FilterChip(
-                        selected = selectedModel == "gemini-1.5-flash",
-                        onClick = { selectedModel = "gemini-1.5-flash" },
-                        label = { Text("1.5 Flash (Chuẩn)") },
+                        selected = selectedModel == "gemini-3.8-flash",
+                        onClick = { selectedModel = "gemini-3.8-flash" },
+                        label = { Text("3.8 Flash") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = LifeOSCyan.copy(alpha = 0.2f),
+                            selectedLabelColor = LifeOSCyan
+                        )
+                    )
+                    FilterChip(
+                        selected = selectedModel == "gemini-3.5-flash",
+                        onClick = { selectedModel = "gemini-3.5-flash" },
+                        label = { Text("3.5 Flash") },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = LifeOSCyan.copy(alpha = 0.2f),
                             selectedLabelColor = LifeOSCyan

@@ -12,7 +12,17 @@ import javax.net.ssl.HttpsURLConnection
 
 object GeminiApiService {
 
+    const val DEFAULT_MODEL = "gemini-flash-latest"
+
     private const val BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
+
+    val ACTIVE_MODELS = listOf(
+        "gemini-flash-latest",
+        "gemini-3.8-flash",
+        "gemini-3.7-flash",
+        "gemini-3.5-flash",
+        "gemini-pro-latest"
+    )
 
     fun cleanApiKey(raw: String): String {
         return raw.trim()
@@ -27,7 +37,7 @@ object GeminiApiService {
         return lower.contains(".apps.googleusercontent.com") || lower.startsWith("gocspx-")
     }
 
-    suspend fun testConnection(apiKey: String, model: String = "gemini-2.0-flash"): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun testConnection(apiKey: String, model: String = DEFAULT_MODEL): Result<String> = withContext(Dispatchers.IO) {
         val cleanKey = cleanApiKey(apiKey)
         if (cleanKey.isBlank()) {
             return@withContext Result.failure(IllegalArgumentException("Vui lòng nhập API Key"))
@@ -38,8 +48,10 @@ object GeminiApiService {
             )
         }
 
+        val testModel = if (model.contains("2.0") || model.contains("1.5")) DEFAULT_MODEL else model
+
         try {
-            val endpoint = "$BASE_URL/$model:generateContent?key=$cleanKey"
+            val endpoint = "$BASE_URL/$testModel:generateContent?key=$cleanKey"
             val payload = JSONObject().apply {
                 val contentsArr = JSONArray().apply {
                     put(JSONObject().apply {
@@ -59,7 +71,7 @@ object GeminiApiService {
 
             val resp = postJson(endpoint, payload.toString(), cleanKey)
             if (resp.code in 200..299) {
-                Result.success("Kết nối Gemini API thành công! Mô hình $model đã sẵn sàng.")
+                Result.success("Kết nối Gemini API thành công! Mô hình $testModel đã sẵn sàng phản hồi.")
             } else {
                 val errObj = try { JSONObject(resp.body).optJSONObject("error") } catch (_: Exception) { null }
                 val errMsg = errObj?.optString("message") ?: "HTTP ${resp.code}: ${resp.body.take(150)}"
@@ -72,7 +84,7 @@ object GeminiApiService {
 
     suspend fun generateContent(
         apiKey: String,
-        preferredModel: String = "gemini-2.0-flash",
+        preferredModel: String = DEFAULT_MODEL,
         systemInstruction: String,
         history: List<Pair<Boolean, String>>, // (isUser, text)
         userMessage: String
@@ -82,11 +94,8 @@ object GeminiApiService {
             return@withContext Result.failure(IllegalArgumentException("Chưa cài đặt Gemini API Key"))
         }
 
-        val modelsToTry = if (preferredModel == "gemini-2.0-flash") {
-            listOf("gemini-2.0-flash", "gemini-1.5-flash")
-        } else {
-            listOf(preferredModel, "gemini-2.0-flash", "gemini-1.5-flash").distinct()
-        }
+        val validPreferred = if (preferredModel.contains("2.0") || preferredModel.contains("1.5")) DEFAULT_MODEL else preferredModel
+        val modelsToTry = (listOf(validPreferred) + ACTIVE_MODELS).distinct()
 
         var lastError: Exception = Exception("Không thể kết nối đến Gemini API")
 
