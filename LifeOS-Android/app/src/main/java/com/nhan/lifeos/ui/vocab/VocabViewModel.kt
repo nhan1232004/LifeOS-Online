@@ -82,4 +82,10 @@ class VocabViewModel(private val repository: VocabRepository) : ViewModel() {
             repository.deleteVocab(id)
         }
     }
+
+    fun updateVocab(vocab: VocabEntity) {
+        viewModelScope.launch {
+            repository.updateVocab(vocab)
+        }
+    }
 }

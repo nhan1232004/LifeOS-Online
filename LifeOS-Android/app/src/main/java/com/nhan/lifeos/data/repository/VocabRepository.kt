@@ -42,6 +42,11 @@ class VocabRepository(
         cloudSyncRepo?.triggerAutoSync("vocab")
     }
 
+    suspend fun updateVocab(vocab: VocabEntity) = withContext(Dispatchers.IO) {
+        vocabDao.updateVocab(vocab.copy(updatedAt = System.currentTimeMillis()))
+        cloudSyncRepo?.triggerAutoSync("vocab")
+    }
+
     suspend fun deleteVocab(id: String) = withContext(Dispatchers.IO) {
         cloudSyncRepo?.recordDeletedItem(id, "vocab")
         vocabDao.deleteById(id)

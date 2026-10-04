@@ -90,6 +90,7 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showAddDialog by remember { mutableStateOf(false) }
+    var editingTransaction by remember { mutableStateOf<TransactionEntity?>(null) }
 
     val filterTabs = listOf(
         TransactionFilter.ALL to "Tất cả",
@@ -416,6 +417,7 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
                 items(uiState.transactions, key = { it.id }) { tx ->
                     TransactionItemCard(
                         transaction = tx,
+                        onClick = { editingTransaction = tx },
                         onDelete = { viewModel.deleteTransaction(tx.id) }
                     )
                 }
@@ -449,17 +451,37 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
                 }
             )
         }
+
+        // Edit Transaction Dialog
+        editingTransaction?.let { tx ->
+            EditTransactionDialog(
+                transaction = tx,
+                onDismiss = { editingTransaction = null },
+                onSave = { updated ->
+                    viewModel.updateTransaction(updated)
+                    editingTransaction = null
+                },
+                onDelete = {
+                    viewModel.deleteTransaction(tx.id)
+                    editingTransaction = null
+                }
+            )
+        }
     }
 }
 
 @Composable
 fun TransactionItemCard(
     transaction: TransactionEntity,
+    onClick: () -> Unit = {},
     onDelete: () -> Unit
 ) {
     val isIncome = transaction.type == "income"
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .clickable { onClick() },
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
     ) {
@@ -715,6 +737,192 @@ fun AddTransactionDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Hủy", color = LifeOSTextMid)
+            }
+        },
+        containerColor = Color(0xFF141424),
+        shape = RoundedCornerShape(20.dp)
+    )
+}
+
+@Composable
+fun EditTransactionDialog(
+    transaction: TransactionEntity,
+    onDismiss: () -> Unit,
+    onSave: (TransactionEntity) -> Unit,
+    onDelete: () -> Unit
+) {
+    var selectedTypeIndex by remember { mutableIntStateOf(if (transaction.type == "income") 1 else 0) }
+    var amountText by remember { mutableStateOf(transaction.amount.toString()) }
+    var categoryText by remember { mutableStateOf(transaction.categoryOrSource) }
+    var methodText by remember { mutableStateOf(transaction.paymentMethod.ifBlank { "Chuyển khoản" }) }
+    var noteText by remember { mutableStateOf(transaction.note) }
+    var dateText by remember { mutableStateOf(transaction.date) }
+
+    val expenseCategories = listOf("Ăn uống", "Nhà ở & Tiện ích", "Mua sắm", "Di chuyển", "Giải trí", "Y tế", "Giáo dục", "Khác")
+    val incomeSources = listOf("Lương chính", "Thưởng", "Freelance", "Đầu tư", "Kinh doanh", "Khác")
+    val paymentMethods = listOf("Chuyển khoản", "Tiền mặt", "Ví điện tử", "Thẻ tín dụng")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Chỉnh sửa giao dịch",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = LifeOSTextHigh
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Type Switcher Tabs
+                TabRow(
+                    selectedTabIndex = selectedTypeIndex,
+                    containerColor = Color.Transparent,
+                    contentColor = if (selectedTypeIndex == 0) LifeOSRed else LifeOSGreen
+                ) {
+                    Tab(
+                        selected = selectedTypeIndex == 0,
+                        onClick = {
+                            selectedTypeIndex = 0
+                            if (categoryText !in expenseCategories) categoryText = expenseCategories.first()
+                        },
+                        text = { Text("Chi tiêu (-)", color = if (selectedTypeIndex == 0) LifeOSRed else LifeOSTextMid, fontWeight = FontWeight.Bold) }
+                    )
+                    Tab(
+                        selected = selectedTypeIndex == 1,
+                        onClick = {
+                            selectedTypeIndex = 1
+                            if (categoryText !in incomeSources) categoryText = incomeSources.first()
+                        },
+                        text = { Text("Thu nhập (+)", color = if (selectedTypeIndex == 1) LifeOSGreen else LifeOSTextMid, fontWeight = FontWeight.Bold) }
+                    )
+                }
+
+                // Amount
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = { amountText = it.filter { ch -> ch.isDigit() } },
+                    label = { Text("Số tiền (VNĐ)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = if (selectedTypeIndex == 0) LifeOSRed else LifeOSGreen,
+                        unfocusedBorderColor = LifeOSGlassBorder,
+                        focusedLabelColor = if (selectedTypeIndex == 0) LifeOSRed else LifeOSGreen
+                    )
+                )
+
+                // Category Chips
+                Text(
+                    text = if (selectedTypeIndex == 0) "Danh mục chi tiêu:" else "Nguồn thu nhập:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LifeOSTextMid
+                )
+                val currentCats = if (selectedTypeIndex == 0) expenseCategories else incomeSources
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(currentCats) { cat ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    if (categoryText == cat) LifeOSPrimary.copy(alpha = 0.3f)
+                                    else LifeOSSurfaceCard
+                                )
+                                .clickable { categoryText = cat }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = cat,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (categoryText == cat) LifeOSPrimary else LifeOSTextMid,
+                                fontWeight = if (categoryText == cat) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+
+                // Payment Method Chips
+                Text(
+                    text = "Hình thức thanh toán:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LifeOSTextMid
+                )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(paymentMethods) { method ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    if (methodText == method) LifeOSCyan.copy(alpha = 0.3f)
+                                    else LifeOSSurfaceCard
+                                )
+                                .clickable { methodText = method }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = method,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (methodText == method) LifeOSCyan else LifeOSTextMid,
+                                fontWeight = if (methodText == method) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+
+                // Date & Note
+                LifeOSDateField(
+                    value = dateText,
+                    onValueChange = { dateText = it },
+                    label = "Ngày giao dịch"
+                )
+
+                OutlinedTextField(
+                    value = noteText,
+                    onValueChange = { noteText = it },
+                    label = { Text("Ghi chú (tùy chọn)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = LifeOSPrimary,
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val amt = amountText.toLongOrNull() ?: 0L
+                    if (amt > 0) {
+                        val type = if (selectedTypeIndex == 0) "expense" else "income"
+                        onSave(
+                            transaction.copy(
+                                type = type,
+                                categoryOrSource = categoryText,
+                                amount = amt,
+                                date = dateText,
+                                paymentMethod = methodText,
+                                note = noteText
+                            )
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (selectedTypeIndex == 0) LifeOSRed else LifeOSGreen
+                )
+            ) {
+                Text("Lưu thay đổi", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onDelete) {
+                    Text("Xóa", color = LifeOSRed)
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Hủy", color = LifeOSTextMid)
+                }
             }
         },
         containerColor = Color(0xFF141424),

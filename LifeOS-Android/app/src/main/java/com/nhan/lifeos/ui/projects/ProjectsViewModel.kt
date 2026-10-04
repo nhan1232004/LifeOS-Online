@@ -153,6 +153,12 @@ class ProjectsViewModel(private val repository: TaskTimeRepository) : ViewModel(
         }
     }
 
+    fun updateProjectTask(task: ProjectTaskEntity) {
+        viewModelScope.launch {
+            repository.updateProjectTask(task)
+        }
+    }
+
     fun deleteTask(id: String) {
         viewModelScope.launch {
             repository.deleteProjectTask(id)

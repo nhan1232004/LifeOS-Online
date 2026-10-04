@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.TrackChanges
 import androidx.compose.material3.AlertDialog
@@ -78,6 +79,7 @@ fun GoalsScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedGoalForProgress by remember { mutableStateOf<GoalEntity?>(null) }
+    var editingGoal by remember { mutableStateOf<GoalEntity?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -209,6 +211,7 @@ fun GoalsScreen(
                     GoalCardItem(
                         goal = goal,
                         onAddProgress = { selectedGoalForProgress = goal },
+                        onEdit = { editingGoal = goal },
                         onDelete = { viewModel.deleteGoal(goal.id) }
                     )
                 }
@@ -243,6 +246,22 @@ fun GoalsScreen(
             )
         }
 
+        // Edit Goal Dialog
+        editingGoal?.let { goal ->
+            EditGoalDialog(
+                goal = goal,
+                onDismiss = { editingGoal = null },
+                onSave = { updated ->
+                    viewModel.updateGoal(updated)
+                    editingGoal = null
+                },
+                onDelete = {
+                    viewModel.deleteGoal(goal.id)
+                    editingGoal = null
+                }
+            )
+        }
+
         // Add Progress Dialog
         selectedGoalForProgress?.let { goal ->
             AddProgressDialog(
@@ -261,13 +280,17 @@ fun GoalsScreen(
 fun GoalCardItem(
     goal: GoalEntity,
     onAddProgress: () -> Unit,
+    onEdit: () -> Unit = {},
     onDelete: () -> Unit
 ) {
     val pct = goal.progressPercentage
     val isDone = goal.isCompleted
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onEdit() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
     ) {
@@ -400,16 +423,29 @@ fun GoalCardItem(
                     )
                 }
 
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.DeleteOutline,
-                        contentDescription = "Xóa",
-                        tint = LifeOSTextLow,
-                        modifier = Modifier.size(18.dp)
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Edit,
+                            contentDescription = "Sửa",
+                            tint = LifeOSTextLow,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.DeleteOutline,
+                            contentDescription = "Xóa",
+                            tint = LifeOSTextLow,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }
@@ -564,6 +600,178 @@ fun AddGoalDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Hủy", color = LifeOSTextMid)
+            }
+        },
+        containerColor = Color(0xFF141424),
+        shape = RoundedCornerShape(20.dp)
+    )
+}
+
+@Composable
+fun EditGoalDialog(
+    goal: GoalEntity,
+    onDismiss: () -> Unit,
+    onSave: (GoalEntity) -> Unit,
+    onDelete: () -> Unit
+) {
+    var titleText by remember { mutableStateOf(goal.title) }
+    var categoryText by remember { mutableStateOf(goal.category) }
+    var targetText by remember { mutableStateOf(goal.targetValue.toString()) }
+    var currentText by remember { mutableStateOf(goal.currentValue.toString()) }
+    var unitText by remember { mutableStateOf(goal.unit) }
+    var deadlineText by remember { mutableStateOf(goal.deadline) }
+    var noteText by remember { mutableStateOf(goal.note) }
+
+    val categories = listOf("Tài chính", "Học tập", "Sự nghiệp", "Sức khỏe", "Phát triển")
+    val units = listOf("₫", "%", "cuốn", "giờ", "bài", "km")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Chỉnh sửa mục tiêu",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = LifeOSTextHigh
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = titleText,
+                    onValueChange = { titleText = it },
+                    label = { Text("Tên mục tiêu *") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = LifeOSCyan,
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+
+                // Category Chips
+                Text(
+                    text = "Lĩnh vực:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LifeOSTextMid
+                )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(categories) { cat ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (categoryText == cat) LifeOSCyan.copy(alpha = 0.3f) else LifeOSSurfaceCard)
+                                .clickable {
+                                    categoryText = cat
+                                    if (cat == "Tài chính") unitText = "₫"
+                                }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = cat,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (categoryText == cat) LifeOSCyan else LifeOSTextMid,
+                                fontWeight = if (categoryText == cat) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+
+                // Target and Unit
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = targetText,
+                        onValueChange = { targetText = it.filter { ch -> ch.isDigit() } },
+                        label = { Text("Mục tiêu") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1.5f),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = LifeOSCyan,
+                            unfocusedBorderColor = LifeOSGlassBorder
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = unitText,
+                        onValueChange = { unitText = it },
+                        label = { Text("Đơn vị") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = LifeOSCyan,
+                            unfocusedBorderColor = LifeOSGlassBorder
+                        )
+                    )
+                }
+
+                OutlinedTextField(
+                    value = currentText,
+                    onValueChange = { currentText = it.filter { ch -> ch.isDigit() } },
+                    label = { Text("Đã có hiện tại") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = LifeOSCyan,
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+
+                LifeOSDateField(
+                    value = deadlineText,
+                    onValueChange = { deadlineText = it },
+                    label = "Hạn chót mục tiêu"
+                )
+
+                OutlinedTextField(
+                    value = noteText,
+                    onValueChange = { noteText = it },
+                    label = { Text("Ghi chú động lực") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = LifeOSCyan,
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val target = targetText.toLongOrNull() ?: 0L
+                    val current = currentText.toLongOrNull() ?: 0L
+                    if (titleText.isNotBlank() && target > 0) {
+                        onSave(
+                            goal.copy(
+                                title = titleText.trim(),
+                                category = categoryText,
+                                targetValue = target,
+                                currentValue = current,
+                                unit = unitText.trim(),
+                                deadline = deadlineText.trim(),
+                                note = noteText.trim()
+                            )
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = LifeOSCyan)
+            ) {
+                Text("Lưu thay đổi", color = Color.Black, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onDelete) {
+                    Text("Xóa", color = LifeOSRed)
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Hủy", color = LifeOSTextMid)
+                }
             }
         },
         containerColor = Color(0xFF141424),

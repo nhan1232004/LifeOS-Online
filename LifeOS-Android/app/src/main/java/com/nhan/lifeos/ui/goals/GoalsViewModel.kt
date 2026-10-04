@@ -70,4 +70,10 @@ class GoalsViewModel(private val repository: FinanceRepository) : ViewModel() {
             repository.deleteGoal(id)
         }
     }
+
+    fun updateGoal(goal: GoalEntity) {
+        viewModelScope.launch {
+            repository.updateGoal(goal)
+        }
+    }
 }

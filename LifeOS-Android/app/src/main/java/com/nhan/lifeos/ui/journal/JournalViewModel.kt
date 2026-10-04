@@ -41,4 +41,10 @@ class JournalViewModel(private val repository: PersonalRepository) : ViewModel()
             repository.deleteJournal(id)
         }
     }
+
+    fun updateEntry(entry: JournalEntity) {
+        viewModelScope.launch {
+            repository.updateJournal(entry)
+        }
+    }
 }

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -73,6 +74,7 @@ fun HabitsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var editingHabit by remember { mutableStateOf<HabitEntity?>(null) }
 
     // Generate past 7 days (including today)
     val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -257,6 +259,7 @@ fun HabitsScreen(
                         habit = habit,
                         past7Days = past7Days,
                         onToggleDay = { date -> viewModel.toggleDay(habit.id, date) },
+                        onEdit = { editingHabit = habit },
                         onDelete = { viewModel.deleteHabit(habit.id) }
                     )
                 }
@@ -290,6 +293,22 @@ fun HabitsScreen(
                 }
             )
         }
+
+        // Edit Habit Dialog
+        editingHabit?.let { habit ->
+            EditHabitDialog(
+                habit = habit,
+                onDismiss = { editingHabit = null },
+                onSave = { updated ->
+                    viewModel.updateHabit(updated)
+                    editingHabit = null
+                },
+                onDelete = {
+                    viewModel.deleteHabit(habit.id)
+                    editingHabit = null
+                }
+            )
+        }
     }
 }
 
@@ -298,6 +317,7 @@ fun HabitCardItem(
     habit: HabitEntity,
     past7Days: List<Triple<String, String, String>>,
     onToggleDay: (String) -> Unit,
+    onEdit: () -> Unit = {},
     onDelete: () -> Unit
 ) {
     val logs = remember(habit.logsJson) {
@@ -315,7 +335,11 @@ fun HabitCardItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onEdit() }
+                ) {
                     Text(
                         text = habit.name,
                         style = MaterialTheme.typography.titleMedium,
@@ -342,16 +366,29 @@ fun HabitCardItem(
                     }
                 }
 
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.DeleteOutline,
-                        contentDescription = "Xóa",
-                        tint = LifeOSTextLow,
-                        modifier = Modifier.size(18.dp)
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Edit,
+                            contentDescription = "Sửa",
+                            tint = LifeOSTextLow,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.DeleteOutline,
+                            contentDescription = "Xóa",
+                            tint = LifeOSTextLow,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
 
@@ -467,6 +504,96 @@ fun AddHabitDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Hủy", color = LifeOSTextMid)
+            }
+        },
+        containerColor = Color(0xFF141424),
+        shape = RoundedCornerShape(20.dp)
+    )
+}
+
+@Composable
+fun EditHabitDialog(
+    habit: HabitEntity,
+    onDismiss: () -> Unit,
+    onSave: (HabitEntity) -> Unit,
+    onDelete: () -> Unit
+) {
+    var nameText by remember { mutableStateOf(habit.name) }
+    var targetText by remember { mutableStateOf(habit.target) }
+    val targetOptions = listOf("Mỗi ngày", "5 ngày/tuần", "3 ngày/tuần", "Cuối tuần", "2 lần/ngày")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Chỉnh sửa thói quen",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = LifeOSTextHigh
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = nameText,
+                    onValueChange = { nameText = it },
+                    label = { Text("Tên thói quen *") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = LifeOSGreen,
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+
+                Text(
+                    text = "Mục tiêu thực hiện:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LifeOSTextMid
+                )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(targetOptions) { target ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    if (targetText == target) LifeOSGreen.copy(alpha = 0.2f)
+                                    else LifeOSSurfaceCard
+                                )
+                                .clickable { targetText = target }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = target,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (targetText == target) LifeOSGreen else LifeOSTextMid,
+                                fontWeight = if (targetText == target) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (nameText.isNotBlank()) {
+                        onSave(habit.copy(name = nameText.trim(), target = targetText.trim()))
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = LifeOSGreen)
+            ) {
+                Text("Lưu thay đổi", color = Color.Black, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onDelete) {
+                    Text("Xóa", color = LifeOSRed)
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Hủy", color = LifeOSTextMid)
+                }
             }
         },
         containerColor = Color(0xFF141424),

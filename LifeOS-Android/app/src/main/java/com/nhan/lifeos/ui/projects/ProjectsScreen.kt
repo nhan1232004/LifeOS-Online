@@ -99,6 +99,7 @@ fun ProjectsScreen(
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var showInviteMemberDialog by remember { mutableStateOf(false) }
     var showChatDialog by remember { mutableStateOf(false) }
+    var editingTask by remember { mutableStateOf<ProjectTaskEntity?>(null) }
 
     val context = LocalContext.current
     val prefsRepo = remember { UserPreferencesRepository(context) }
@@ -595,6 +596,7 @@ fun ProjectsScreen(
                         ProjectTaskCard(
                             task = task,
                             onCycleStatus = { viewModel.cycleTaskStatus(task) },
+                            onEdit = { editingTask = task },
                             onDelete = { viewModel.deleteTask(task.id) }
                         )
                     }
@@ -763,12 +765,30 @@ fun ProjectsScreen(
             onDismiss = { showChatDialog = false }
         )
     }
+
+    // Edit Project Task Dialog
+    if (editingTask != null) {
+        val currentEditTask = editingTask!!
+        EditProjectTaskDialog(
+            task = currentEditTask,
+            onDismiss = { editingTask = null },
+            onSave = { updated ->
+                viewModel.updateProjectTask(updated)
+                editingTask = null
+            },
+            onDelete = {
+                viewModel.deleteTask(currentEditTask.id)
+                editingTask = null
+            }
+        )
+    }
 }
 
 @Composable
 private fun ProjectTaskCard(
     task: ProjectTaskEntity,
     onCycleStatus: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     val isDone = task.status == "Hoàn thành" || task.status == "Done"
@@ -787,7 +807,9 @@ private fun ProjectTaskCard(
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onEdit() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard),
         border = androidx.compose.foundation.BorderStroke(1.dp, LifeOSGlassBorder)
@@ -877,6 +899,18 @@ private fun ProjectTaskCard(
             }
 
             IconButton(
+                onClick = onEdit,
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Edit,
+                    contentDescription = "Sửa nhiệm vụ",
+                    tint = LifeOSTextLow,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+
+            IconButton(
                 onClick = onDelete,
                 modifier = Modifier.size(28.dp)
             ) {
@@ -889,6 +923,116 @@ private fun ProjectTaskCard(
             }
         }
     }
+}
+
+@Composable
+private fun EditProjectTaskDialog(
+    task: ProjectTaskEntity,
+    onDismiss: () -> Unit,
+    onSave: (ProjectTaskEntity) -> Unit,
+    onDelete: () -> Unit
+) {
+    var text by remember { mutableStateOf(task.text) }
+    var desc by remember { mutableStateOf(task.desc) }
+    var priority by remember { mutableStateOf(task.priority) }
+    var due by remember { mutableStateOf(task.due) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = LifeOSSurfaceDark,
+        title = {
+            Text(
+                text = "Chỉnh sửa nhiệm vụ",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = LifeOSTextHigh
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("Tên nhiệm vụ *") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = LifeOSPrimary,
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = desc,
+                    onValueChange = { desc = it },
+                    label = { Text("Chi tiết bổ sung") },
+                    maxLines = 2,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = LifeOSPrimary,
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("low" to "Thấp", "mid" to "Vừa", "high" to "Cao").forEach { (priKey, priLbl) ->
+                        val isSel = priority.lowercase() == priKey
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSel) LifeOSPrimary else LifeOSSurfaceDark)
+                                .clickable { priority = priKey }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = priLbl,
+                                fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSel) Color.White else LifeOSTextMid,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+
+                LifeOSDateField(
+                    value = due,
+                    onValueChange = { due = it },
+                    label = "Hạn chót nhiệm vụ"
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (text.isNotBlank()) {
+                        onSave(
+                            task.copy(
+                                text = text.trim(),
+                                desc = desc.trim(),
+                                priority = priority,
+                                due = due.trim()
+                            )
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = LifeOSPrimary)
+            ) {
+                Text("Lưu thay đổi", color = Color.White)
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onDelete) {
+                    Text("Xóa", color = LifeOSRed)
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Hủy", color = LifeOSTextMid)
+                }
+            }
+        }
+    )
 }
 
 @Composable

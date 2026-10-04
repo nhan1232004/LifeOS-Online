@@ -119,6 +119,11 @@ class PersonalRepository(
         cloudSyncRepo?.triggerAutoSync("habits")
     }
 
+    suspend fun updateHabit(habit: HabitEntity) = withContext(Dispatchers.IO) {
+        habitDao.updateHabit(habit.copy(updatedAt = System.currentTimeMillis()))
+        cloudSyncRepo?.triggerAutoSync("habits")
+    }
+
     // ─── Journal ──────────────────────────────────────────────────────────────
     val allJournalEntries: Flow<List<JournalEntity>> = journalDao.getAllEntries()
 
@@ -132,6 +137,11 @@ class PersonalRepository(
             updatedAt = System.currentTimeMillis()
         )
         journalDao.insertEntry(entry)
+        cloudSyncRepo?.triggerAutoSync("journal")
+    }
+
+    suspend fun updateJournal(entry: JournalEntity) = withContext(Dispatchers.IO) {
+        journalDao.updateEntry(entry.copy(updatedAt = System.currentTimeMillis()))
         cloudSyncRepo?.triggerAutoSync("journal")
     }
 

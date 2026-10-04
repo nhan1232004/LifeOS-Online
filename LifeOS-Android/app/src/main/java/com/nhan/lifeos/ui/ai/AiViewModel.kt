@@ -2,6 +2,13 @@ package com.nhan.lifeos.ui.ai
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nhan.lifeos.data.local.entity.EventEntity
+import com.nhan.lifeos.data.local.entity.GoalEntity
+import com.nhan.lifeos.data.local.entity.HabitEntity
+import com.nhan.lifeos.data.local.entity.NoteEntity
+import com.nhan.lifeos.data.local.entity.ProjectEntity
+import com.nhan.lifeos.data.local.entity.TodoEntity
+import com.nhan.lifeos.data.local.entity.TransactionEntity
 import com.nhan.lifeos.data.network.GeminiApiService
 import com.nhan.lifeos.data.preferences.UserPreferencesRepository
 import com.nhan.lifeos.data.preferences.UserSession
@@ -9,11 +16,13 @@ import com.nhan.lifeos.data.repository.FinanceRepository
 import com.nhan.lifeos.data.repository.PersonalRepository
 import com.nhan.lifeos.data.repository.TaskTimeRepository
 import com.nhan.lifeos.ui.finance.formatVnd
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -166,7 +175,7 @@ class AiViewModel(
             if (key.isNotBlank()) {
                 // Call real Gemini API
                 val systemPrompt = buildSystemPrompt()
-                val historyPairs = currentHistory.map { it.isUser to it.text }
+                val historyPairs = currentHistory.takeLast(8).map { it.isUser to it.text }
                 val apiResult = GeminiApiService.generateContent(
                     apiKey = key,
                     preferredModel = model,
@@ -197,7 +206,7 @@ class AiViewModel(
                 )
             } else {
                 // Smart contextual offline assistant
-                kotlinx.coroutines.delay(600L)
+                kotlinx.coroutines.delay(100L)
                 val (cleanResponse, actionNotice) = processAndExecuteActions(trimmed, generateSmartFallback(trimmed))
                 val fullResponse = buildString {
                     append(cleanResponse)
@@ -215,85 +224,60 @@ class AiViewModel(
         }
     }
 
-    private suspend fun buildSystemPrompt(): String {
-        val todos = taskTimeRepository.allTodos.first()
-        val projects = taskTimeRepository.allProjects.first()
-        val events = taskTimeRepository.allEvents.first()
-        val txs = financeRepository.getAllTransactions().first()
-        val goals = financeRepository.getAllGoals().first()
-        val habits = personalRepository.allHabits.first()
-        val notes = personalRepository.allNotes.first()
-        val session = preferencesRepository?.userSessionFlow?.first() ?: UserSession()
+    private suspend fun buildSystemPrompt(): String = withContext(Dispatchers.IO) {
+        val todos: List<TodoEntity> = taskTimeRepository.allTodos.first()
+        val projects: List<ProjectEntity> = taskTimeRepository.allProjects.first()
+        val events: List<EventEntity> = taskTimeRepository.allEvents.first()
+        val txs: List<TransactionEntity> = financeRepository.getAllTransactions().first()
+        val goals: List<GoalEntity> = financeRepository.getAllGoals().first()
+        val habits: List<HabitEntity> = personalRepository.allHabits.first()
+        val notes: List<NoteEntity> = personalRepository.allNotes.first()
+        val session: UserSession = preferencesRepository?.userSessionFlow?.first() ?: UserSession()
 
         val todayDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val dateHuman = SimpleDateFormat("EEEE, dd/MM/yyyy", Locale("vi", "VN")).format(Date())
         val timeHuman = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
 
         val pendingTodos = todos.filter { !it.done }
-        val doneTodos = todos.filter { it.done }
-        val todayEvents = events.filter { it.dateStart == todayDate }
         val inc = txs.filter { it.type == "income" }.sumOf { it.amount }
         val exp = txs.filter { it.type == "expense" }.sumOf { it.amount }
         val net = inc - exp
 
-        return """
-        Bạn là "LifeOS AI" — Cố vấn cá nhân và Trợ lý điều hành thông minh hàng đầu được tích hợp trực tiếp trong ứng dụng LifeOS.
-        Thời gian hiện tại: $dateHuman, lúc $timeHuman (Ngày format YYYY-MM-DD: $todayDate).
-        Người dùng: ${session.displayName.ifBlank { "Bạn" }} ${if (session.jobTitle.isNotBlank()) "(${session.jobTitle})" else ""} ${if (session.bio.isNotBlank()) "— Bio: ${session.bio}" else ""}.
+        val todoSummary = pendingTodos.take(6).joinToString(", ") { t -> "[${t.priority.uppercase()}] ${t.text}" }
+        val todayEvents = events.filter { it.dateStart == todayDate }
+        val eventSummary = if (todayEvents.isEmpty()) "Trống lịch" else todayEvents.joinToString(", ") { e -> "${e.title} (${e.timeStart})" }
+        val habitSummary = habits.take(5).joinToString(", ") { h -> "${h.name} (${h.streak}d 🔥)" }
+        val goalSummary = goals.take(4).joinToString(", ") { g -> "${g.title}: ${formatVnd(g.currentValue)}/${formatVnd(g.targetValue)}" }
+        val userTitle = if (session.jobTitle.isNotBlank()) " (${session.jobTitle})" else ""
+        val userName = session.displayName.ifBlank { "Bạn" }
 
-        NGUYÊN TẮC PHỤC VỤ:
-        1. Phản hồi bằng tiếng Việt thân thiện, đồng cảm nhưng chuẩn xác, định dạng Markdown đẹp mắt (in đậm, danh sách gạch đầu dòng, emoji sinh động).
-        2. Dựa vào dữ liệu thực tế dưới đây của người dùng để phân tích cá nhân hóa, không bịa đặt số liệu.
-        3. Đưa ra lời khuyên thực tế, có tính hành động cao (Actionable).
+        """
+        Bạn là "LifeOS AI" — Cố vấn cá nhân & Trợ lý thông minh hàng đầu trong ứng dụng LifeOS.
+        Thời gian: $dateHuman lúc $timeHuman (Format: $todayDate).
+        Người dùng: $userName$userTitle.
 
-        DỮ LIỆU ĐANG CÓ TRONG HỆ THỐNG LIFEOS:
-        • Công việc cần làm (${pendingTodos.size} việc chưa xong, ${doneTodos.size} đã hoàn thành):
-        ${pendingTodos.take(8).joinToString("\n") { "  - [${it.priority.uppercase()}] ${it.text} (Hạn: ${it.date.ifBlank { "Không có" }})" }}
-        • Lịch trình hôm nay (${todayEvents.size} sự kiện):
-        ${todayEvents.joinToString("\n") { "  - ${it.title} (${it.timeStart} - ${it.timeEnd})" }.ifBlank { "  - Trống lịch" }}
-        • Dự án Kanban (${projects.size} dự án):
-        ${projects.take(5).joinToString("\n") { "  - ${it.name} [${it.status}] (Tiến độ: ${it.progress}%)" }}
-        • Tài chính:
-          - Tổng thu nhập: +${formatVnd(inc)}
-          - Tổng chi tiêu: -${formatVnd(exp)}
-          - Số dư khả dụng: ${formatVnd(net)}
-        • Thói quen đang rèn luyện (${habits.size} thói quen):
-        ${habits.joinToString("\n") { "  - ${it.name} (Streak: ${it.streak} ngày liên tiếp 🔥)" }}
-        • Mục tiêu tài chính & dài hạn (${goals.size} mục tiêu):
-        ${goals.joinToString("\n") { "  - ${it.title}: ${formatVnd(it.currentValue)} / ${formatVnd(it.targetValue)}" }}
-        • Ghi chú: ${notes.size} ghi chú đã lưu.
+        NGUYÊN TẮC:
+        1. Phản hồi tiếng Việt súc tích, chuẩn xác, định dạng Markdown đẹp mắt, trả lời nhanh gọn và đi thẳng vào trọng tâm.
+        2. Dựa trên dữ liệu LifeOS thực tế:
+          • Việc cần làm (${pendingTodos.size} chưa xong): $todoSummary
+          • Lịch hôm nay: $eventSummary
+          • Tài chính: Thu +${formatVnd(inc)}, Chi -${formatVnd(exp)}, Dư ${formatVnd(net)}
+          • Thói quen: $habitSummary
+          • Mục tiêu: $goalSummary
+          • Dự án: ${projects.size} dự án, Ghi chú: ${notes.size} ghi chú.
 
-        KHẢ NĂNG THỰC THI HÀNH ĐỘNG HỆ THỐNG (SYSTEM ACTIONS):
-        Bạn có khả năng thêm trực tiếp dữ liệu vào LifeOS cho người dùng!
-        Khi người dùng yêu cầu ghi nhận thu chi, thêm việc cần làm hoặc tạo ghi chú:
-        1. Phản hồi tự nhiên, thân thiện xác nhận đã ghi nhận.
-        2. BẮT BUỘC chèn thêm 1 khối JSON ở cuối tin nhắn theo định dạng sau:
+        HÀNH ĐỘNG HỆ THỐNG:
+        Khi người dùng yêu cầu ghi chép thu chi, thêm việc hoặc tạo ghi chú, chèn khối JSON sau vào cuối phản hồi:
         ```lifeos-action
-        {
-          "action": "add_transaction",
-          "type": "expense",
-          "amount": 50000,
-          "category": "Ăn uống",
-          "note": "Tiền ăn sáng",
-          "date": "$todayDate"
-        }
+        {"action":"add_transaction","type":"expense","amount":50000,"category":"Ăn uống","note":"Tiền ăn sáng","date":"$todayDate"}
         ```
-        hoặc Todo:
+        hoặc:
         ```lifeos-action
-        {
-          "action": "add_todo",
-          "text": "Nội dung công việc",
-          "priority": "high",
-          "date": "$todayDate"
-        }
+        {"action":"add_todo","text":"Nội dung công việc","priority":"high","date":"$todayDate"}
         ```
-        hoặc Ghi chú:
+        hoặc:
         ```lifeos-action
-        {
-          "action": "add_note",
-          "title": "Tiêu đề ghi chú",
-          "content": "Nội dung ghi chú..."
-        }
+        {"action":"add_note","title":"Tiêu đề ghi chú","content":"Nội dung ghi chú..."}
         ```
         """.trimIndent()
     }

@@ -59,6 +59,11 @@ class TaskTimeRepository(
         cloudSyncRepo?.triggerAutoSync("todos")
     }
 
+    suspend fun updateTodo(todo: TodoEntity) {
+        todoDao.updateTodo(todo.copy(updatedAt = System.currentTimeMillis()))
+        cloudSyncRepo?.triggerAutoSync("todos")
+    }
+
     suspend fun deleteTodo(id: String) {
         cloudSyncRepo?.recordDeletedItem(id, "todos")
         todoDao.deleteById(id)
@@ -213,6 +218,11 @@ class TaskTimeRepository(
 
     suspend fun updateProjectTaskStatus(id: String, status: String) {
         projectTaskDao.updateTaskStatus(id, status)
+        cloudSyncRepo?.triggerAutoSync("proj_tasks")
+    }
+
+    suspend fun updateProjectTask(task: ProjectTaskEntity) {
+        projectTaskDao.insertTask(task.copy(updatedAt = System.currentTimeMillis()))
         cloudSyncRepo?.triggerAutoSync("proj_tasks")
     }
 

@@ -27,6 +27,8 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FlipCameraAndroid
 import androidx.compose.material.icons.rounded.NavigateBefore
 import androidx.compose.material.icons.rounded.NavigateNext
@@ -66,6 +68,7 @@ import com.nhan.lifeos.core.designsystem.LifeOSGlassBorder
 import com.nhan.lifeos.core.designsystem.LifeOSGreen
 import com.nhan.lifeos.core.designsystem.LifeOSPrimary
 import com.nhan.lifeos.core.designsystem.LifeOSRed
+import com.nhan.lifeos.data.local.entity.VocabEntity
 import com.nhan.lifeos.core.designsystem.LifeOSSurfaceCard
 import com.nhan.lifeos.core.designsystem.LifeOSTextHigh
 import com.nhan.lifeos.core.designsystem.LifeOSTextLow
@@ -80,6 +83,7 @@ fun VocabScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showAddDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
 
     // Initialize Native Android Text-to-Speech
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
@@ -163,7 +167,10 @@ fun VocabScreen(
                     color = LifeOSTextHigh
                 )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
@@ -176,6 +183,31 @@ fun VocabScreen(
                             color = LifeOSGreen,
                             fontWeight = FontWeight.Bold
                         )
+                    }
+
+                    if (currentCard != null) {
+                        IconButton(
+                            onClick = { showEditDialog = true },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Edit,
+                                contentDescription = "Sửa từ",
+                                tint = LifeOSTextLow,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        IconButton(
+                            onClick = { viewModel.deleteVocab(currentCard.id) },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.DeleteOutline,
+                                contentDescription = "Xóa từ",
+                                tint = LifeOSTextLow,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -425,6 +457,22 @@ fun VocabScreen(
                 }
             )
         }
+
+        // Edit Vocab Dialog
+        if (showEditDialog && currentCard != null) {
+            EditVocabDialog(
+                vocab = currentCard,
+                onDismiss = { showEditDialog = false },
+                onSave = { updated ->
+                    viewModel.updateVocab(updated)
+                    showEditDialog = false
+                },
+                onDelete = {
+                    viewModel.deleteVocab(currentCard.id)
+                    showEditDialog = false
+                }
+            )
+        }
     }
 }
 
@@ -535,6 +583,135 @@ fun AddVocabDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Hủy", color = LifeOSTextMid)
+            }
+        },
+        containerColor = Color(0xFF141424),
+        shape = RoundedCornerShape(20.dp)
+    )
+}
+
+@Composable
+fun EditVocabDialog(
+    vocab: VocabEntity,
+    onDismiss: () -> Unit,
+    onSave: (VocabEntity) -> Unit,
+    onDelete: () -> Unit
+) {
+    var wordText by remember { mutableStateOf(vocab.word) }
+    var pronText by remember { mutableStateOf(vocab.pron) }
+    var typeText by remember { mutableStateOf(vocab.type) }
+    var meanText by remember { mutableStateOf(vocab.mean) }
+    var exampleText by remember { mutableStateOf(vocab.example) }
+
+    val types = listOf("n", "v", "adj", "adv", "phrase")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Chỉnh sửa từ vựng",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = LifeOSTextHigh
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = wordText,
+                    onValueChange = { wordText = it },
+                    label = { Text("Từ vựng (English) *") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFFFF80AB),
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = pronText,
+                        onValueChange = { pronText = it },
+                        label = { Text("Phiên âm (/.../)") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1.5f),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFFF80AB),
+                            unfocusedBorderColor = LifeOSGlassBorder
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = typeText,
+                        onValueChange = { typeText = it },
+                        label = { Text("Từ loại") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFFF80AB),
+                            unfocusedBorderColor = LifeOSGlassBorder
+                        )
+                    )
+                }
+
+                OutlinedTextField(
+                    value = meanText,
+                    onValueChange = { meanText = it },
+                    label = { Text("Nghĩa tiếng Việt *") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFFFF80AB),
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+
+                OutlinedTextField(
+                    value = exampleText,
+                    onValueChange = { exampleText = it },
+                    label = { Text("Câu ví dụ minh họa") },
+                    minLines = 2,
+                    maxLines = 4,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFFFF80AB),
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (wordText.isNotBlank() && meanText.isNotBlank()) {
+                        onSave(
+                            vocab.copy(
+                                word = wordText.trim(),
+                                pron = pronText.trim(),
+                                type = typeText.trim(),
+                                mean = meanText.trim(),
+                                example = exampleText.trim()
+                            )
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF80AB))
+            ) {
+                Text("Lưu thay đổi", color = Color.Black, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onDelete) {
+                    Text("Xóa", color = LifeOSRed)
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Hủy", color = LifeOSTextMid)
+                }
             }
         },
         containerColor = Color(0xFF141424),

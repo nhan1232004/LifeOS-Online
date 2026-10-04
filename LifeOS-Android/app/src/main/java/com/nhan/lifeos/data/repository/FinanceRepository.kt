@@ -44,6 +44,11 @@ class FinanceRepository(
         cloudSyncRepo?.triggerAutoSync("finance")
     }
 
+    suspend fun updateTransaction(transaction: TransactionEntity) = withContext(Dispatchers.IO) {
+        transactionDao.updateTransaction(transaction.copy(updatedAt = System.currentTimeMillis()))
+        cloudSyncRepo?.triggerAutoSync("finance")
+    }
+
     suspend fun deleteTransaction(id: String) = withContext(Dispatchers.IO) {
         val tx = transactionDao.getTransactionById(id)
         val col = if (tx != null) {

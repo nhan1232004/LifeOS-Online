@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -67,6 +68,7 @@ fun JournalScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var editingEntry by remember { mutableStateOf<JournalEntity?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -133,6 +135,7 @@ fun JournalScreen(
                 items(uiState.entries, key = { it.id }) { entry ->
                     JournalCardItem(
                         entry = entry,
+                        onEdit = { editingEntry = entry },
                         onDelete = { viewModel.deleteEntry(entry.id) }
                     )
                 }
@@ -166,16 +169,36 @@ fun JournalScreen(
                 }
             )
         }
+
+        // Edit Journal Dialog
+        editingEntry?.let { entry ->
+            EditJournalDialog(
+                entry = entry,
+                onDismiss = { editingEntry = null },
+                onSave = { updated ->
+                    viewModel.updateEntry(updated)
+                    editingEntry = null
+                },
+                onDelete = {
+                    viewModel.deleteEntry(entry.id)
+                    editingEntry = null
+                }
+            )
+        }
     }
 }
 
 @Composable
 fun JournalCardItem(
     entry: JournalEntity,
+    onEdit: () -> Unit = {},
     onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onEdit() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
     ) {
@@ -185,7 +208,12 @@ fun JournalCardItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onEdit() },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Box(
                         modifier = Modifier
                             .size(36.dp)
@@ -204,16 +232,29 @@ fun JournalCardItem(
                     )
                 }
 
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.DeleteOutline,
-                        contentDescription = "Xóa",
-                        tint = LifeOSTextLow,
-                        modifier = Modifier.size(18.dp)
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Edit,
+                            contentDescription = "Sửa",
+                            tint = LifeOSTextLow,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.DeleteOutline,
+                            contentDescription = "Xóa",
+                            tint = LifeOSTextLow,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
 
@@ -351,6 +392,118 @@ fun AddJournalDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Hủy", color = LifeOSTextMid)
+            }
+        },
+        containerColor = Color(0xFF141424),
+        shape = RoundedCornerShape(20.dp)
+    )
+}
+
+@Composable
+fun EditJournalDialog(
+    entry: JournalEntity,
+    onDismiss: () -> Unit,
+    onSave: (JournalEntity) -> Unit,
+    onDelete: () -> Unit
+) {
+    var dateText by remember { mutableStateOf(entry.date) }
+    var selectedMood by remember { mutableStateOf(entry.mood) }
+    var titleText by remember { mutableStateOf(entry.title) }
+    var bodyText by remember { mutableStateOf(entry.body) }
+
+    val moods = listOf("😊", "🚀", "😌", "🤔", "😴", "😢", "🔥")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Chỉnh sửa nhật ký",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = LifeOSTextHigh
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                LifeOSDateField(
+                    value = dateText,
+                    onValueChange = { dateText = it },
+                    label = "Ngày viết"
+                )
+
+                Text(
+                    text = "Tâm trạng:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LifeOSTextMid
+                )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(moods) { mood ->
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(if (selectedMood == mood) Color(0xFFCE93D8).copy(alpha = 0.3f) else LifeOSSurfaceCard)
+                                .clickable { selectedMood = mood },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = mood, fontSize = 20.sp)
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = titleText,
+                    onValueChange = { titleText = it },
+                    label = { Text("Tiêu đề (tùy chọn)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFFCE93D8),
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+
+                OutlinedTextField(
+                    value = bodyText,
+                    onValueChange = { bodyText = it },
+                    label = { Text("Nội dung nhật ký *") },
+                    minLines = 4,
+                    maxLines = 8,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFFCE93D8),
+                        unfocusedBorderColor = LifeOSGlassBorder
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (bodyText.isNotBlank()) {
+                        onSave(
+                            entry.copy(
+                                date = dateText,
+                                mood = selectedMood,
+                                title = titleText.trim(),
+                                body = bodyText.trim()
+                            )
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCE93D8))
+            ) {
+                Text("Lưu thay đổi", color = Color.Black, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onDelete) {
+                    Text("Xóa", color = Color(0xFFFF5252))
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Hủy", color = LifeOSTextMid)
+                }
             }
         },
         containerColor = Color(0xFF141424),

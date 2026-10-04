@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -69,6 +70,7 @@ import com.nhan.lifeos.data.local.entity.TodoEntity
 fun TodosScreen(viewModel: TodosViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var editingTodo by remember { mutableStateOf<TodoEntity?>(null) }
 
     val filterTabs = listOf(
         TodoFilter.ALL to "Tất cả (${uiState.todos.size})",
@@ -150,6 +152,7 @@ fun TodosScreen(viewModel: TodosViewModel) {
                         TodoCardItem(
                             todo = todo,
                             onToggle = { viewModel.toggleTodo(todo.id, !todo.done) },
+                            onEdit = { editingTodo = todo },
                             onDelete = { viewModel.deleteTodo(todo.id) }
                         )
                     }
@@ -179,12 +182,28 @@ fun TodosScreen(viewModel: TodosViewModel) {
             }
         )
     }
+
+    editingTodo?.let { todo ->
+        EditTodoDialog(
+            todo = todo,
+            onDismiss = { editingTodo = null },
+            onSave = { updated ->
+                viewModel.updateTodo(updated)
+                editingTodo = null
+            },
+            onDelete = {
+                viewModel.deleteTodo(todo.id)
+                editingTodo = null
+            }
+        )
+    }
 }
 
 @Composable
 private fun TodoCardItem(
     todo: TodoEntity,
     onToggle: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     val priColor = when (todo.priority.lowercase()) {
@@ -197,7 +216,7 @@ private fun TodoCardItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .clickable { onToggle() },
+            .clickable { onEdit() },
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
     ) {
@@ -219,7 +238,11 @@ private fun TodoCardItem(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onEdit() }
+            ) {
                 Text(
                     text = todo.text,
                     style = MaterialTheme.typography.bodyLarge,
@@ -258,6 +281,15 @@ private fun TodoCardItem(
                     style = MaterialTheme.typography.labelSmall,
                     color = priColor,
                     fontWeight = FontWeight.Bold
+                )
+            }
+
+            IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    imageVector = Icons.Rounded.Edit,
+                    contentDescription = "Chỉnh sửa",
+                    tint = LifeOSTextLow,
+                    modifier = Modifier.size(17.dp)
                 )
             }
 
@@ -354,6 +386,132 @@ private fun AddTodoDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Hủy", color = LifeOSTextMid)
+            }
+        },
+        containerColor = LifeOSSurfaceCard
+    )
+}
+
+@Composable
+private fun EditTodoDialog(
+    todo: TodoEntity,
+    onDismiss: () -> Unit,
+    onSave: (TodoEntity) -> Unit,
+    onDelete: () -> Unit
+) {
+    var text by remember { mutableStateOf(todo.text) }
+    var priority by remember { mutableStateOf(todo.priority) }
+    var date by remember { mutableStateOf(todo.date) }
+    var note by remember { mutableStateOf(todo.note) }
+    var done by remember { mutableStateOf(todo.done) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Chỉnh sửa việc cần làm", fontWeight = FontWeight.Bold, color = LifeOSTextHigh)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("Nội dung công việc *") },
+                    colors = customTodoDialogColors(),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Priority Selector
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf("high" to "Cao", "mid" to "TB", "low" to "Thấp").forEach { (pri, label) ->
+                        val isSel = priority.lowercase() == pri
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSel) LifeOSPrimary else Color.White.copy(alpha = 0.05f))
+                                .clickable { priority = pri }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSel) Color.White else LifeOSTextMid
+                            )
+                        }
+                    }
+                }
+
+                LifeOSDateField(
+                    value = date,
+                    onValueChange = { date = it },
+                    label = "Ngày thực hiện"
+                )
+
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Ghi chú bổ sung") },
+                    colors = customTodoDialogColors(),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { done = !done }
+                        .padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = done,
+                        onCheckedChange = { done = it },
+                        colors = CheckboxDefaults.colors(checkedColor = LifeOSPrimary)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (done) "Đã hoàn thành" else "Chưa hoàn thành",
+                        color = LifeOSTextHigh,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (text.isNotBlank()) {
+                        onSave(
+                            todo.copy(
+                                text = text.trim(),
+                                priority = priority,
+                                date = date.trim(),
+                                note = note.trim(),
+                                done = done
+                            )
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = LifeOSPrimary)
+            ) {
+                Text("Lưu thay đổi", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onDelete) {
+                    Text("Xóa", color = LifeOSRed)
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Hủy", color = LifeOSTextMid)
+                }
             }
         },
         containerColor = LifeOSSurfaceCard

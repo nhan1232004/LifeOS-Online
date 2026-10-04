@@ -50,4 +50,10 @@ class HabitsViewModel(private val repository: PersonalRepository) : ViewModel() 
             repository.deleteHabit(id)
         }
     }
+
+    fun updateHabit(habit: HabitEntity) {
+        viewModelScope.launch {
+            repository.updateHabit(habit)
+        }
+    }
 }

@@ -18,10 +18,9 @@ object GeminiApiService {
 
     val ACTIVE_MODELS = listOf(
         "gemini-flash-latest",
-        "gemini-3.8-flash",
-        "gemini-3.7-flash",
-        "gemini-3.5-flash",
-        "gemini-pro-latest"
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash"
     )
 
     fun cleanApiKey(raw: String): String {
@@ -135,9 +134,9 @@ object GeminiApiService {
 
                     put("contents", contentsArr)
                     put("generationConfig", JSONObject().apply {
-                        put("temperature", 0.7)
-                        put("maxOutputTokens", 2048)
-                        put("topP", 0.95)
+                        put("temperature", 0.5)
+                        put("maxOutputTokens", 1024)
+                        put("topP", 0.9)
                     })
                 }
 
@@ -189,8 +188,8 @@ object GeminiApiService {
         conn.requestMethod = "POST"
         conn.setRequestProperty("Content-Type", "application/json")
         conn.setRequestProperty("x-goog-api-key", apiKey)
-        conn.connectTimeout = 25000
-        conn.readTimeout = 30000
+        conn.connectTimeout = 10000
+        conn.readTimeout = 18000
         conn.doOutput = true
 
         OutputStreamWriter(conn.outputStream, "UTF-8").use { writer ->

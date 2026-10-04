@@ -66,6 +66,12 @@ class TodosViewModel(private val repository: TaskTimeRepository) : ViewModel() {
         }
     }
 
+    fun updateTodo(todo: TodoEntity) {
+        viewModelScope.launch {
+            repository.updateTodo(todo)
+        }
+    }
+
     fun addTodo(text: String, priority: String, date: String = "", note: String = "") {
         viewModelScope.launch {
             val taskDate = if (date.isBlank()) {
