@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import org.json.JSONObject
 
 data class AiMessage(
     val id: String = java.util.UUID.randomUUID().toString(),
@@ -176,15 +177,18 @@ class AiViewModel(
 
                 apiResult.fold(
                     onSuccess = { reply ->
+                        val (cleanReply, actionNotice) = processAndExecuteActions(trimmed, reply)
+                        val finalMsg = if (actionNotice != null) "$cleanReply\n\n$actionNotice" else cleanReply
                         _uiState.value = _uiState.value.copy(
-                            messages = _uiState.value.messages + AiMessage(isUser = false, text = reply),
+                            messages = _uiState.value.messages + AiMessage(isUser = false, text = finalMsg),
                             isThinking = false
                         )
                     },
                     onFailure = { err ->
                         // Fallback response with notice
-                        val fallback = generateSmartFallback(trimmed)
-                        val errNotice = "⚠️ *(Lưu ý: Không thể kết nối Gemini API [${err.message?.take(80)}], chuyển sang phân tích ngoại tuyến)*\n\n$fallback"
+                        val (cleanFallback, actionNotice) = processAndExecuteActions(trimmed, generateSmartFallback(trimmed))
+                        val finalFallback = if (actionNotice != null) "$cleanFallback\n\n$actionNotice" else cleanFallback
+                        val errNotice = "⚠️ *(Lưu ý: Không thể kết nối Gemini API [${err.message?.take(80)}], chuyển sang phân tích ngoại tuyến)*\n\n$finalFallback"
                         _uiState.value = _uiState.value.copy(
                             messages = _uiState.value.messages + AiMessage(isUser = false, text = errNotice),
                             isThinking = false
@@ -194,9 +198,13 @@ class AiViewModel(
             } else {
                 // Smart contextual offline assistant
                 kotlinx.coroutines.delay(600L)
-                val response = generateSmartFallback(trimmed)
+                val (cleanResponse, actionNotice) = processAndExecuteActions(trimmed, generateSmartFallback(trimmed))
                 val fullResponse = buildString {
-                    append(response)
+                    append(cleanResponse)
+                    if (actionNotice != null) {
+                        append("\n\n")
+                        append(actionNotice)
+                    }
                     append("\n\n---\n💡 *Mẹo: Bạn có thể bấm nút **Cài đặt Key** ở trên cùng để kết nối Google Gemini API miễn phí, mở khóa khả năng hỏi đáp và sáng tạo không giới hạn!*")
                 }
                 _uiState.value = _uiState.value.copy(
@@ -254,7 +262,233 @@ class AiViewModel(
         • Mục tiêu tài chính & dài hạn (${goals.size} mục tiêu):
         ${goals.joinToString("\n") { "  - ${it.title}: ${formatVnd(it.currentValue)} / ${formatVnd(it.targetValue)}" }}
         • Ghi chú: ${notes.size} ghi chú đã lưu.
+
+        KHẢ NĂNG THỰC THI HÀNH ĐỘNG HỆ THỐNG (SYSTEM ACTIONS):
+        Bạn có khả năng thêm trực tiếp dữ liệu vào LifeOS cho người dùng!
+        Khi người dùng yêu cầu ghi nhận thu chi, thêm việc cần làm hoặc tạo ghi chú:
+        1. Phản hồi tự nhiên, thân thiện xác nhận đã ghi nhận.
+        2. BẮT BUỘC chèn thêm 1 khối JSON ở cuối tin nhắn theo định dạng sau:
+        ```lifeos-action
+        {
+          "action": "add_transaction",
+          "type": "expense",
+          "amount": 50000,
+          "category": "Ăn uống",
+          "note": "Tiền ăn sáng",
+          "date": "$todayDate"
+        }
+        ```
+        hoặc Todo:
+        ```lifeos-action
+        {
+          "action": "add_todo",
+          "text": "Nội dung công việc",
+          "priority": "high",
+          "date": "$todayDate"
+        }
+        ```
+        hoặc Ghi chú:
+        ```lifeos-action
+        {
+          "action": "add_note",
+          "title": "Tiêu đề ghi chú",
+          "content": "Nội dung ghi chú..."
+        }
+        ```
         """.trimIndent()
+    }
+
+    private suspend fun processAndExecuteActions(userText: String, replyText: String): Pair<String, String?> {
+        val todayDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        var cleanedReply = replyText
+        var actionNotice: String? = null
+
+        // 1. First attempt: Parse structured ```lifeos-action ... ``` block from reply
+        val actionRegex = Regex("""```lifeos-action\s*(\{[\s\S]*?\})\s*```""", RegexOption.IGNORE_CASE)
+        val match = actionRegex.find(replyText)
+        if (match != null) {
+            val jsonStr = match.groupValues[1]
+            cleanedReply = replyText.replace(match.value, "").trim()
+            try {
+                val json = JSONObject(jsonStr)
+                val action = json.optString("action")
+                when (action) {
+                    "add_transaction" -> {
+                        val type = json.optString("type", "expense").lowercase()
+                        val amt = json.optLong("amount", 0L)
+                        val cat = json.optString("category", if (type == "expense") "Chi tiêu khác" else "Thu nhập khác")
+                        val note = json.optString("note", "")
+                        val date = json.optString("date", todayDate).ifBlank { todayDate }
+                        if (amt > 0L) {
+                            financeRepository.addTransaction(
+                                type = type,
+                                categoryOrSource = cat,
+                                amount = amt,
+                                date = date,
+                                paymentMethod = "Tiền mặt",
+                                note = note
+                            )
+                            val sign = if (type == "expense") "-" else "+"
+                            actionNotice = "✅ **Đã ghi nhận vào Sổ Thu Chi:** $sign${formatVnd(amt)} ($cat${if (note.isNotBlank()) ": $note" else ""})"
+                        }
+                    }
+                    "add_todo" -> {
+                        val text = json.optString("text")
+                        val priority = json.optString("priority", "mid")
+                        val date = json.optString("date", todayDate).ifBlank { todayDate }
+                        if (text.isNotBlank()) {
+                            taskTimeRepository.insertTodo(text = text, priority = priority, date = date)
+                            actionNotice = "✅ **Đã tạo việc cần làm:** \"$text\""
+                        }
+                    }
+                    "add_note" -> {
+                        val title = json.optString("title", "Ghi chú từ AI")
+                        val content = json.optString("content", "")
+                        if (content.isNotBlank() || title.isNotBlank()) {
+                            personalRepository.insertNote(title = title, content = content, tags = listOf("AI"), pinned = false)
+                            actionNotice = "✅ **Đã lưu vào Ghi chú:** \"$title\""
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+
+        // 2. Second attempt: If no action was executed from JSON, check user's text with Natural Language Intent Detector
+        if (actionNotice == null) {
+            actionNotice = detectAndExecuteVietnameseIntent(userText, todayDate)
+        }
+
+        return Pair(cleanedReply, actionNotice)
+    }
+
+    private suspend fun detectAndExecuteVietnameseIntent(userText: String, todayDate: String): String? {
+        val lower = userText.trim().lowercase()
+
+        // 1. Transaction intent
+        val isExpense = lower.contains("chi") || lower.contains("tiêu") || lower.contains("mua") ||
+                lower.contains("trả tiền") || lower.contains("đổ xăng") || lower.contains("thanh toán") ||
+                lower.contains("ăn sáng") || lower.contains("ăn trưa") || lower.contains("ăn tối")
+        val isIncome = lower.contains("thu") || lower.contains("nhận") || lower.contains("lương") ||
+                lower.contains("thưởng") || lower.contains("tiền vào") || lower.contains("freelance") ||
+                lower.contains("bán được") || lower.contains("được cho")
+
+        if (isExpense || isIncome) {
+            val amount = parseVndAmount(userText)
+            if (amount != null && amount > 0L) {
+                val type = if (isIncome && !lower.contains("chi") && !lower.contains("tiêu")) "income" else "expense"
+                val category = detectCategory(lower, type)
+                val note = extractNoteDescription(userText)
+
+                financeRepository.addTransaction(
+                    type = type,
+                    categoryOrSource = category,
+                    amount = amount,
+                    date = todayDate,
+                    paymentMethod = "Tiền mặt",
+                    note = note
+                )
+                val sign = if (type == "expense") "-" else "+"
+                return "✅ **Đã tự động lưu vào Sổ Thu Chi:** $sign${formatVnd(amount)} ($category${if (note.isNotBlank()) ": $note" else ""})"
+            }
+        }
+
+        // 2. Todo intent
+        if (lower.startsWith("thêm việc") || lower.startsWith("tạo việc") || lower.contains("việc cần làm") ||
+            lower.startsWith("nhắc tôi") || lower.startsWith("nhắc việc") || lower.startsWith("todo:")) {
+            val todoText = userText
+                .replace(Regex("""^(thêm việc cần làm|tạo việc cần làm|việc cần làm|nhắc tôi|nhắc việc|thêm việc|tạo việc|todo:)\s*[:\-]?\s*""", RegexOption.IGNORE_CASE), "")
+                .trim()
+            if (todoText.isNotBlank()) {
+                val priority = if (lower.contains("gấp") || lower.contains("quan trọng") || lower.contains("ưu tiên")) "high" else "mid"
+                taskTimeRepository.insertTodo(text = todoText, priority = priority, date = todayDate)
+                return "✅ **Đã tự động thêm vào Việc Cần Làm:** \"$todoText\""
+            }
+        }
+
+        // 3. Note intent
+        if (lower.startsWith("tạo ghi chú") || lower.startsWith("thêm ghi chú") || lower.startsWith("lưu ghi chú") || lower.startsWith("ghi chú:")) {
+            val content = userText
+                .replace(Regex("""^(tạo ghi chú|thêm ghi chú|lưu ghi chú|ghi chú:)\s*[:\-]?\s*""", RegexOption.IGNORE_CASE), "")
+                .trim()
+            if (content.isNotBlank()) {
+                val title = content.take(30).trim() + if (content.length > 30) "..." else ""
+                personalRepository.insertNote(title = title, content = content, tags = listOf("AI"), pinned = false)
+                return "✅ **Đã tự động lưu vào Ghi chú:** \"$title\""
+            }
+        }
+
+        return null
+    }
+
+    private fun parseVndAmount(text: String): Long? {
+        val regex = Regex("""(\d+(?:[.,]\d+)?)\s*(k|nghìn|ngàn|tr|triệu|m|đ|vnd)?""", RegexOption.IGNORE_CASE)
+        val matches = regex.findAll(text).toList()
+        for (m in matches) {
+            val numStr = m.groupValues[1].replace(",", ".")
+            val unit = m.groupValues[2].lowercase()
+            val num = numStr.toDoubleOrNull() ?: continue
+            var total = num
+            when (unit) {
+                "k", "nghìn", "ngàn" -> total *= 1_000.0
+                "tr", "triệu", "m" -> total *= 1_000_000.0
+                else -> {
+                    if (total < 1000.0 && total > 0.0) {
+                        total *= 1_000.0
+                    }
+                }
+            }
+            if (total >= 1000.0) {
+                return total.toLong()
+            }
+        }
+        return null
+    }
+
+    private fun detectCategory(lower: String, type: String): String {
+        if (type == "income") {
+            return when {
+                lower.contains("lương") -> "Lương"
+                lower.contains("thưởng") || lower.contains("bonus") -> "Thưởng"
+                lower.contains("freelance") || lower.contains("dự án") -> "Freelance"
+                lower.contains("bán") -> "Bán hàng"
+                lower.contains("quà") || lower.contains("tặng") || lower.contains("cho") -> "Được tặng/Cho"
+                lower.contains("đầu tư") || lower.contains("lãi") -> "Đầu tư"
+                else -> "Thu nhập khác"
+            }
+        } else {
+            return when {
+                lower.contains("ăn") || lower.contains("uống") || lower.contains("cơm") || lower.contains("phở") ||
+                lower.contains("bún") || lower.contains("bánh") || lower.contains("cà phê") || lower.contains("cafe") ||
+                lower.contains("trà") || lower.contains("thức ăn") -> "Ăn uống"
+
+                lower.contains("xăng") || lower.contains("xe") || lower.contains("grab") || lower.contains("taxi") ||
+                lower.contains("đi lại") || lower.contains("gửi xe") || lower.contains("bus") -> "Đi lại"
+
+                lower.contains("mua") || lower.contains("quần áo") || lower.contains("giày") || lower.contains("shopee") ||
+                lower.contains("tiki") || lower.contains("lazada") || lower.contains("đồ") -> "Mua sắm"
+
+                lower.contains("học") || lower.contains("sách") || lower.contains("khóa học") || lower.contains("học phí") -> "Học tập"
+
+                lower.contains("thuốc") || lower.contains("bệnh") || lower.contains("khám") || lower.contains("gym") ||
+                lower.contains("thể thao") || lower.contains("nha khoa") -> "Sức khỏe"
+
+                lower.contains("nhà") || lower.contains("phòng") || lower.contains("điện") || lower.contains("nước") ||
+                lower.contains("wifi") || lower.contains("mạng") -> "Nhà ở & Tiện ích"
+
+                lower.contains("nhậu") || lower.contains("xem phim") || lower.contains("chơi") || lower.contains("du lịch") -> "Giải trí"
+
+                else -> "Chi tiêu khác"
+            }
+        }
+    }
+
+    private fun extractNoteDescription(userText: String): String {
+        val cleaned = userText
+            .replace(Regex("""(?i)\b(thêm|ghi nhận|ghi|nhập|khoản chi|khoản thu|chi|tiêu|thu|nhận)\b"""), "")
+            .replace(Regex("""(?i)\b(\d+(?:[.,]\d+)?\s*(?:k|nghìn|ngàn|tr|triệu|m|đ|vnd)?)\b"""), "")
+            .replace(Regex("""(?i)\b(tiền|cho|vào|từ|ngày hôm nay|hôm nay)\b"""), "")
+            .trim()
+        return cleaned.ifBlank { userText.take(40) }
     }
 
     private suspend fun generateSmartFallback(query: String): String {
