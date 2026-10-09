@@ -165,7 +165,7 @@ fun TodayScreen(viewModel: TodayViewModel) {
                         ) {
                             StatItem(label = "Việc hoàn thành", value = "${uiState.completedCount}/${uiState.totalTodoCount}")
                             StatItem(label = "Sự kiện hôm nay", value = "${uiState.events.size}")
-                            StatItem(label = "Streak thói quen", value = "12 ngày")
+                            StatItem(label = "Trạng thái", value = if (uiState.productivityPercentage == 100 && uiState.totalTodoCount > 0) "Hoàn hảo ✨" else "${uiState.productivityPercentage}%")
                         }
                     }
                 }

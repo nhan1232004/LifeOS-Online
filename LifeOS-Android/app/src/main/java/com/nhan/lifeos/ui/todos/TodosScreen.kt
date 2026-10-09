@@ -56,6 +56,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nhan.lifeos.core.designsystem.LifeOSAmber
+import com.nhan.lifeos.core.designsystem.LifeOSCyan
 import com.nhan.lifeos.core.designsystem.LifeOSGlassBorder
 import com.nhan.lifeos.core.designsystem.LifeOSGreen
 import com.nhan.lifeos.core.designsystem.LifeOSPrimary
@@ -209,7 +210,7 @@ private fun TodoCardItem(
     val priColor = when (todo.priority.lowercase()) {
         "high" -> LifeOSRed
         "mid" -> LifeOSAmber
-        else -> LifeOSGreen
+        else -> LifeOSCyan
     }
 
     Card(

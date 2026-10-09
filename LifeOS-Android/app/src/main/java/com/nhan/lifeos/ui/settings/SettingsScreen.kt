@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,10 +47,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.nhan.lifeos.core.designsystem.LifeOSAmber
 import com.nhan.lifeos.core.designsystem.LifeOSCyan
 import com.nhan.lifeos.core.designsystem.LifeOSGreen
@@ -118,6 +121,82 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = LifeOSTextMid
                     )
+                }
+            }
+        }
+
+        // Active Theme: Midnight Aurora Banner
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard),
+                border = androidx.compose.foundation.BorderStroke(1.dp, LifeOSPrimary.copy(alpha = 0.45f))
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(
+                                        Brush.linearGradient(listOf(LifeOSPrimary, LifeOSCyan))
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Info,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Chủ đề: Midnight Aurora",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = LifeOSTextHigh
+                                )
+                                Text(
+                                    text = "Dark SaaS hiện đại + Glassmorphism",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = LifeOSCyan
+                                )
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(LifeOSGreen.copy(alpha = 0.18f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "Đang áp dụng",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = LifeOSGreen,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        PalettePill("Nền", "#0B1024", Color(0xFF0B1024))
+                        PalettePill("Bề mặt", "#171F3B", Color(0xFF171F3B))
+                        PalettePill("Màu chính", "#8B5CF6", Color(0xFF8B5CF6))
+                        PalettePill("Màu phụ", "#22D3EE", Color(0xFF22D3EE))
+                    }
                 }
             }
         }
@@ -514,3 +593,28 @@ fun SettingsScreen(
         )
     }
 }
+
+@Composable
+private fun RowScope.PalettePill(label: String, hex: String, color: Color) {
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFF131A36))
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(14.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = label, fontSize = 9.sp, color = LifeOSTextMid)
+            Text(text = hex, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = LifeOSTextHigh)
+        }
+    }
+}
+

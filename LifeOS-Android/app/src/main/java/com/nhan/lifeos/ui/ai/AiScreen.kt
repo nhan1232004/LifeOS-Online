@@ -58,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.font.FontWeight
@@ -289,13 +290,17 @@ fun AiScreen(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(LifeOSCyan)
+                    .background(
+                        Brush.linearGradient(
+                            listOf(LifeOSPrimary, LifeOSCyan)
+                        )
+                    )
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.Send,
                     contentDescription = "Gửi",
-                    tint = Color.Black,
-                    modifier = Modifier.size(22.dp)
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }

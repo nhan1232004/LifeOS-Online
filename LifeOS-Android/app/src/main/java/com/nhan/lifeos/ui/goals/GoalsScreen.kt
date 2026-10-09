@@ -81,6 +81,11 @@ fun GoalsScreen(
     var selectedGoalForProgress by remember { mutableStateOf<GoalEntity?>(null) }
     var editingGoal by remember { mutableStateOf<GoalEntity?>(null) }
 
+    val totalSaved = remember(uiState.goals) { uiState.goals.sumOf { it.currentValue } }
+    val totalTarget = remember(uiState.goals) { uiState.goals.sumOf { it.targetValue } }
+    val overallPercent = if (totalTarget > 0) ((totalSaved * 100) / totalTarget).toInt().coerceIn(0, 100) else 0
+    val decFmt = remember { DecimalFormat("#,###") }
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
@@ -126,64 +131,64 @@ fun GoalsScreen(
                 }
             }
 
-            // Overview Summary Card
+            // 4 Top KPI Cards (Midnight Aurora Bento)
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        LifeOSCyan.copy(alpha = 0.2f),
-                                        LifeOSPrimary.copy(alpha = 0.25f)
-                                    )
-                                )
-                            )
-                            .padding(20.dp)
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
                         ) {
-                            Column {
-                                Text(
-                                    text = "Tiến độ mục tiêu",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = LifeOSTextMid
-                                )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = "${uiState.completedGoals} / ${uiState.totalGoals} hoàn thành",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = LifeOSTextHigh
-                                )
-                                Text(
-                                    text = "Đang tích lũy: ${uiState.inProgressGoals} mục tiêu",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = LifeOSCyan
-                                )
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(text = "Đã tích lũy", style = MaterialTheme.typography.labelSmall, color = LifeOSTextMid)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = "${decFmt.format(totalSaved)}đ", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = LifeOSCyan)
+                                Text(text = "Tiết kiệm hiện tại", style = MaterialTheme.typography.labelSmall, color = LifeOSTextLow)
                             }
-
-                            Box(
-                                modifier = Modifier
-                                    .size(52.dp)
-                                    .clip(CircleShape)
-                                    .background(LifeOSCyan.copy(alpha = 0.2f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.TrackChanges,
-                                    contentDescription = null,
-                                    tint = LifeOSCyan,
-                                    modifier = Modifier.size(28.dp)
-                                )
+                        }
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(text = "Cần đạt", style = MaterialTheme.typography.labelSmall, color = LifeOSTextMid)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = "${decFmt.format(totalTarget)}đ", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = LifeOSAmber)
+                                Text(text = "Tổng hạn mức", style = MaterialTheme.typography.labelSmall, color = LifeOSTextLow)
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(text = "Hoàn thành", style = MaterialTheme.typography.labelSmall, color = LifeOSTextMid)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = "${uiState.completedGoals}/${uiState.totalGoals}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = LifeOSGreen)
+                                Text(text = "Mục tiêu đã xong", style = MaterialTheme.typography.labelSmall, color = LifeOSTextLow)
+                            }
+                        }
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(text = "Tổng tiến độ", style = MaterialTheme.typography.labelSmall, color = LifeOSTextMid)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = "$overallPercent%", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = LifeOSPrimary)
+                                Text(text = "Tỷ lệ tích lũy chung", style = MaterialTheme.typography.labelSmall, color = LifeOSTextLow)
                             }
                         }
                     }

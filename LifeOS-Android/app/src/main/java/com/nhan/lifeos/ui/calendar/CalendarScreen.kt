@@ -285,7 +285,7 @@ fun CalendarScreen(viewModel: CalendarViewModel) {
                                                 modifier = Modifier
                                                     .size(4.dp)
                                                     .clip(CircleShape)
-                                                    .background(if (isSelected) Color.White else LifeOSAmber)
+                                                    .background(if (isSelected) Color.White else LifeOSCyan)
                                             )
                                         }
                                     }

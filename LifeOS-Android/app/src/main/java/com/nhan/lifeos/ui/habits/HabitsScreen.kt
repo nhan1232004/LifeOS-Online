@@ -53,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nhan.lifeos.core.designsystem.LifeOSAmber
+import com.nhan.lifeos.core.designsystem.LifeOSCyan
 import com.nhan.lifeos.core.designsystem.LifeOSGlassBorder
 import com.nhan.lifeos.core.designsystem.LifeOSGreen
 import com.nhan.lifeos.core.designsystem.LifeOSPrimary
@@ -97,6 +98,19 @@ fun HabitsScreen(
         }
         list
     }
+
+    val todayIso = remember { sdf.format(Calendar.getInstance().time) }
+    val todayDoneCount = remember(uiState.habits) {
+        uiState.habits.count { h ->
+            try {
+                val json = JSONObject(h.logsJson)
+                json.optBoolean(todayIso, false)
+            } catch (e: Exception) { false }
+        }
+    }
+    val todayRate = if (uiState.habits.isNotEmpty()) (todayDoneCount * 100 / uiState.habits.size) else 0
+    val maxStreak = remember(uiState.habits) { uiState.habits.maxOfOrNull { it.streak } ?: 0 }
+    val activeCount = uiState.habits.size
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -143,53 +157,64 @@ fun HabitsScreen(
                 }
             }
 
-            // Streak Overview Card
+            // 4 Top KPI Cards (Midnight Aurora Bento)
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        LifeOSAmber.copy(alpha = 0.25f),
-                                        LifeOSRed.copy(alpha = 0.15f)
-                                    )
-                                )
-                            )
-                            .padding(20.dp)
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
                         ) {
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.LocalFireDepartment,
-                                        contentDescription = null,
-                                        tint = LifeOSAmber,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "Tổng chuỗi Streak: ${uiState.totalStreak} ngày",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = LifeOSTextHigh
-                                    )
-                                }
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(text = "Hôm nay", style = MaterialTheme.typography.labelSmall, color = LifeOSTextMid)
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Duy trì đều đặn để tạo dựng kỷ luật thép!",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LifeOSTextMid
-                                )
+                                Text(text = "$todayRate%", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = LifeOSCyan)
+                                Text(text = "$todayDoneCount/$activeCount thói quen", style = MaterialTheme.typography.labelSmall, color = LifeOSTextLow)
+                            }
+                        }
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(text = "Kỷ lục", style = MaterialTheme.typography.labelSmall, color = LifeOSTextMid)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = "$maxStreak ngày", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = LifeOSAmber)
+                                Text(text = "Chuỗi dài nhất", style = MaterialTheme.typography.labelSmall, color = LifeOSTextLow)
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(text = "Bền bỉ", style = MaterialTheme.typography.labelSmall, color = LifeOSTextMid)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = "${uiState.totalStreak} ngày", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = LifeOSPrimary)
+                                Text(text = "Tổng ngày tích lũy", style = MaterialTheme.typography.labelSmall, color = LifeOSTextLow)
+                            }
+                        }
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(text = "Đang duy trì", style = MaterialTheme.typography.labelSmall, color = LifeOSTextMid)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = "$activeCount", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = LifeOSGreen)
+                                Text(text = "Thói quen hoạt động", style = MaterialTheme.typography.labelSmall, color = LifeOSTextLow)
                             }
                         }
                     }
@@ -276,8 +301,8 @@ fun HabitsScreen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
-            containerColor = LifeOSGreen,
-            contentColor = Color.Black,
+            containerColor = LifeOSPrimary,
+            contentColor = Color.White,
             shape = CircleShape
         ) {
             Icon(imageVector = Icons.Rounded.Add, contentDescription = "Thêm thói quen")
@@ -407,7 +432,7 @@ fun HabitCardItem(
                             .size(34.dp)
                             .clip(CircleShape)
                             .background(
-                                if (isChecked) LifeOSGreen else Color(0xFF1E1E30)
+                                if (isChecked) LifeOSPrimary else Color(0xFF131A36)
                             )
                             .clickable { onToggleDay(isoDate) },
                         contentAlignment = Alignment.Center
@@ -416,7 +441,7 @@ fun HabitCardItem(
                             Icon(
                                 imageVector = Icons.Rounded.Check,
                                 contentDescription = null,
-                                tint = Color.Black,
+                                tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
                         }

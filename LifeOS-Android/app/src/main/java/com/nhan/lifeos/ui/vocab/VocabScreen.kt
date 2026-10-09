@@ -4,6 +4,7 @@ import android.speech.tts.TextToSpeech
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -64,6 +65,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nhan.lifeos.core.designsystem.LifeOSAmber
+import com.nhan.lifeos.core.designsystem.LifeOSCyan
 import com.nhan.lifeos.core.designsystem.LifeOSGlassBorder
 import com.nhan.lifeos.core.designsystem.LifeOSGreen
 import com.nhan.lifeos.core.designsystem.LifeOSPrimary
@@ -239,16 +241,22 @@ fun VocabScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
+                            val typeColor = when (currentCard.type.lowercase()) {
+                                "noun", "danh từ" -> LifeOSCyan
+                                "verb", "động từ" -> LifeOSPrimary
+                                "adj", "tính từ" -> LifeOSAmber
+                                else -> LifeOSGreen
+                            }
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(LifeOSPrimary.copy(alpha = 0.2f))
+                                    .background(typeColor.copy(alpha = 0.2f))
                                     .padding(horizontal = 10.dp, vertical = 4.dp)
                             ) {
                                 Text(
                                     text = currentCard.type.uppercase(),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = LifeOSPrimary,
+                                    color = typeColor,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -338,13 +346,14 @@ fun VocabScreen(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFF222238))
-                                        .padding(12.dp)
+                                        .background(LifeOSSurfaceCard)
+                                        .border(1.dp, LifeOSCyan.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                                        .padding(14.dp)
                                 ) {
                                     Text(
                                         text = "\"${currentCard.example}\"",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = LifeOSTextMid,
+                                        color = LifeOSCyan,
                                         fontStyle = FontStyle.Italic,
                                         textAlign = TextAlign.Center
                                     )

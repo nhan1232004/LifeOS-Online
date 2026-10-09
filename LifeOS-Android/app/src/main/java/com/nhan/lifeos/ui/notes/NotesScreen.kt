@@ -71,6 +71,32 @@ fun NotesScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var editingNote by remember { mutableStateOf<NoteEntity?>(null) }
+    var selectedCategory by remember { mutableStateOf("all") }
+
+    val categories = listOf(
+        "all" to "Tất cả",
+        "work" to "Công việc",
+        "personal" to "Cá nhân",
+        "excel" to "Bảng tính Excel"
+    )
+
+    val displayedNotes = remember(uiState.notes, selectedCategory) {
+        when (selectedCategory) {
+            "work" -> uiState.notes.filter { note ->
+                note.tags.any { it.contains("work", true) || it.contains("công việc", true) } ||
+                note.title.contains("công việc", true)
+            }
+            "personal" -> uiState.notes.filter { note ->
+                note.tags.any { it.contains("personal", true) || it.contains("cá nhân", true) } ||
+                note.title.contains("cá nhân", true)
+            }
+            "excel" -> uiState.notes.filter { note ->
+                note.tags.any { it.contains("excel", true) || it.contains("sheet", true) || it.contains("bảng", true) } ||
+                note.title.contains("excel", true) || note.content.contains("sheet", true)
+            }
+            else -> uiState.notes
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -147,14 +173,39 @@ fun NotesScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = LifeOSSurfaceCard,
                         unfocusedContainerColor = LifeOSSurfaceCard,
-                        focusedBorderColor = LifeOSAmber,
+                        focusedBorderColor = LifeOSPrimary,
                         unfocusedBorderColor = LifeOSGlassBorder
                     )
                 )
             }
 
+            // Category Filter Pills
+            item {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(categories) { (key, label) ->
+                        val isSelected = selectedCategory == key
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isSelected) LifeOSPrimary else LifeOSSurfaceCard)
+                                .clickable { selectedCategory = key }
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) Color.White else LifeOSTextMid
+                            )
+                        }
+                    }
+                }
+            }
+
             // Notes List
-            if (uiState.notes.isEmpty()) {
+            if (displayedNotes.isEmpty()) {
                 item {
                     Box(
                         modifier = Modifier
@@ -163,14 +214,14 @@ fun NotesScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (uiState.searchQuery.isNotBlank()) "Không tìm thấy ghi chú phù hợp" else "Chưa có ghi chú nào. Hãy tạo ngay!",
+                            text = if (uiState.searchQuery.isNotBlank()) "Không tìm thấy ghi chú phù hợp" else "Chưa có ghi chú nào trong mục này",
                             style = MaterialTheme.typography.bodyMedium,
                             color = LifeOSTextLow
                         )
                     }
                 }
             } else {
-                items(uiState.notes, key = { it.id }) { note ->
+                items(displayedNotes, key = { it.id }) { note ->
                     NoteCardItem(
                         note = note,
                         onClick = { editingNote = note },
@@ -191,8 +242,8 @@ fun NotesScreen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
-            containerColor = LifeOSAmber,
-            contentColor = Color.Black,
+            containerColor = LifeOSPrimary,
+            contentColor = Color.White,
             shape = CircleShape
         ) {
             Icon(imageVector = Icons.Rounded.Add, contentDescription = "Thêm ghi chú")

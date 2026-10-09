@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nhan.lifeos.core.designsystem.LifeOSAmber
+import com.nhan.lifeos.core.designsystem.LifeOSCyan
 import com.nhan.lifeos.core.designsystem.LifeOSGreen
 import com.nhan.lifeos.core.designsystem.LifeOSPrimary
 import com.nhan.lifeos.core.designsystem.LifeOSRed
@@ -70,7 +71,7 @@ fun PomodoroScreen(
         Triple("Nghỉ dài", 15, false)
     )
 
-    val activeColor = if (uiState.isWorkMode) LifeOSRed else LifeOSGreen
+    val activeColor = if (uiState.isWorkMode) LifeOSPrimary else LifeOSCyan
 
     Column(
         modifier = Modifier
@@ -159,7 +160,7 @@ fun PomodoroScreen(
                 val strokeWidth = 14.dp.toPx()
                 // Track circle
                 drawCircle(
-                    color = Color(0xFF1B1B2C),
+                    color = Color(0xFF131A36),
                     radius = (size.minDimension - strokeWidth) / 2,
                     style = Stroke(width = strokeWidth)
                 )
@@ -270,7 +271,7 @@ fun PomodoroScreen(
                         text = "${uiState.completedSessions} phiên",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = LifeOSAmber
+                        color = LifeOSCyan
                     )
                 }
             }
