@@ -1615,10 +1615,11 @@ function getFinMonth() {
 
 function computeFin(customInterval){
  const { start, end } = customInterval || getFinDateInterval();
- const totalInc=(window.DB.income||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).reduce((a,x)=>a+x.amt,0);
- const totalExp=(window.DB.expense||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).reduce((a,x)=>a+x.amt,0);
+ const getAmt = x => Number(x.amt ?? x.amount ?? 0) || 0;
+ const totalInc=(window.DB.income||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).reduce((a,x)=>a+getAmt(x),0);
+ const totalExp=(window.DB.expense||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).reduce((a,x)=>a+getAmt(x),0);
  const balance=totalInc-totalExp;
- const savRate=totalInc>0?((balance/totalInc)*100).toFixed(1):0;
+ const savRate=totalInc>0?Math.max(0, ((balance/totalInc)*100)).toFixed(1):0;
  return{totalInc,totalExp,balance,savRate};
 }
 function renderFinKpi(){
@@ -2603,10 +2604,77 @@ function renderToday() {
     const maxStreak = habits.reduce((max, h) => Math.max(max, (typeof getStreak === 'function' ? getStreak(h.log||{}, h.createdAt) : h.streak || 0)), 0);
     const habitPct = habits.length ? Math.round((habitsDone / habits.length) * 100) : 0;
 
-    const k = typeof computeFin === 'function' ? computeFin() : { balance: 0, savRate: 0 };
+    // 4. Savings / Finance KPI
     const curMonth = td.substring(0, 7);
-    const monthExpenses = (window.DB.expense || []).filter(e => (e.date || '').startsWith(curMonth));
-    const totalMonthExp = monthExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+    const allIncomes = window.DB.income || [];
+    const allExpenses = window.DB.expense || [];
+    const getAmt = item => Number(item.amt ?? item.amount ?? 0) || 0;
+
+    const totalAllInc = allIncomes.reduce((sum, i) => sum + getAmt(i), 0);
+    const totalAllExp = allExpenses.reduce((sum, e) => sum + getAmt(e), 0);
+    const allTimeBalance = totalAllInc - totalAllExp;
+
+    const monthIncomes = allIncomes.filter(i => (i.date || '').startsWith(curMonth));
+    const totalMonthInc = monthIncomes.reduce((sum, i) => sum + getAmt(i), 0);
+    const monthExpenses = allExpenses.filter(e => (e.date || '').startsWith(curMonth));
+    const totalMonthExp = monthExpenses.reduce((sum, e) => sum + getAmt(e), 0);
+    const monthSavings = totalMonthInc - totalMonthExp;
+
+    const allGoals = window.DB.goals || [];
+    const totalGoalsSaved = allGoals.reduce((sum, g) => sum + (Number(g.saved) || 0), 0);
+    const totalGoalsTarget = allGoals.reduce((sum, g) => sum + (Number(g.target) || 0), 0);
+    const goalsPct = totalGoalsTarget > 0 ? Math.round((totalGoalsSaved / totalGoalsTarget) * 100) : 0;
+
+    let savCardValue = '0 ₫';
+    let savCardLabel = 'Tiết kiệm tháng này';
+    let savCardPill = '0% Tiết kiệm';
+    let savCardPct = 0;
+    let savCardTargetNav = 'finance';
+
+    if (totalGoalsSaved > 0 && totalAllInc === 0 && totalAllExp === 0) {
+      // User primarily uses Goals to track savings
+      savCardValue = `${fmt(totalGoalsSaved)} ₫`;
+      savCardLabel = 'Đã tiết kiệm mục tiêu';
+      savCardPill = `${goalsPct}% mục tiêu`;
+      savCardPct = goalsPct;
+      savCardTargetNav = 'goals';
+    } else if (totalMonthInc > 0) {
+      // We have income this month
+      const rate = Math.round((monthSavings / totalMonthInc) * 100);
+      savCardValue = `${monthSavings >= 0 ? '+' : ''}${fmt(monthSavings)} ₫`;
+      savCardLabel = 'Tiết kiệm tháng này';
+      savCardPill = rate >= 0 ? `Tiết kiệm ${rate}%` : `Bội chi ${Math.abs(rate)}%`;
+      savCardPct = Math.max(0, rate);
+      savCardTargetNav = 'finance';
+    } else if (allTimeBalance > 0) {
+      // User has cumulative savings from past months
+      savCardValue = `+${fmt(allTimeBalance)} ₫`;
+      savCardLabel = 'Tổng số dư tiết kiệm';
+      savCardPill = totalMonthExp > 0 ? `Chi tháng: ${fmt(totalMonthExp)} ₫` : 'Số dư khả dụng';
+      savCardPct = 100;
+      savCardTargetNav = 'finance';
+    } else if (totalGoalsSaved > 0) {
+      // User has goal savings even if month income is 0
+      savCardValue = `${fmt(totalGoalsSaved)} ₫`;
+      savCardLabel = 'Tiết kiệm mục tiêu';
+      savCardPill = `${goalsPct}% mục tiêu`;
+      savCardPct = goalsPct;
+      savCardTargetNav = 'goals';
+    } else if (totalMonthExp > 0) {
+      // Only expenses recorded this month
+      savCardValue = `-${fmt(totalMonthExp)} ₫`;
+      savCardLabel = 'Chi tiêu tháng này';
+      savCardPill = `${monthExpenses.length} khoản chi`;
+      savCardPct = 0;
+      savCardTargetNav = 'finance';
+    } else {
+      // No data yet
+      savCardValue = '0 ₫';
+      savCardLabel = 'Tiết kiệm tháng này';
+      savCardPill = 'Chưa có giao dịch';
+      savCardPct = 0;
+      savCardTargetNav = 'finance';
+    }
 
     kpiGrid.innerHTML = `
       <div class="bento-kpi-card" onclick="nav('todos')">
@@ -2651,17 +2719,17 @@ function renderToday() {
         </div>
       </div>
 
-      <div class="bento-kpi-card" onclick="nav('finance')">
+      <div class="bento-kpi-card" onclick="nav('${savCardTargetNav}')">
         <div class="bento-kpi-top">
           <div class="bento-kpi-icon mint"><i data-lucide="wallet" class="ic-18"></i></div>
-          <span class="bento-kpi-pill mint">Tiết kiệm ${k.savRate}%</span>
+          <span class="bento-kpi-pill mint">${savCardPill}</span>
         </div>
         <div class="bento-kpi-mid">
-          <div class="bento-kpi-value">${fmt(totalMonthExp)} ₫</div>
-          <div class="bento-kpi-label">Chi tiêu tháng này</div>
+          <div class="bento-kpi-value" style="color:${savCardValue.startsWith('-') ? 'var(--danger)' : 'var(--text-primary)'}">${savCardValue}</div>
+          <div class="bento-kpi-label">${savCardLabel}</div>
         </div>
         <div class="bento-progress-track">
-          <div class="bento-progress-fill" style="width:${Math.min(100, k.savRate || 50)}%;background:linear-gradient(90deg,var(--accent-secondary),#4DD4A2);"></div>
+          <div class="bento-progress-fill" style="width:${Math.min(100, Math.max(5, savCardPct))}%;background:linear-gradient(90deg,var(--accent-secondary),#4DD4A2);"></div>
         </div>
       </div>
     `;

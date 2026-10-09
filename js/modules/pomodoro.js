@@ -23,7 +23,11 @@ pomWorker.onmessage = function() {
  if (pomLeft <= 0) {
   pomWorker.postMessage('stop');
   pomRunning = false;
-  document.getElementById('pomStartBtn').textContent = '▶ Bắt đầu';
+  const startBtn = document.getElementById('pomStartBtn');
+  if (startBtn) {
+   startBtn.innerHTML = '<i data-lucide="play" class="ic-16"></i> Bắt đầu';
+   if (window.lucide) window.lucide.createIcons();
+  }
   const isWork = pomTime > 15 * 60 || pomTime < 5 * 60;
   if (isWork) {
    const stats = pomLoadStats();
@@ -89,18 +93,20 @@ function pomUpdateDisplay() {
 
 function pomToggle() {
  if (typeof window.hapticTap === 'function') window.hapticTap();
+ const btn = document.getElementById('pomStartBtn');
  if (pomRunning) {
   pomWorker.postMessage('stop');
   pomRunning = false;
-  document.getElementById('pomStartBtn').textContent = '▶ Tiếp tục';
+  if (btn) btn.innerHTML = '<i data-lucide="play" class="ic-16"></i> Tiếp tục';
   document.getElementById('pomodoroStatus').textContent = 'Đã tạm dừng';
  } else {
   pomRunning = true;
   pomEndTime = Date.now() + pomLeft * 1000;
-  document.getElementById('pomStartBtn').textContent = '⏸ Tạm dừng';
+  if (btn) btn.innerHTML = '<i data-lucide="pause" class="ic-16"></i> Tạm dừng';
   document.getElementById('pomodoroStatus').textContent = pomTime <= 15 * 60 && pomTime >= 5 * 60 ? 'Đang nghỉ ngơi...' : 'Đang tập trung...';
   pomWorker.postMessage('start');
  }
+ if (window.lucide) window.lucide.createIcons();
  pomUpdateDisplay();
 }
 
@@ -108,8 +114,12 @@ function pomReset() {
  pomWorker.postMessage('stop');
  pomRunning = false;
  pomLeft = pomTime;
- document.getElementById('pomStartBtn').textContent = '▶ Bắt đầu';
- document.getElementById('pomodoroStatus').textContent = 'Tập trung làm việc';
+ const btn = document.getElementById('pomStartBtn');
+ if (btn) {
+  btn.innerHTML = '<i data-lucide="play" class="ic-16"></i> Bắt đầu';
+  if (window.lucide) window.lucide.createIcons();
+ }
+ document.getElementById('pomodoroStatus').textContent = pomTime <= 15 * 60 ? 'Nghỉ ngơi' : 'Tập trung làm việc';
  pomUpdateDisplay();
 }
 
@@ -118,10 +128,24 @@ function pomSet(mins, el) {
  pomRunning = false;
  pomTime = mins * 60;
  pomLeft = pomTime;
- document.getElementById('pomStartBtn').textContent = '▶ Bắt đầu';
+ const btn = document.getElementById('pomStartBtn');
+ if (btn) {
+  btn.innerHTML = '<i data-lucide="play" class="ic-16"></i> Bắt đầu';
+  if (window.lucide) window.lucide.createIcons();
+ }
  document.getElementById('pomodoroStatus').textContent = mins <= 15 ? 'Nghỉ ngơi' : 'Tập trung làm việc';
- document.querySelectorAll('#p-pomodoro .ftab').forEach(b => b.classList.remove('active'));
- if (el) el.classList.add('active');
+ 
+ // Remove active from all preset buttons
+ document.querySelectorAll('#p-pomodoro .seg-btn, #p-pomodoro .ftab').forEach(b => b.classList.remove('active'));
+ if (el) {
+  el.classList.add('active');
+ } else {
+  const matchBtn = Array.from(document.querySelectorAll('#p-pomodoro .seg-btn')).find(b => {
+    const attr = b.getAttribute('onclick') || '';
+    return attr.includes(`pomSet(${mins}`) || b.textContent.includes(`${mins}p`);
+  });
+  if (matchBtn) matchBtn.classList.add('active');
+ }
  pomUpdateDisplay();
 }
 function renderPomodoro() { pomUpdateDisplay(); }
