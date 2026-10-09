@@ -900,8 +900,8 @@ function renderProjGrid() {
    <div class="proj-card-create-icon">
     <i data-lucide="folder-plus" style="width:28px;height:28px"></i>
    </div>
-   <div style="font-weight:700;font-size:15px;margin-top:10px;color:var(--text-hi)">Tạo dự án mới</div>
-   <div style="font-size:12px;color:var(--text-mid);margin-top:4px">Thêm dự án để theo dõi tiến độ & công việc</div>
+   <div style="font-weight:700;font-size:15px;margin-top:12px;color:var(--text-primary)">Tạo dự án mới</div>
+   <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Thêm dự án để theo dõi tiến độ & công việc</div>
   </div>
  `;
  
@@ -909,37 +909,36 @@ function renderProjGrid() {
   const pTasks = allTasks.filter(t => t.projId === p.id);
   const doneTasks = pTasks.filter(t => t.status === 'Hoàn thành').length;
   const prog = p.progress !== undefined ? p.progress : (p.status==='Hoàn thành'?100:p.status==='Đang làm'?50:0);
-  const progColor = prog === 100 ? 'var(--green)' : prog > 0 ? 'var(--accent)' : 'var(--text3)';
-  const sb = {'Backlog':'bk','Cần làm':'ba','Đang làm':'bw','Hoàn thành':'bs'}[p.status]||'bk';
-  const tagsHtml = (p.tags||[]).slice(0, 3).map(t => `<span class="badge bp" style="font-size:10px;padding:2px 6px;">${window.LifeOSData?.escapeAttr(t)||t}</span>`).join('');
+  const statusPillClass = p.status === 'Hoàn thành' ? 'mint' : p.status === 'Đang làm' ? 'amber' : 'purple';
+  const tagsHtml = (p.tags||[]).slice(0, 3).map(t => `<span class="modern-tag-chip modern-tag-project">${window.LifeOSData?.escapeAttr(t)||t}</span>`).join('');
   
   cardsHtml += `
    <div class="proj-card" onclick="selectProjAndOpen('${p.id}')">
     <div class="proj-card-header">
-     <span class="badge ${sb}">${p.status||'Chưa làm'}</span>
+     <span class="bento-kpi-pill ${statusPillClass}">${p.status||'Khởi tạo'}</span>
      <div style="display:flex;gap:4px;" onclick="event.stopPropagation()">
-      <button class="btn btn-sm icon-btn-tool" onclick="editProj('${p.id}')" title="Sửa dự án" style="padding:4px"><i data-lucide="edit-3" class="ic-14"></i></button>
-      <button class="btn btn-sm icon-btn-tool" onclick="openProjDetail('${p.id}')" title="Xem chi tiết" style="padding:4px"><i data-lucide="eye" class="ic-14"></i></button>
+      <button class="icon-btn" onclick="editProj('${p.id}')" title="Sửa dự án" style="padding:4px"><i data-lucide="edit-3" class="ic-14"></i></button>
+      <button class="icon-btn" onclick="openProjDetail('${p.id}')" title="Xem chi tiết" style="padding:4px"><i data-lucide="eye" class="ic-14"></i></button>
      </div>
     </div>
-    <div class="proj-card-body">
+    <div class="proj-card-body" style="margin:10px 0;">
      <h3 class="proj-card-title">${window.LifeOSData?.escapeAttr(p.name)||p.name}</h3>
      ${p.desc ? `<p class="proj-card-desc">${window.LifeOSData?.escapeAttr(p.desc)||p.desc}</p>` : ''}
      ${tagsHtml ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${tagsHtml}</div>` : ''}
     </div>
-    <div class="proj-card-footer">
-     <div style="margin-bottom:8px;">
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-mid);margin-bottom:4px">
-       <span>Tiến độ</span>
-       <span style="font-weight:700;color:var(--text-hi)">${prog}%</span>
+    <div class="proj-card-footer" style="margin-top:auto;">
+     <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-muted);margin-bottom:5px">
+       <span>Tiến độ hoàn thành</span>
+       <span style="font-weight:700;color:var(--text-primary)">${prog}%</span>
       </div>
-      <div class="prog" style="height:6px;background:var(--glass-b);border-radius:99px;overflow:hidden">
-       <div class="prog-fill" style="width:${prog}%;background:${progColor};height:100%;border-radius:99px"></div>
+      <div class="bento-progress-track">
+       <div class="bento-progress-fill" style="width:${prog}%;"></div>
       </div>
      </div>
-     <div class="proj-card-meta">
-      <span style="font-size:11.5px;color:var(--text-mid)"><i data-lucide="check-square" class="ic-12" style="margin-right:2px"></i> ${doneTasks}/${pTasks.length} việc</span>
-      ${p.due ? `<span style="font-size:11.5px;color:${p.due<today()?'var(--red)':'var(--text-mid)'}"><i data-lucide="calendar" class="ic-12" style="margin-right:2px"></i> ${fmtDate(p.due)}</span>` : ''}
+     <div class="proj-card-meta" style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--text-muted);">
+      <span><i data-lucide="check-square" class="ic-12" style="margin-right:2px"></i> ${doneTasks}/${pTasks.length} việc</span>
+      ${p.due ? `<span style="${p.due<today()?'color:var(--danger);font-weight:700':''}"><i data-lucide="calendar" class="ic-12" style="margin-right:2px"></i> ${fmtDate(p.due)}</span>` : ''}
      </div>
     </div>
    </div>
@@ -1628,20 +1627,73 @@ function renderFinKpi(){
  const rangeLbl = document.getElementById('finDateRangeLabel');
  if (rangeLbl) rangeLbl.textContent = label;
 
- const k=computeFin(interval);
+ const k = computeFin(interval);
  const incCount = (window.DB.income||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).length;
  const expCount = (window.DB.expense||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).length;
  const expInPeriod = (window.DB.expense||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end));
  const expMax = expCount ? Math.max(...expInPeriod.map(e=>e.amt)) : 0;
- document.getElementById('finKpi').innerHTML=[
-  {l:'Tổng thu nhập',v:fmt(k.totalInc)+' ₫',c:'cg',i:'',s:incCount+' giao dịch'},
-  {l:'Tổng chi tiêu',v:fmt(k.totalExp)+' ₫',c:'cr',i:'<i data-lucide="heart" style="width:20px;height:20px"></i>',s:expCount+' giao dịch'},
-  {l:'Số dư',v:fmt(Math.abs(k.balance))+(k.balance<0?' âm':'')+' ₫',c:k.balance>=0?'cc':'cr',i:'',s:k.savRate+'% tiết kiệm'},
-  {l:'Tỷ lệ tiết kiệm',v:k.savRate+'%',c:'cp',i:'<i data-lucide="gem" style="width:20px;height:20px"></i>',s:'Mục tiêu 30%'},
-  {l:'Chi tiêu cao nhất',v:expCount?fmt(expMax)+' ₫':'—',c:'ca',i:'',s:''},
-  {l:'Tổng giao dịch',v:(incCount+expCount).toString(),c:'ck',i:'<i data-lucide="refresh-cw" style="width:20px;height:20px"></i>',s:''}
- ].map(k=>`<div class="kpi ${k.c}"><div class="kpi-ico">${k.i}</div><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div>${k.s?`<div class="kpi-sub">${k.s}</div>`:''}</div>`).join('');
- if(window.lucide) window.lucide.createIcons();
+
+ const el = document.getElementById('finKpi');
+ if (!el) return;
+ el.className = 'fin-bento-kpis';
+ el.innerHTML = `
+  <div class="bento-kpi-card">
+   <div class="bento-kpi-top">
+    <div class="bento-kpi-icon mint"><i data-lucide="wallet" class="ic-18"></i></div>
+    <span class="bento-kpi-pill mint">${k.savRate}% Tiết kiệm</span>
+   </div>
+   <div class="bento-kpi-mid">
+    <div class="bento-kpi-value" style="color:${k.balance >= 0 ? 'var(--text-primary)' : 'var(--danger)'}">${fmt(Math.abs(k.balance))}${k.balance < 0 ? ' âm' : ''} ₫</div>
+    <div class="bento-kpi-label">Số dư kỳ này</div>
+   </div>
+   <div class="bento-progress-track">
+    <div class="bento-progress-fill" style="width:${Math.min(100, k.savRate || 50)}%;background:linear-gradient(90deg,var(--accent-secondary),#4DD4A2);"></div>
+   </div>
+  </div>
+
+  <div class="bento-kpi-card">
+   <div class="bento-kpi-top">
+    <div class="bento-kpi-icon mint"><i data-lucide="trending-up" class="ic-18"></i></div>
+    <span class="bento-kpi-pill mint">${incCount} khoản thu</span>
+   </div>
+   <div class="bento-kpi-mid">
+    <div class="bento-kpi-value" style="color:var(--success)">+${fmt(k.totalInc)} ₫</div>
+    <div class="bento-kpi-label">Tổng thu nhập</div>
+   </div>
+   <div class="bento-progress-track">
+    <div class="bento-progress-fill" style="width:100%;background:linear-gradient(90deg,#4DD4A2,#5DD6C0);"></div>
+   </div>
+  </div>
+
+  <div class="bento-kpi-card">
+   <div class="bento-kpi-top">
+    <div class="bento-kpi-icon rose"><i data-lucide="trending-down" class="ic-18"></i></div>
+    <span class="bento-kpi-pill rose">${expCount} khoản chi</span>
+   </div>
+   <div class="bento-kpi-mid">
+    <div class="bento-kpi-value" style="color:var(--danger)">-${fmt(k.totalExp)} ₫</div>
+    <div class="bento-kpi-label">Tổng chi tiêu</div>
+   </div>
+   <div class="bento-progress-track">
+    <div class="bento-progress-fill" style="width:${k.totalInc > 0 ? Math.min(100, Math.round((k.totalExp / k.totalInc) * 100)) : 100}%;background:linear-gradient(90deg,var(--danger),#FFA8B5);"></div>
+   </div>
+  </div>
+
+  <div class="bento-kpi-card">
+   <div class="bento-kpi-top">
+    <div class="bento-kpi-icon amber"><i data-lucide="credit-card" class="ic-18"></i></div>
+    <span class="bento-kpi-pill amber">${incCount + expCount} giao dịch</span>
+   </div>
+   <div class="bento-kpi-mid">
+    <div class="bento-kpi-value">${expCount ? fmt(expMax) + ' ₫' : '0 ₫'}</div>
+    <div class="bento-kpi-label">Chi tiêu lớn nhất</div>
+   </div>
+   <div class="bento-progress-track">
+    <div class="bento-progress-fill" style="width:65%;background:linear-gradient(90deg,var(--warning),#FFD166);"></div>
+   </div>
+  </div>
+ `;
+ if (window.lucide) window.lucide.createIcons();
 }
 function renderFinTables(){
  const { start, end } = getFinDateInterval();
@@ -1651,8 +1703,8 @@ function renderFinTables(){
  const incomes = (window.DB.income||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).sort((a,b)=>b.date.localeCompare(a.date));
  const expenses = (window.DB.expense||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).sort((a,b)=>b.date.localeCompare(a.date));
  
- it.innerHTML=incomes.slice(0,30).map(x=>`<tr><td style="font-weight:600">${x.src}</td><td class="money mg">+${fmt(x.amt)} ₫</td><td style="color:var(--text3);font-size:11.5px">${fmtDate(x.date)}</td><td style="color:var(--text3);font-size:11.5px">${x.note||'—'}</td><td><button class="btn btn-sm btn-r" style="padding:2px 6px" onclick="delIncome('${x.id}')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">Chưa có dữ liệu</div></td></tr>';
- et.innerHTML=expenses.slice(0,30).map(x=>`<tr><td style="font-weight:600">${x.cat}</td><td class="money mr">−${fmt(x.amt)} ₫</td><td style="color:var(--text3);font-size:11.5px">${fmtDate(x.date)}</td><td style="color:var(--text3);font-size:11.5px">${x.pay}</td><td><button class="btn btn-sm btn-r" style="padding:2px 6px" onclick="delExpense('${x.id}')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">Chưa có dữ liệu</div></td></tr>';
+ it.innerHTML=incomes.slice(0,30).map(x=>`<tr><td style="font-weight:600;color:var(--text-primary)">${x.src}</td><td><span class="amount-income">+${fmt(x.amt)} ₫</span></td><td style="color:var(--text-muted);font-size:12px">${fmtDate(x.date)}</td><td style="color:var(--text-secondary);font-size:12px">${x.note||'—'}</td><td><button class="btn btn-sm btn-subtle" style="padding:4px 6px;color:var(--danger)" onclick="delIncome('${x.id}')" title="Xóa"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">Chưa có dữ liệu thu nhập</div></td></tr>';
+ et.innerHTML=expenses.slice(0,30).map(x=>`<tr><td style="font-weight:600;color:var(--text-primary)">${x.cat}</td><td><span class="amount-expense">−${fmt(x.amt)} ₫</span></td><td style="color:var(--text-muted);font-size:12px">${fmtDate(x.date)}</td><td style="color:var(--text-secondary);font-size:12px"><span class="badge" style="background:var(--surface-2);color:var(--text-secondary);font-size:11px">${x.pay}</span></td><td><button class="btn btn-sm btn-subtle" style="padding:4px 6px;color:var(--danger)" onclick="delExpense('${x.id}')" title="Xóa"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">Chưa có dữ liệu chi tiêu</div></td></tr>';
  
  // Default date inputs
  const incDateEl = document.getElementById('incDate');
@@ -1857,13 +1909,62 @@ function renderOverview(){
  // KPIs
  const ovKpi=document.getElementById('ovKpi');
  if(ovKpi){
+  ovKpi.className = 'bento-grid-4';
   ovKpi.innerHTML=`
-   <div class="kpi cc"><div class="kpi-ico" style="display:flex;align-items:center;justify-content:center"><i data-lucide="wallet"></i></div><div class="kpi-lbl">Tổng tài sản</div><div class="kpi-val">${fmt(k.balance)} ₫</div><div class="kpi-sub">${k.savRate}% Tiết kiệm</div><div class="sparkline"><canvas id="spFin"></canvas></div></div>
-   <div class="kpi ca"><div class="kpi-ico"></div><div class="kpi-lbl">Năng suất Todo</div><div class="kpi-val">${done}/${todayTodos.length}</div><div class="kpi-sub">Hôm nay</div><div class="sparkline"><canvas id="spTodo"></canvas></div></div>
-   <div class="kpi cg"><div class="kpi-ico">⏱️</div><div class="kpi-lbl">Thời gian Focus</div><div class="kpi-val">${pomStats.mins}p</div><div class="kpi-sub">Hôm nay</div><div class="sparkline"><canvas id="spPom"></canvas></div></div>
-   <div class="kpi cp"><div class="kpi-ico" style="display:flex;align-items:center;justify-content:center"><i data-lucide="languages"></i></div><div class="kpi-lbl">Tiếng Anh</div><div class="kpi-val">${avgEng} đ</div><div class="kpi-sub">Trung bình Mock Test</div><div class="sparkline"><canvas id="spEng"></canvas></div></div>
+   <div class="bento-kpi-card" onclick="nav('finance')">
+    <div class="bento-kpi-top">
+     <div class="bento-kpi-icon mint"><i data-lucide="wallet" class="ic-18"></i></div>
+     <span class="bento-kpi-pill mint">${k.savRate}% Tiết kiệm</span>
+    </div>
+    <div class="bento-kpi-mid">
+     <div class="bento-kpi-value">${fmt(k.balance)} ₫</div>
+     <div class="bento-kpi-label">Tổng tài sản ròng</div>
+    </div>
+    <div class="bento-progress-track">
+     <div class="bento-progress-fill" style="width:${Math.min(100, k.savRate || 50)}%;background:linear-gradient(90deg,var(--accent-secondary),#4DD4A2);"></div>
+    </div>
+   </div>
+   <div class="bento-kpi-card" onclick="nav('todos')">
+    <div class="bento-kpi-top">
+     <div class="bento-kpi-icon purple"><i data-lucide="check-circle-2" class="ic-18"></i></div>
+     <span class="bento-kpi-pill purple">${todayTodos.length ? Math.round((done / todayTodos.length) * 100) : 100}% xong</span>
+    </div>
+    <div class="bento-kpi-mid">
+     <div class="bento-kpi-value">${done}/${todayTodos.length}</div>
+     <div class="bento-kpi-label">Năng suất Todo hôm nay</div>
+    </div>
+    <div class="bento-progress-track">
+     <div class="bento-progress-fill" style="width:${todayTodos.length ? Math.round((done / todayTodos.length) * 100) : 0}%;background:linear-gradient(90deg,var(--accent),var(--accent-hover));"></div>
+    </div>
+   </div>
+   <div class="bento-kpi-card" onclick="nav('pomodoro')">
+    <div class="bento-kpi-top">
+     <div class="bento-kpi-icon amber"><i data-lucide="timer" class="ic-18"></i></div>
+     <span class="bento-kpi-pill amber">Focus Mode</span>
+    </div>
+    <div class="bento-kpi-mid">
+     <div class="bento-kpi-value">${pomStats.mins} phút</div>
+     <div class="bento-kpi-label">Thời gian tập trung hôm nay</div>
+    </div>
+    <div class="bento-progress-track">
+     <div class="bento-progress-fill" style="width:${Math.min(100, Math.round((pomStats.mins / 120) * 100))}%;background:linear-gradient(90deg,var(--warning),#FFD166);"></div>
+    </div>
+   </div>
+   <div class="bento-kpi-card" onclick="nav('vocab')">
+    <div class="bento-kpi-top">
+     <div class="bento-kpi-icon rose"><i data-lucide="languages" class="ic-18"></i></div>
+     <span class="bento-kpi-pill rose">Học tập</span>
+    </div>
+    <div class="bento-kpi-mid">
+     <div class="bento-kpi-value">${avgEng ? avgEng + ' đ' : (window.DB.vocab || []).length + ' từ'}</div>
+     <div class="bento-kpi-label">${avgEng ? 'Trung bình Mock Test' : 'Từ vựng đã lưu'}</div>
+    </div>
+    <div class="bento-progress-track">
+     <div class="bento-progress-fill" style="width:75%;background:linear-gradient(90deg,var(--danger),#FFA8B5);"></div>
+    </div>
+   </div>
   `;
-  setTimeout(() => drawSparklines(), 50);
+  if (window.lucide) window.lucide.createIcons();
  }
 
  // Activity Heatmap (Last 28 days)

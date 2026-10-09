@@ -49,19 +49,31 @@ async function delJournal(id) {
 function renderJournal() {
  const c = document.getElementById('journalContainer'); if (!c) return;
  const entries = (window.DB.journal || []).sort((a, b) => b.date.localeCompare(a.date));
- if (!entries.length) { c.innerHTML = '<div style="color:var(--text3);padding:30px;text-align:center">Chưa có nhật ký nào. Bấm "+ Viết nhật ký" để bắt đầu!</div>'; return; }
+ if (!entries.length) {
+  c.innerHTML = `
+   <div class="empty-state" style="padding:48px 20px;">
+    <div class="empty-state-icon"><i data-lucide="book-heart" class="ic-24"></i></div>
+    <div class="empty-state-title">Chưa có nhật ký nào</div>
+    <div class="empty-state-desc">Ghi lại cảm xúc, bài học hoặc suy nghĩ của bạn hôm nay.</div>
+    <button class="btn btn-p btn-sm" onclick="openJournal()" style="margin-top:12px;"><i data-lucide="plus" class="ic-14"></i> Viết nhật ký</button>
+   </div>`;
+  if (window.lucide) window.lucide.createIcons();
+  return;
+ }
  c.innerHTML = entries.map(j => `
-  <div class="journal-entry">
-   <div class="je-top">
-    <div class="je-date">${fmtDate(j.date)}</div>
+  <div class="modern-journal-card">
+   <div class="mj-header">
+    <div class="mj-date"><i data-lucide="calendar" class="ic-14"></i> <span>${fmtDate(j.date)}</span></div>
     <div style="display:flex;align-items:center;gap:8px">
-     <div class="je-mood">${j.mood || ''}</div>
-     <button class="btn btn-sm" onclick="openJournal('${j.id}')" style="padding:3px 6px"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
-     <button class="btn btn-sm" onclick="delJournal('${j.id}')" style="padding:3px 6px"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+     ${j.mood ? `<div class="mj-mood">${j.mood}</div>` : ''}
+     <button class="btn btn-sm btn-subtle" onclick="openJournal('${j.id}')" title="Chỉnh sửa"><i data-lucide="pencil" class="ic-14"></i></button>
+     <button class="btn btn-sm btn-subtle" onclick="delJournal('${j.id}')" title="Xóa" style="color:var(--danger)"><i data-lucide="trash-2" class="ic-14"></i></button>
     </div>
    </div>
-   <div class="je-body">${(j.body || '').replace(/</g, '&lt;')}</div>
+   <div class="mj-body">${(j.body || '').replace(/</g, '&lt;')}</div>
   </div>
  `).join('');
+ if (window.lucide) window.lucide.createIcons();
 }
+
 

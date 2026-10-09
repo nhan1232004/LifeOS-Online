@@ -57,23 +57,52 @@ async function delGoal(id) {
 function renderGoals() {
  const c = document.getElementById('goalsContainer'); if (!c) return;
  const goals = window.DB.goals || [];
- if (!goals.length) { c.innerHTML = '<div style="color:var(--text3);padding:30px;text-align:center">Chưa có mục tiêu nào. Bấm "<i data-lucide="plus" style="width:14px;height:14px;margin-right:4px"></i> Thêm mục tiêu" để bắt đầu!</div>'; return; }
+ if (!goals.length) {
+  c.className = '';
+  c.innerHTML = `
+   <div class="empty-state" style="padding:48px 16px;text-align:center;">
+    <div style="width:52px;height:52px;border-radius:14px;background:rgba(93,214,192,0.12);color:var(--accent-secondary);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+     <i data-lucide="target" class="ic-28"></i>
+    </div>
+    <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:6px">Chưa có mục tiêu nào</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Đặt ra mục tiêu tài chính cụ thể để theo dõi số tiền tiết kiệm và ngày hoàn thành.</div>
+    <button class="btn btn-p btn-sm" onclick="openGoal()"><i data-lucide="plus" class="ic-14"></i> Thêm mục tiêu</button>
+   </div>`;
+  if (window.lucide) lucide.createIcons();
+  return;
+ }
+ c.className = 'goals-grid';
  c.innerHTML = goals.map(g => {
   const pct = g.target > 0 ? Math.min(100, Math.round((g.saved / g.target) * 100)) : 0;
   const done = pct >= 100;
-  return `<div class="goal-card">
-   <div class="gc-top">
-    <div class="gc-name">${done ? ' ' : ' '}${g.name}</div>
-    <div class="gc-pct">${pct}%</div>
+  return `
+   <div class="goal-card">
+    <div class="gc-top">
+     <div class="gc-name" style="display:flex;align-items:center;gap:8px;">
+      <i data-lucide="${done ? 'check-circle-2' : 'target'}" class="ic-18" style="color:${done ? 'var(--success)' : 'var(--accent)'}"></i>
+      <span>${window.LifeOSData.escapeHtml(g.name)}</span>
+     </div>
+     <span class="bento-kpi-pill ${done ? 'mint' : 'purple'}">${pct}%</span>
+    </div>
+
+    <div class="gc-amt" style="display:flex;justify-content:space-between;align-items:center;">
+     <span style="font-weight:700;color:var(--text-primary);font-size:13.5px">${fmtFull(g.saved)} <span style="font-size:11px;color:var(--text-muted)">/ ${fmtFull(g.target)} ₫</span></span>
+     ${g.due ? `<span style="font-size:11.5px;color:var(--text-muted)"><i data-lucide="calendar" class="ic-12"></i> ${fmtDate(g.due)}</span>` : ''}
+    </div>
+
+    <div class="goal-bar">
+     <div class="goal-bar-fill" style="width:${pct}%;${done ? 'background:linear-gradient(90deg,var(--success),#5DD6C0)' : ''}"></div>
+    </div>
+
+    <div class="gc-actions" style="margin-top:4px;">
+     <button class="btn btn-sm btn-p" onclick="addToGoal('${window.LifeOSData.escapeAttr(g.id)}')" style="font-size:11.5px;padding:5px 12px;background:var(--accent-secondary);color:#0B0D14;font-weight:700"><i data-lucide="plus" class="ic-12"></i> Nạp thêm</button>
+     <button class="btn btn-sm btn-outline" onclick="openGoal('${window.LifeOSData.escapeAttr(g.id)}')" style="font-size:11.5px;padding:5px 10px"><i data-lucide="pencil" class="ic-12"></i> Sửa</button>
+     <button class="icon-btn" style="color:var(--danger);margin-left:auto" onclick="delGoal('${window.LifeOSData.escapeAttr(g.id)}')"><i data-lucide="trash-2" class="ic-14"></i></button>
+    </div>
    </div>
-   <div class="gc-amt">${fmtFull(g.saved)} / ${fmtFull(g.target)} ₫${g.due ? ' · Hạn: ' + fmtDate(g.due) : ''}</div>
-   <div class="goal-bar"><div class="goal-bar-fill" style="width:${pct}%;${done ? 'background:linear-gradient(90deg,var(--green),#00e676)' : ''}"></div></div>
-   <div class="gc-actions">
-    <button class="btn btn-sm btn-g" onclick="addToGoal('${g.id}')"><i data-lucide="plus" style="width:14px;height:14px;margin-right:4px"></i> Thêm tiền</button>
-    <button class="btn btn-sm" onclick="openGoal('${g.id}')"><i data-lucide="pencil" style="width:14px;height:14px;margin-right:4px"></i> Sửa</button>
-    <button class="btn btn-sm btn-r" onclick="delGoal('${g.id}')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
-   </div>
-  </div>`;
+  `;
  }).join('');
+
+ if (window.lucide) lucide.createIcons();
 }
 

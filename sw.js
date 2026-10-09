@@ -1,4 +1,4 @@
-const CACHE = 'lifeos-v11-bento-saas';
+const CACHE = 'lifeos-v13-saas-complete';
 const APP_SHELL = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const APP_SHELL = [
   './icon.svg',
   './css/style.css',
   './css/bento.css',
+  './css/modules.css',
   './js/data.js',
   './js/main.js',
   './js/workspace.js',

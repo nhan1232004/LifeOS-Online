@@ -129,10 +129,32 @@ async function todoDrop(e, newPri) {
  tDraggedId = null;
 }
 
+async function quickAddTodoFromInput() {
+  const inp = document.getElementById('quickTodoInput');
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (!text) return;
+  const newTodo = {
+    id: uid(),
+    text,
+    date: today(),
+    priority: 'mid',
+    done: false
+  };
+  const list = [newTodo, ...(window.DB.todos || [])];
+  await persist('todos', list);
+  inp.value = '';
+  toast('Đã thêm công việc!', 'success');
+  window.syncTodosUI();
+}
+
 function renderTodos(){
  const t = today();
- let list = [...(window.DB.todos || [])];
- 
+ const all = window.DB.todos || [];
+ const bAll = document.getElementById('badgeTodoAll');
+ if (bAll) bAll.textContent = all.length;
+
+ let list = [...all];
  if (todoFilter === 'today') {
   list = list.filter(x => x.date === t || (!x.done && x.date && x.date < t) || (!x.date && !x.done));
  } else if (todoFilter === 'pending') {
@@ -141,9 +163,12 @@ function renderTodos(){
   list = list.filter(x => x.done);
  }
  
- // Sort: high priority first, then date ascending, then undone before done
+ // Sort: undone first, overdue first, then high priority
  list.sort((a, b) => {
   if (a.done !== b.done) return a.done ? 1 : -1;
+  const aOverdue = !a.done && a.date && a.date < t;
+  const bOverdue = !b.done && b.date && b.date < t;
+  if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
   const priWeight = { high: 3, mid: 2, low: 1 };
   const pa = priWeight[a.priority] || 2;
   const pb = priWeight[b.priority] || 2;
@@ -156,7 +181,7 @@ function renderTodos(){
  
  if (currentTodoView === 'kanban' && kanbanView) {
   if (listView) listView.style.display = 'none';
-  kanbanView.style.display = 'flex';
+  kanbanView.style.display = 'block';
   renderTodoKanban(list);
  } else {
   if (kanbanView) kanbanView.style.display = 'none';
@@ -166,54 +191,78 @@ function renderTodos(){
 }
 
 function renderTodoList(list) {
- const el=document.getElementById('todoList'); if(!el)return;
- if (!list.length){el.innerHTML='<div class="empty">Chưa có việc cần làm.</div>';return;}
- const pl={high:'Cao',mid:'TB',low:'Thấp'};
- el.innerHTML=list.map(t=>`
- <div class="todo-item">
-  <div class="todo-cb" role="checkbox" tabindex="0" aria-checked="${Boolean(t.done)}" onclick="toggleTodo('${window.LifeOSData.escapeAttr(t.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTodo('${window.LifeOSData.escapeAttr(t.id)}')}" style="border-color:${t.done?'var(--green)':'var(--text3)'};background:${t.done?'var(--green)':'transparent'}">
-   ${t.done?'<span style="color:#000;font-size:10px;font-weight:800">✓</span>':''}
-  </div>
-  <div style="flex:1;min-width:0">
-   <div class="todo-txt" style="${t.done?'text-decoration:line-through;color:var(--text3)':''}">${window.LifeOSData.escapeHtml(t.text)}</div>
-   ${t.date?'<div class="todo-meta"> ' + fmtDate(t.date) + '</div>':''}
-  </div>
-  <span style="font-size:10px;padding:2px 7px;border-radius:8px;background:${PRI_C[t.priority]+'22'};color:${PRI_C[t.priority]};font-weight:700;flex-shrink:0">${pl[t.priority]||'TB'}</span>
-  <button class="btn btn-sm" aria-label="Sửa việc" style="padding:3px 7px;flex-shrink:0" onclick="editTodo('${window.LifeOSData.escapeAttr(t.id)}')"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
-  <button class="btn btn-sm btn-r" aria-label="Xóa việc" style="padding:3px 7px;flex-shrink:0" onclick="delTodo('${window.LifeOSData.escapeAttr(t.id)}')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
- </div>`).join('');
- if(window.lucide) lucide.createIcons();
+ const el = document.getElementById('todoList'); if(!el) return;
+ if (!list.length) {
+  el.innerHTML = `
+   <div class="empty-state" style="padding:36px 16px;text-align:center;">
+    <div style="width:48px;height:48px;border-radius:14px;background:rgba(139,124,255,0.12);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+     <i data-lucide="check-circle-2" class="ic-24"></i>
+    </div>
+    <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:4px">Không có công việc nào</div>
+    <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:14px">Thêm công việc vào danh sách để quản lý hiệu quả hơn.</div>
+    <button class="btn btn-p btn-sm" onclick="openTodoModal()"><i data-lucide="plus" class="ic-14"></i> Thêm việc mới</button>
+   </div>`;
+  if (window.lucide) lucide.createIcons();
+  return;
+ }
+ const pl = { high: 'Cao', mid: 'TB', low: 'Thấp' };
+ const t = today();
+ el.innerHTML = list.map(item => {
+  const isOverdue = !item.done && item.date && item.date < t;
+  const priClass = item.priority === 'high' ? 'p-high' : item.priority === 'mid' ? 'p-med' : 'p-low';
+  return `
+  <div class="modern-todo-row ${item.done ? 'done' : ''}">
+   <div class="modern-todo-cb" role="checkbox" aria-checked="${Boolean(item.done)}" onclick="toggleTodo('${window.LifeOSData.escapeAttr(item.id)}')">
+    ${item.done ? '<span style="font-size:11px;font-weight:900;color:#fff">✓</span>' : ''}
+   </div>
+   <div class="modern-todo-body">
+    <div class="modern-todo-text">${window.LifeOSData.escapeHtml(item.text)}</div>
+    <div class="modern-todo-meta">
+     <span class="bento-priority-badge ${priClass}">${pl[item.priority] || 'TB'}</span>
+     ${isOverdue ? '<span class="modern-tag-chip modern-tag-overdue">⚠️ Quá hạn</span>' : ''}
+     ${item.date ? `<span class="modern-tag-chip modern-tag-date"><i data-lucide="calendar" class="ic-10"></i> ${fmtDate(item.date)}</span>` : ''}
+     ${item.project ? `<span class="modern-tag-chip modern-tag-project"><i data-lucide="folder" class="ic-10"></i> ${item.project}</span>` : ''}
+     ${item.note ? `<span style="color:var(--text-muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">💬 ${window.LifeOSData.escapeHtml(item.note)}</span>` : ''}
+    </div>
+   </div>
+   <div class="modern-todo-actions">
+    <button class="icon-btn" aria-label="Sửa việc" onclick="editTodo('${window.LifeOSData.escapeAttr(item.id)}')"><i data-lucide="pencil" class="ic-14"></i></button>
+    <button class="icon-btn" aria-label="Xóa việc" style="color:var(--danger)" onclick="delTodo('${window.LifeOSData.escapeAttr(item.id)}')"><i data-lucide="trash-2" class="ic-14"></i></button>
+   </div>
+  </div>`;
+ }).join('');
+ if (window.lucide) lucide.createIcons();
 }
 
 function renderTodoKanban(list) {
- const cols = {high:[], mid:[], low:[]};
+ const cols = { high: [], mid: [], low: [] };
  list.forEach(t => {
-  if(cols[t.priority]) cols[t.priority].push(t);
+  if (cols[t.priority]) cols[t.priority].push(t);
   else cols.mid.push(t);
  });
  
- ['high','mid','low'].forEach(pri => {
+ ['high', 'mid', 'low'].forEach(pri => {
   const cntEl = document.getElementById('tkcnt_' + pri);
-  if(cntEl) cntEl.textContent = cols[pri].length;
+  if (cntEl) cntEl.textContent = cols[pri].length;
   const colEl = document.getElementById('tkcol_' + pri);
-  if(colEl) {
+  if (colEl) {
    colEl.innerHTML = cols[pri].map(t => `
-   <div class="kcard" draggable="true" ondragstart="todoDragStart(event, '${t.id}')" ondragend="todoDragEnd(event)" onclick="editTodo('${t.id}')" style="${t.done?'opacity:0.6':''}">
+   <div class="kcard" draggable="true" ondragstart="todoDragStart(event, '${t.id}')" ondragend="todoDragEnd(event)" onclick="editTodo('${t.id}')" style="${t.done ? 'opacity:0.6' : ''}">
     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
-     <div style="font-weight:600; font-size:14px; color:var(--text1); line-height:1.4; ${t.done?'text-decoration:line-through; color:var(--text3)':''}">${t.text}</div>
-     <div class="todo-cb" onclick="event.stopPropagation(); toggleTodo('${t.id}')" style="margin-left:8px; width:18px; height:18px; flex-shrink:0; border-color:${t.done?'var(--green)':'var(--text3)'};background:${t.done?'var(--green)':'transparent'}">
-      ${t.done?'<span style="color:#000;font-size:10px;font-weight:800">✓</span>':''}
+     <div style="font-weight:600; font-size:13.5px; color:var(--text-primary); line-height:1.4; ${t.done ? 'text-decoration:line-through; color:var(--text-muted)' : ''}">${window.LifeOSData.escapeHtml(t.text)}</div>
+     <div class="modern-todo-cb" onclick="event.stopPropagation(); toggleTodo('${t.id}')" style="margin-left:8px; width:18px; height:18px; flex-shrink:0;">
+      ${t.done ? '<span style="font-size:10px;font-weight:900;color:#fff">✓</span>' : ''}
      </div>
     </div>
-    <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text3);">
-     ${t.date ? '<span><i data-lucide="calendar" style="width:12px;height:12px;vertical-align:middle;margin-top:-2px;"></i> ' + fmtDate(t.date) + '</span>' : '<span></span>'}
-     <button class="btn btn-sm btn-r" style="padding:2px 5px; opacity:0.5;" onclick="event.stopPropagation(); delTodo('${t.id}')"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+    <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--text-muted);">
+     ${t.date ? `<span><i data-lucide="calendar" class="ic-12"></i> ${fmtDate(t.date)}</span>` : '<span></span>'}
+     <button class="icon-btn" style="color:var(--danger);padding:2px" onclick="event.stopPropagation(); delTodo('${t.id}')"><i data-lucide="trash-2" class="ic-12"></i></button>
     </div>
    </div>
    `).join('');
   }
  });
- if(window.lucide) lucide.createIcons();
+ if (window.lucide) lucide.createIcons();
 }
 
 window.addEventListener('DOMContentLoaded', () => {

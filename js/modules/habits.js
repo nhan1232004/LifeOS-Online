@@ -50,37 +50,89 @@ function getStreak(log, createdAt) {
 function renderHabits() {
  const c = document.getElementById('habitsContainer'); if (!c) return;
  const habits = window.DB.habits || [];
- if (!habits.length) { c.innerHTML = '<div style="color:var(--text3);padding:30px;text-align:center">Chưa có thói quen nào. Bấm "<i data-lucide="plus" style="width:14px;height:14px;margin-right:4px"></i> Thêm thói quen" để bắt đầu!</div>'; return; }
+ if (!habits.length) {
+  c.innerHTML = `
+   <div class="empty-state" style="padding:48px 16px;text-align:center;">
+    <div style="width:52px;height:52px;border-radius:14px;background:rgba(255,113,133,0.12);color:var(--danger);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+     <i data-lucide="flame" class="ic-28"></i>
+    </div>
+    <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:6px">Chưa có thói quen nào</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Tạo thói quen để rèn luyện kỷ luật và duy trì tiến bộ mỗi ngày.</div>
+    <button class="btn btn-p btn-sm" onclick="openHabit()"><i data-lucide="plus" class="ic-14"></i> Thêm thói quen mới</button>
+   </div>`;
+  if (window.lucide) lucide.createIcons();
+  return;
+ }
  const todayStr = today();
+ const curr = new Date();
+ const dayOfWeek = (curr.getDay() + 6) % 7; // 0 is Monday
+ const weekDayNames = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+ c.className = 'modern-habits-container';
  c.innerHTML = habits.map(h => {
   const created = h.createdAt || todayStr;
-  const startDate = new Date(created + 'T00:00:00');
-  const days = Array.from({ length: 30 }, (_, i) => {
-   const d = new Date(startDate);
-   d.setDate(d.getDate() + i);
-   return toLocalDateStr(d);
-  });
   const streak = getStreak(h.log || {}, created);
-  return `<div class="habit-card">
-   <div class="hc-top">
-    <div class="hc-name">${h.icon} ${h.name}</div>
-    <div style="display:flex;align-items:center;gap:8px">
-     <div class="hc-streak"> ${streak} ngày liên tiếp</div>
-     <button class="habit-del" onclick="delHabit('${h.id}')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+
+  // Compute 7 days of current week (Mon -> Sun)
+  const weekDays = [];
+  let doneThisWeek = 0;
+  for (let i = 0; i < 7; i++) {
+   const d = new Date(curr);
+   d.setDate(curr.getDate() - dayOfWeek + i);
+   const ds = toLocalDateStr(d);
+   const isDone = Boolean((h.log || {})[ds]);
+   if (isDone) doneThisWeek++;
+   weekDays.push({
+    label: weekDayNames[i],
+    dateStr: ds,
+    dayNum: d.getDate(),
+    isDone,
+    isToday: ds === todayStr,
+    isFuture: ds > todayStr
+   });
+  }
+
+  const weekPct = Math.round((doneThisWeek / 7) * 100);
+
+  return `
+   <div class="modern-habit-card">
+    <div class="modern-habit-top">
+     <div class="modern-habit-info">
+      <div class="modern-habit-icon-box">${h.icon || '🔥'}</div>
+      <div>
+       <div class="modern-habit-name">${window.LifeOSData.escapeHtml(h.name)}</div>
+       <div style="font-size:12px;color:var(--text-muted)">Rèn luyện hàng ngày • Đạt ${doneThisWeek}/7 ngày tuần này</div>
+      </div>
+     </div>
+     <div style="display:flex;align-items:center;gap:10px">
+      <div class="modern-habit-streak-pill"><i data-lucide="flame" class="ic-14"></i> Chuỗi ${streak} ngày</div>
+      <button class="icon-btn" style="color:var(--danger)" onclick="delHabit('${window.LifeOSData.escapeAttr(h.id)}')"><i data-lucide="trash-2" class="ic-14"></i></button>
+     </div>
+    </div>
+    
+    <div class="modern-habit-tracker-row">
+     ${weekDays.map(wd => `
+      <div class="modern-habit-bubble ${wd.isDone ? 'done' : ''} ${wd.isToday ? 'today' : ''} ${wd.isFuture ? 'future' : ''}" 
+           ${wd.isFuture ? '' : `onclick="toggleHabitDay('${window.LifeOSData.escapeAttr(h.id)}','${wd.dateStr}')"`}
+           title="${wd.label} (${wd.dateStr}): ${wd.isDone ? 'Đã hoàn thành' : 'Chưa hoàn thành'}">
+       <div class="modern-habit-bubble-btn">
+        ${wd.isDone ? '✓' : (wd.isFuture ? '·' : wd.dayNum)}
+       </div>
+       <div class="modern-habit-bubble-label">${wd.label}</div>
+      </div>
+     `).join('')}
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--text-muted);margin-top:-4px">
+     <span>Tiến độ tuần: ${weekPct}%</span>
+     <div style="width:120px;height:4px;background:var(--surface-2);border-radius:99px;overflow:hidden">
+      <div style="width:${weekPct}%;height:100%;background:linear-gradient(90deg,var(--accent-secondary),#4DD4A2);border-radius:99px"></div>
+     </div>
     </div>
    </div>
-   <div class="habit-days">
-    ${days.map(d => {
-     const done = (h.log || {})[d];
-     const isToday = d === todayStr;
-     const isFuture = d > todayStr;
-     const dt = new Date(d + 'T00:00:00');
-     const label = dt.getDate() + '/' + (dt.getMonth() + 1);
-     if (isFuture) return `<div class="habit-day future" title="${label}">${label}</div>`;
-     return `<div class="habit-day${done ? ' done' : ''}${isToday ? ' today' : ''}" onclick="toggleHabitDay('${h.id}','${d}')" title="${label}">${done ? '✓' : label}</div>`;
-    }).join('')}
-   </div>
-  </div>`;
+  `;
  }).join('');
+
+ if (window.lucide) lucide.createIcons();
 }
 

@@ -1,0 +1,984 @@
+/* ═══════════════════════════════════════════════════════════
+   LIFEOS MODERN DARK SAAS — MODULE DESIGN SYSTEM v2
+   Cohesive UI for Tasks, Projects, Finance, Notes, Habits, Goals, Pomodoro
+═══════════════════════════════════════════════════════════ */
+
+/* ── 1. GLOBAL TOOLBARS & HEADERS ── */
+.page-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 4px 0 16px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+
+.page-toolbar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.page-toolbar-title i {
+  color: var(--accent);
+}
+
+.page-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── 2. SIDEBAR REFINEMENT (Modern Dark SaaS Showcase) ── */
+.sidebar {
+  background: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--border) !important;
+}
+
+.sb-logo-ico {
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary)) !important;
+  box-shadow: 0 4px 14px rgba(139, 124, 255, 0.3) !important;
+  border-radius: 10px !important;
+}
+
+.sb-sec {
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  color: var(--text-muted) !important;
+  padding: 12px 10px 4px !important;
+}
+
+.sb-item {
+  border-radius: var(--radius-md) !important;
+  padding: 9px 12px !important;
+  font-weight: 600 !important;
+  font-size: 13.5px !important;
+  color: var(--text-secondary) !important;
+  transition: all var(--motion-fast) ease !important;
+  border: 1px solid transparent !important;
+}
+
+.sb-item:hover {
+  background: var(--surface-2) !important;
+  color: var(--text-primary) !important;
+}
+
+.sb-item.active {
+  background: rgba(139, 124, 255, 0.12) !important;
+  color: var(--accent) !important;
+  font-weight: 700 !important;
+  border-left: 3px solid var(--accent) !important;
+}
+
+.sb-badge {
+  background: rgba(139, 124, 255, 0.16) !important;
+  color: var(--accent) !important;
+  font-weight: 700 !important;
+  border-radius: 99px !important;
+  padding: 2px 8px !important;
+  font-size: 10.5px !important;
+}
+
+/* ── 3. TASKS MODULE (My Tasks / Việc cần làm) ── */
+.todo-quick-add {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 6px 14px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--motion-normal) ease;
+}
+
+.todo-quick-add:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(139, 124, 255, 0.15);
+}
+
+.todo-quick-add input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 6px 0;
+}
+
+.todo-quick-add input::placeholder {
+  color: var(--text-muted);
+}
+
+.todo-quick-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--motion-fast) ease;
+}
+
+.todo-quick-add-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.modern-todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modern-todo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.modern-todo-row:hover {
+  background: var(--surface-hover);
+  border-color: rgba(139, 124, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.modern-todo-row.done {
+  opacity: 0.55;
+  background: rgba(21, 25, 39, 0.6);
+}
+
+.modern-todo-row.done .modern-todo-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.modern-todo-cb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.modern-todo-row:hover .modern-todo-cb {
+  border-color: var(--accent);
+}
+
+.modern-todo-row.done .modern-todo-cb {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.modern-todo-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.modern-todo-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.modern-todo-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.modern-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.modern-tag-project {
+  background: rgba(139, 124, 255, 0.12);
+  color: var(--accent-light);
+}
+
+.modern-tag-date {
+  color: var(--text-muted);
+}
+
+.modern-tag-overdue {
+  background: rgba(255, 113, 133, 0.16);
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.modern-todo-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.modern-todo-row:hover .modern-todo-actions {
+  opacity: 1;
+}
+
+/* Kanban Board for Tasks */
+.todo-kanban-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.todo-kanban-col {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 360px;
+}
+
+.todo-kanban-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.todo-kanban-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.todo-kanban-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 100px;
+}
+
+/* ── 4. PROJECTS MODULE (Dự án) ── */
+.proj-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+}
+
+.proj-card {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 20px !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.proj-card:hover {
+  transform: translateY(-3px) !important;
+  border-color: rgba(139, 124, 255, 0.35) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35) !important;
+}
+
+.proj-card-create {
+  border: 2px dashed rgba(139, 124, 255, 0.35) !important;
+  background: rgba(139, 124, 255, 0.04) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.proj-card-create:hover {
+  border-color: var(--accent) !important;
+  background: rgba(139, 124, 255, 0.1) !important;
+}
+
+.proj-card-title {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: var(--text-primary) !important;
+  margin-bottom: 6px !important;
+}
+
+.proj-card-desc {
+  font-size: 13px !important;
+  color: var(--text-secondary) !important;
+  line-height: 1.45 !important;
+}
+
+/* Kanban Board for Projects */
+.kcol {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.kcol-hdr {
+  border-bottom: 1px solid var(--border) !important;
+  padding: 12px 14px !important;
+}
+
+.kcol-title {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--text-primary) !important;
+}
+
+.kcol-cnt {
+  background: var(--surface-1) !important;
+  color: var(--text-secondary) !important;
+  border-radius: 99px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.kcard {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 14px !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: all 0.15s ease !important;
+}
+
+.kcard:hover {
+  border-color: rgba(139, 124, 255, 0.3) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25) !important;
+}
+
+.kcard-title {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+}
+
+/* ── 5. NOTES MODULE (Ghi chú) ── */
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.note-card {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 18px 20px !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border-top-width: 4px !important;
+}
+
+.note-card:hover {
+  transform: translateY(-3px) !important;
+  border-color: rgba(139, 124, 255, 0.35) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+.note-card .nc-title {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--text-primary) !important;
+  margin-bottom: 8px !important;
+}
+
+.note-card .nc-body {
+  font-size: 13px !important;
+  color: var(--text-secondary) !important;
+  line-height: 1.55 !important;
+}
+
+.note-card .nc-date {
+  font-size: 11px !important;
+  color: var(--text-muted) !important;
+  margin-top: 14px !important;
+}
+
+/* ── 6. HABITS MODULE (Thói quen) ── */
+.modern-habits-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modern-habit-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color var(--motion-fast) ease;
+}
+
+.modern-habit-card:hover {
+  border-color: rgba(139, 124, 255, 0.25);
+}
+
+.modern-habit-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modern-habit-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modern-habit-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  border: 1px solid var(--border);
+}
+
+.modern-habit-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.modern-habit-streak-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: rgba(244, 190, 104, 0.15);
+  color: var(--warning);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.modern-habit-tracker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--surface-2);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+}
+
+.modern-habit-bubble {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  cursor: pointer;
+}
+
+.modern-habit-bubble-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.modern-habit-bubble:hover .modern-habit-bubble-btn {
+  border-color: var(--accent);
+  transform: scale(1.05);
+}
+
+.modern-habit-bubble.done .modern-habit-bubble-btn {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(93, 214, 192, 0.3);
+}
+
+.modern-habit-bubble.today .modern-habit-bubble-btn {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(139, 124, 255, 0.2);
+}
+
+.modern-habit-bubble-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.modern-habit-bubble.today .modern-habit-bubble-label {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ── 7. GOALS MODULE (Mục tiêu) ── */
+.goals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.goal-card {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 20px !important;
+  box-shadow: var(--shadow-sm) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  transition: border-color var(--motion-fast) ease !important;
+}
+
+.goal-card:hover {
+  border-color: rgba(139, 124, 255, 0.25) !important;
+}
+
+.goal-card .gc-name {
+  font-size: 15.5px !important;
+  font-weight: 800 !important;
+  color: var(--text-primary) !important;
+}
+
+.goal-card .gc-pct {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: var(--accent-secondary) !important;
+}
+
+.goal-card .gc-amt {
+  font-size: 12.5px !important;
+  color: var(--text-secondary) !important;
+}
+
+.goal-bar {
+  background: var(--surface-2) !important;
+  height: 8px !important;
+  border-radius: 99px !important;
+}
+
+.goal-bar-fill {
+  background: linear-gradient(90deg, var(--accent), var(--accent-secondary)) !important;
+  box-shadow: 0 0 10px rgba(139, 124, 255, 0.3) !important;
+}
+
+/* ── 8. FINANCE TABLES & KPIS ── */
+.fin-bento-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.fin-table-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+
+.modern-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.modern-tbl th {
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.modern-tbl td {
+  padding: 12px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+}
+
+.modern-tbl tr:last-child td {
+  border-bottom: none;
+}
+
+.modern-tbl tr:hover td {
+  background: var(--surface-hover);
+}
+
+.amount-income {
+  color: var(--success);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.amount-expense {
+  color: var(--danger);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 9. CALENDAR & SCHEDULE MODULE ── */
+.big-cal-hdr {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.bcd-name {
+  border-right: 1px solid var(--border) !important;
+  color: var(--text-muted) !important;
+  font-weight: 700 !important;
+}
+
+.big-cal-grid {
+  border-left: 1px solid var(--border) !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+.bcd {
+  background: var(--surface-1) !important;
+  border-right: 1px solid var(--border) !important;
+  border-bottom: 1px solid var(--border) !important;
+  transition: background 0.15s ease !important;
+}
+
+.bcd:hover {
+  background: var(--surface-hover) !important;
+}
+
+.bcd-num {
+  color: var(--text-secondary) !important;
+}
+
+.bcd-num.today {
+  background: var(--accent) !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px rgba(139, 124, 255, 0.4) !important;
+}
+
+.ev-pill {
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  padding: 3px 7px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.wk-cell {
+  background: var(--surface-1) !important;
+  border-color: var(--border) !important;
+}
+
+.wk-hdr, .wk-hdr-corner {
+  background: var(--surface-2) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+/* ── 10. MODALS & FORMS POLISH ── */
+.modal {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.modal-hdr {
+  border-bottom: 1px solid var(--border) !important;
+  padding-bottom: 14px !important;
+}
+
+.mtitle {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: var(--text-primary) !important;
+  letter-spacing: -0.2px !important;
+}
+
+/* ── 11. RESPONSIVE BREAKPOINTS ── */
+@media (max-width: 900px) {
+  .todo-kanban-grid {
+    grid-template-columns: 1fr;
+  }
+  .fin-bento-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .fin-bento-kpis {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .modern-habit-tracker-row {
+    padding: 8px;
+    gap: 4px;
+  }
+  .modern-habit-bubble-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+  }
+}
+
+/* ── 12. UNIVERSAL CARD & CONTENT POLISH ── */
+.card {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+}
+
+.card:hover {
+  border-color: rgba(139, 124, 255, 0.22) !important;
+}
+
+.ch {
+  border-bottom: 1px solid var(--border) !important;
+  padding: 14px 18px !important;
+}
+
+.ct {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: var(--text-primary) !important;
+}
+
+.cb {
+  padding: 18px !important;
+}
+
+/* ── 13. FINANCE FORMS & INPUTS ── */
+.fin-forms {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.fin-card {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 20px !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: border-color var(--motion-fast) ease !important;
+}
+
+.fin-card:hover {
+  border-color: rgba(139, 124, 255, 0.25) !important;
+}
+
+.fin-card .fin-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.fin-badge-income {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(77, 212, 162, 0.15) !important;
+  color: var(--success) !important;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fin-badge-expense {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 113, 133, 0.15) !important;
+  color: var(--danger) !important;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ── 14. JOURNAL MODULE ── */
+.modern-journal-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--motion-fast) ease;
+}
+
+.modern-journal-card:hover {
+  border-color: rgba(139, 124, 255, 0.25);
+  box-shadow: var(--shadow-md);
+}
+
+.mj-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mj-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-light);
+}
+
+.mj-mood {
+  font-size: 20px;
+  line-height: 1;
+  background: var(--surface-2);
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.mj-body {
+  font-size: 13.5px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* ── 15. VOCABULARY MODULE ── */
+.vocab-card {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 20px !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: all var(--motion-fast) ease !important;
+}
+
+.vocab-card:hover {
+  border-color: var(--accent) !important;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md) !important;
+}
+
+.vocab-card .vc-word {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: var(--accent-light) !important;
+}
+
+.vocab-card .vc-type {
+  background: var(--surface-2) !important;
+  color: var(--accent) !important;
+  border: 1px solid var(--border);
+  border-radius: 6px !important;
+  padding: 2px 8px !important;
+  font-weight: 700 !important;
+}
+
+.vocab-card .vc-pron {
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+}
+
+.vocab-card .vc-mean {
+  color: var(--text-primary) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+
+.vocab-batch-bar {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--accent) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* ── 16. BENTO GRID 4 (OVERVIEW) ── */
+.bento-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1024px) {
+  .bento-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .bento-grid-4 {
+    grid-template-columns: 1fr;
+  }
+  .fin-forms {
+    grid-template-columns: 1fr !important;
+  }
+}
+

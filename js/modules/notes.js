@@ -262,22 +262,43 @@ function renderNotes() {
  const notes = (window.DB.notes || []).filter(n =>
   !q || (n.title || '').toLowerCase().includes(q) || getNotePreview(n.body).toLowerCase().includes(q)
  );
- grid.innerHTML = notes.length ? notes.map(n => {
+ if (!notes.length) {
+  grid.innerHTML = `
+   <div class="empty-state" style="grid-column:1/-1;padding:48px 16px;text-align:center;">
+    <div style="width:52px;height:52px;border-radius:14px;background:rgba(139,124,255,0.12);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+     <i data-lucide="sticky-note" class="ic-28"></i>
+    </div>
+    <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:6px">Chưa có ghi chú nào</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Tạo ghi chú mới hoặc bảng tính Excel để lưu lại các thông tin quan trọng.</div>
+    <button class="btn btn-p btn-sm" onclick="openNote()"><i data-lucide="plus" class="ic-14"></i> + Ghi chú mới</button>
+   </div>`;
+  if (window.lucide) lucide.createIcons();
+  return;
+ }
+ grid.innerHTML = notes.map(n => {
   const isSheet = n.isSheet || (n.sheetData && n.sheetData.length > 0);
   const clickHandler = isSheet ? `openNoteSpreadsheet('${window.LifeOSData.escapeAttr(n.id)}')` : `openNote('${window.LifeOSData.escapeAttr(n.id)}')`;
-  const sheetBadge = isSheet ? `<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#107c41;background:rgba(16,124,65,0.18);padding:2px 7px;border-radius:4px;margin-bottom:6px;"><i data-lucide="sheet" style="width:11px;height:11px"></i> Bảng tính Excel</div>` : '';
-  const cardBorderColor = isSheet ? '#107c41' : (n.color || '#7c4dff');
+  const sheetBadge = isSheet ? `<span class="modern-tag-chip" style="background:rgba(16,124,65,0.18);color:#2ebd6e;font-weight:700;"><i data-lucide="sheet" class="ic-10"></i> Excel</span>` : '';
+  const cardBorderColor = isSheet ? '#2ebd6e' : (n.color || 'var(--accent)');
+  const tagsHtml = (n.tags || []).slice(0, 3).map(t => `<span class="modern-tag-chip modern-tag-project">#${window.LifeOSData.escapeHtml(t)}</span>`).join('');
+  const preview = getNotePreview(n.body).substring(0, 110).replace(/</g,'&lt;') || 'Chưa có nội dung ghi chú...';
+
   return `
   <div class="note-card" role="button" tabindex="0" style="border-top-color:${window.LifeOSData.escapeAttr(cardBorderColor)}" onclick="${clickHandler}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${clickHandler}}">
-   <button class="nc-del" aria-label="Xóa ghi chú" onclick="event.stopPropagation();delNote('${window.LifeOSData.escapeAttr(n.id)}')">✕</button>
-   ${sheetBadge}
+   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div style="display:flex;gap:6px;align-items:center;">
+     ${sheetBadge}
+     ${tagsHtml}
+    </div>
+    <button class="icon-btn" aria-label="Xóa ghi chú" style="color:var(--danger);padding:2px" onclick="event.stopPropagation();delNote('${window.LifeOSData.escapeAttr(n.id)}')"><i data-lucide="trash-2" class="ic-14"></i></button>
+   </div>
    <div class="nc-title">${window.LifeOSData.escapeHtml(n.title || 'Không tiêu đề')}</div>
-   <div class="nc-body">${getNotePreview(n.body).substring(0, 100).replace(/</g,'&lt;')}</div>
-   <div class="nc-date">${fmtDate(n.date)}</div>
+   <div class="nc-body">${preview}</div>
+   <div class="nc-date"><i data-lucide="calendar" class="ic-12" style="margin-right:2px"></i> ${fmtDate(n.date)}</div>
   </div>
   `;
- }).join('') : '<div style="color:var(--text3);padding:30px;text-align:center">Chưa có ghi chú nào. Bấm "+ Ghi chú mới" để bắt đầu!</div>';
- if (window.lucide) window.lucide.createIcons();
+ }).join('');
+ if (window.lucide) lucide.createIcons();
 }
 document.getElementById('noteSearch')?.addEventListener('input', renderNotes);
 
