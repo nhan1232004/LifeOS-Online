@@ -26,11 +26,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.LocalCafe
 import androidx.compose.material.icons.rounded.Payment
+import androidx.compose.material.icons.rounded.PieChart
 import androidx.compose.material.icons.rounded.ShoppingBag
+import androidx.compose.material.icons.rounded.TableChart
 import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.Wallet
 import androidx.compose.material3.AlertDialog
@@ -45,6 +49,9 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
@@ -91,6 +98,8 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
     val context = LocalContext.current
     var showAddDialog by remember { mutableStateOf(false) }
     var editingTransaction by remember { mutableStateOf<TransactionEntity?>(null) }
+    var showExportDialog by remember { mutableStateOf(false) }
+    var showCustomDateDialog by remember { mutableStateOf(false) }
 
     val filterTabs = listOf(
         TransactionFilter.ALL to "Tất cả",
@@ -112,7 +121,7 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Thu chi & Tài chính",
                             style = MaterialTheme.typography.headlineLarge,
@@ -126,26 +135,127 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
                         )
                     }
 
-                    // CSV Export Button
-                    IconButton(
-                        onClick = {
-                            val csvData = viewModel.getCsvData()
-                            val sendIntent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                putExtra(Intent.EXTRA_TEXT, csvData)
-                                putExtra(Intent.EXTRA_TITLE, "Báo cáo Thu Chi LifeOS")
-                                type = "text/csv"
-                            }
-                            context.startActivity(Intent.createChooser(sendIntent, "Xuất báo cáo CSV"))
-                        },
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(LifeOSSurfaceCard)
+                    // Excel Export Button
+                    Button(
+                        onClick = { showExportDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = LifeOSGreen.copy(alpha = 0.18f)),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.FileDownload,
-                            contentDescription = "Xuất CSV",
-                            tint = LifeOSCyan
+                            imageVector = Icons.Rounded.TableChart,
+                            contentDescription = "Xuất Excel",
+                            tint = LifeOSGreen,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Xuất Excel",
+                            color = LifeOSGreen,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+
+            // ─── Time Period Filter Bar (Ngày / Tuần / Tháng / Năm / Tất cả / Tùy chọn) ───
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Main Periods Tabs
+                    ScrollableTabRow(
+                        selectedTabIndex = FinanceTimePeriod.entries.indexOf(uiState.selectedPeriod).coerceAtLeast(0),
+                        containerColor = Color.Transparent,
+                        contentColor = LifeOSPrimary,
+                        edgePadding = 0.dp,
+                        divider = {},
+                        indicator = { tabPositions ->
+                            val index = FinanceTimePeriod.entries.indexOf(uiState.selectedPeriod).coerceAtLeast(0)
+                            TabRowDefaults.SecondaryIndicator(
+                                modifier = Modifier.tabIndicatorOffset(tabPositions[index]),
+                                color = LifeOSPrimary
+                            )
+                        }
+                    ) {
+                        FinanceTimePeriod.entries.forEach { period ->
+                            val isSel = uiState.selectedPeriod == period
+                            Tab(
+                                selected = isSel,
+                                onClick = {
+                                    if (period == FinanceTimePeriod.CUSTOM) {
+                                        showCustomDateDialog = true
+                                    } else {
+                                        viewModel.setTimePeriod(period)
+                                    }
+                                },
+                                text = {
+                                    Text(
+                                        text = period.label,
+                                        fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSel) LifeOSPrimary else LifeOSTextMid,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                            )
+                        }
+                    }
+
+                    // Sub-range Options (Chips)
+                    if (uiState.subOptions.isNotEmpty()) {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(vertical = 2.dp)
+                        ) {
+                            items(uiState.subOptions) { opt ->
+                                val isOptSel = uiState.selectedSubKey == opt.key
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isOptSel) LifeOSPrimary else LifeOSSurfaceCard)
+                                        .clickable { viewModel.setSubRange(opt.key) }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = opt.label,
+                                        fontSize = 12.sp,
+                                        fontWeight = if (isOptSel) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isOptSel) Color.White else LifeOSTextMid
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Date Range Display Badge (Clickable)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(LifeOSSurfaceCard)
+                            .clickable { showCustomDateDialog = true }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Rounded.CalendarMonth,
+                                contentDescription = null,
+                                tint = LifeOSCyan,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = uiState.dateRangeLabel,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = LifeOSCyan
+                            )
+                        }
+                        Text(
+                            text = "Đổi ngày ▾",
+                            fontSize = 11.sp,
+                            color = LifeOSTextLow
                         )
                     }
                 }
@@ -464,6 +574,208 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
                 onDelete = {
                     viewModel.deleteTransaction(tx.id)
                     editingTransaction = null
+                }
+            )
+        }
+
+        // Export Excel Dialog
+        if (showExportDialog) {
+            var exportPeriodOnly by remember { mutableStateOf(true) }
+            AlertDialog(
+                onDismissRequest = { showExportDialog = false },
+                containerColor = Color(0xFF141424),
+                shape = RoundedCornerShape(20.dp),
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Rounded.TableChart,
+                            contentDescription = null,
+                            tint = LifeOSGreen,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Xuất Báo Cáo Excel (.xls)",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = LifeOSTextHigh
+                        )
+                    }
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(
+                            text = "Trích xuất file bảng tính Excel chứa chi tiết thu chi, tổng kết số tiền đã tiêu, đã tiết kiệm và biểu đồ phân tích cơ cấu trực quan:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = LifeOSTextMid
+                        )
+
+                        // Option 1: Current Period
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { exportPeriodOnly = true },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (exportPeriodOnly) LifeOSPrimary.copy(alpha = 0.2f) else LifeOSSurfaceCard
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (exportPeriodOnly) LifeOSPrimary else LifeOSGlassBorder
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = exportPeriodOnly,
+                                    onClick = { exportPeriodOnly = true },
+                                    colors = RadioButtonDefaults.colors(selectedColor = LifeOSPrimary)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "Kỳ đang xem: ${uiState.dateRangeLabel}",
+                                        fontWeight = FontWeight.Bold,
+                                        color = LifeOSTextHigh,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        text = "${uiState.periodTransactions.size} giao dịch trong kỳ",
+                                        color = LifeOSTextLow,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
+
+                        // Option 2: All Time
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { exportPeriodOnly = false },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (!exportPeriodOnly) LifeOSPrimary.copy(alpha = 0.2f) else LifeOSSurfaceCard
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (!exportPeriodOnly) LifeOSPrimary else LifeOSGlassBorder
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = !exportPeriodOnly,
+                                    onClick = { exportPeriodOnly = false },
+                                    colors = RadioButtonDefaults.colors(selectedColor = LifeOSPrimary)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "Toàn bộ thời gian (Tất cả)",
+                                        fontWeight = FontWeight.Bold,
+                                        color = LifeOSTextHigh,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        text = "Toàn bộ dữ liệu thu chi từ trước đến nay",
+                                        color = LifeOSTextLow,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showExportDialog = false
+                            viewModel.exportExcel(context, periodOnly = exportPeriodOnly)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = LifeOSGreen)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.FileDownload,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Tải Excel (.xls)", color = Color.Black, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showExportDialog = false }) {
+                        Text("Hủy", color = LifeOSTextMid)
+                    }
+                }
+            )
+        }
+
+        // Custom Date Range Dialog
+        if (showCustomDateDialog) {
+            var startDateInput by remember { mutableStateOf(uiState.startDate) }
+            var endDateInput by remember { mutableStateOf(uiState.endDate) }
+            AlertDialog(
+                onDismissRequest = { showCustomDateDialog = false },
+                containerColor = Color(0xFF141424),
+                shape = RoundedCornerShape(20.dp),
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Rounded.DateRange,
+                            contentDescription = null,
+                            tint = LifeOSCyan,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Chọn khoảng ngày tùy biến",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = LifeOSTextHigh
+                        )
+                    }
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(
+                            text = "Lọc dữ liệu thu chi theo khoảng ngày chính xác:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LifeOSTextMid
+                        )
+                        LifeOSDateField(
+                            value = startDateInput,
+                            onValueChange = { startDateInput = it },
+                            label = "Từ ngày"
+                        )
+                        LifeOSDateField(
+                            value = endDateInput,
+                            onValueChange = { endDateInput = it },
+                            label = "Đến ngày"
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showCustomDateDialog = false
+                            viewModel.setCustomRange(startDateInput, endDateInput)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = LifeOSPrimary)
+                    ) {
+                        Text("Áp dụng", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showCustomDateDialog = false }) {
+                        Text("Hủy", color = LifeOSTextMid)
+                    }
                 }
             )
         }

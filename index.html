@@ -1039,6 +1039,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
      <div class="ct" style="display:flex;align-items:center;gap:6px;font-weight:700;"><i data-lucide="wallet" class="ic-18" style="color:var(--accent);"></i> <span>Thu chi</span></div>
      <div style="display:flex; gap:8px; align-items:center;">
       <input type="month" id="finMonth" class="inp" style="padding:6px 10px; font-size:12.5px; border-radius:8px; width:auto;" onchange="renderFinKpi(); renderFinTables();">
+      <button class="btn btn-outline btn-sm" onclick="openExportFinanceModal()" title="Xuất báo cáo Excel"><i data-lucide="file-spreadsheet" class="ic-14"></i> <span class="hide-mobile">Xuất Excel</span></button>
       <button class="btn btn-p btn-sm" onclick="openQuickFinanceModal()"><i data-lucide="plus" class="ic-14"></i> <span class="hide-mobile">Ghi nhận</span><span class="show-mobile">+ Giao dịch</span></button>
      </div>
     </div>
@@ -1095,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
       <span class="badge" id="statsDateRangeLabel" style="font-size:12px; padding:6px 12px; border-radius:8px; background:var(--surface); border:1px solid var(--border); color:var(--accent-light); font-weight:700;">
        Tháng này
       </span>
-      <button class="btn btn-sm btn-outline" onclick="exportReport()" title="Xuất báo cáo tài chính"><i data-lucide="download" class="ic-14"></i> <span class="hide-mobile">Xuất báo cáo</span></button>
+      <button class="btn btn-sm btn-outline" onclick="openExportFinanceModal()" title="Xuất báo cáo tài chính Excel"><i data-lucide="file-spreadsheet" class="ic-14"></i> <span class="hide-mobile">Xuất Excel</span></button>
      </div>
     </div>
 
@@ -2491,9 +2492,12 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
     </div>
    </div>
    <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
-    <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="file-spreadsheet" style="width:14px;height:14px;color:var(--cyan)"></i> Xuất Thu Chi (CSV)</div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Tải file CSV để mở bằng Excel / Google Sheets.</p>
-    <button class="btn btn-outline btn-sm" onclick="exportFinanceCSV()"><i data-lucide="file-spreadsheet" style="width:13px;height:13px;margin-right:4px"></i> Export CSV</button>
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><i data-lucide="file-spreadsheet" style="width:14px;height:14px;color:var(--green)"></i> Xuất Thống Kê Thu Chi (Excel)</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Tải báo cáo Excel (.xls) chuyên nghiệp kèm biểu đồ, tỷ lệ tiết kiệm và chi tiết giao dịch.</p>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-g btn-sm" onclick="openExportFinanceModal()"><i data-lucide="file-spreadsheet" style="width:13px;height:13px;margin-right:4px"></i> Xuất Excel (.xls)</button>
+      <button class="btn btn-outline btn-sm" onclick="exportFinanceCSV()"><i data-lucide="download" style="width:13px;height:13px;margin-right:4px"></i> CSV Dự phòng</button>
+    </div>
    </div>
    <div style="padding:16px;background:rgba(255,82,82,0.06);border-radius:10px;border:1px solid rgba(255,82,82,0.15)">
     <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--red);display:flex;align-items:center;gap:6px"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Xóa dữ liệu</div>
@@ -2536,6 +2540,67 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
     <div class="fg"><label>Ngày</label><input type="date" id="qfIncDate" class="inp"></div>
     <div class="fg"><label>Ghi chú</label><input id="qfIncNote" class="inp" placeholder="Tùy chọn"></div>
     <button class="btn btn-g btn-full" style="margin-top:12px; min-height:42px;" onclick="saveQuickIncome()"><i data-lucide="check" class="ic-16"></i> Lưu khoản thu</button>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- EXPORT FINANCE MODAL -->
+<div class="overlay" id="mExportFinance" onclick="if(event.target===this)closeExportFinanceModal()">
+ <div class="modal" style="max-width:480px;">
+  <div class="mh">
+   <h3 style="display:flex;align-items:center;gap:8px;"><i data-lucide="file-spreadsheet" class="ic-18" style="color:var(--green);"></i> Xuất Báo Cáo Thu Chi (Excel)</h3>
+   <button class="mclose" onclick="closeExportFinanceModal()">✕</button>
+  </div>
+  <div class="mb-body" style="padding:16px 20px 24px;">
+   <p style="font-size:12.5px;color:var(--text2);margin-bottom:14px;">Chọn khoảng thời gian để trích xuất file Excel (.xls) chuyên nghiệp bao gồm tổng quan KPI, tỷ lệ tiết kiệm, biểu đồ cơ cấu và chi tiết giao dịch:</p>
+   
+   <div style="display:flex; flex-direction:column; gap:9px; margin-bottom:18px;">
+    <label style="display:flex; align-items:center; gap:10px; font-size:13.5px; cursor:pointer; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px;">
+     <input type="radio" name="expFinRange" value="current" checked style="cursor:pointer;">
+     <span>Khoảng thời gian đang xem <b id="expFinCurLabel" style="color:var(--accent);"></b></span>
+    </label>
+    
+    <label style="display:flex; align-items:center; gap:10px; font-size:13.5px; cursor:pointer; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px;">
+     <input type="radio" name="expFinRange" value="thisMonth" style="cursor:pointer;">
+     <span>Tháng này</span>
+    </label>
+
+    <label style="display:flex; align-items:center; gap:10px; font-size:13.5px; cursor:pointer; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px;">
+     <input type="radio" name="expFinRange" value="lastMonth" style="cursor:pointer;">
+     <span>Tháng trước</span>
+    </label>
+
+    <label style="display:flex; align-items:center; gap:10px; font-size:13.5px; cursor:pointer; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px;">
+     <input type="radio" name="expFinRange" value="last3months" style="cursor:pointer;">
+     <span>3 tháng qua (Quý)</span>
+    </label>
+
+    <label style="display:flex; align-items:center; gap:10px; font-size:13.5px; cursor:pointer; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px;">
+     <input type="radio" name="expFinRange" value="thisYear" style="cursor:pointer;">
+     <span>Năm nay</span>
+    </label>
+
+    <label style="display:flex; align-items:center; gap:10px; font-size:13.5px; cursor:pointer; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px;">
+     <input type="radio" name="expFinRange" value="all" style="cursor:pointer;">
+     <span>Toàn bộ thời gian</span>
+    </label>
+
+    <label style="display:flex; align-items:center; gap:10px; font-size:13.5px; cursor:pointer; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px;">
+     <input type="radio" name="expFinRange" value="custom" id="expFinRadioCustom" style="cursor:pointer;">
+     <span>Tùy chọn khoảng ngày:</span>
+    </label>
+    
+    <div id="expFinCustomInputs" style="display:flex; gap:10px; align-items:center; margin-left:26px;">
+     <input type="date" id="expFinCustomStart" class="inp" style="padding:6px 10px; font-size:12px;" onclick="document.getElementById('expFinRadioCustom').checked=true">
+     <span style="color:var(--text3); font-size:12px;">đến</span>
+     <input type="date" id="expFinCustomEnd" class="inp" style="padding:6px 10px; font-size:12px;" onclick="document.getElementById('expFinRadioCustom').checked=true">
+    </div>
+   </div>
+
+   <div style="display:flex; gap:10px; justify-content:flex-end;">
+    <button class="btn btn-outline btn-sm" onclick="closeExportFinanceModal()">Hủy</button>
+    <button class="btn btn-g btn-sm" onclick="triggerFinanceExportFromModal()"><i data-lucide="file-spreadsheet" class="ic-14"></i> Tải file Excel (.xls)</button>
    </div>
   </div>
  </div>
