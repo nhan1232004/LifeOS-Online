@@ -1,0 +1,331 @@
+LIFEOS ONLINE
+KẾ HOẠCH REDESIGNUI/UX & PHÁT TRIỂN
+Modern Dark SaaS  •  Soft Glass  •  Bento Dashboard
+Mục tiêu: xây dựng giao diện hiện đại, dễ nhìn, nhất quán và thuận tiện khi sử dụng; đồng thời giữ ổn định chức năng, dữ liệu và khả năng đồng bộ hiện có.
+TÀI LIỆU KẾ HOẠCH • PHIÊN BẢN 1.0
+1. Tóm tắt định hướng
+Định hướng đề xuất cho LifeOS Online là Modern Dark SaaS kết hợp Soft Glass và Bento Grid. Nền xanh than trung tính, điểm nhấn tím lavender, card bo góc tinh tế, biểu đồ gọn và chuyển động nhẹ. Thiết kế cần ưu tiên khả năng đọc, thứ bậc thông tin và tốc độ thao tác thay vì hiệu ứng trang trí.
+Hạng mục
+Định hướng
+Phong cách
+Modern Dark SaaS + Soft Glass + Bento Grid
+Màu nhận diện
+Lavender/purple; xanh mint là màu phụ
+Ưu tiên UX
+Quick Add, tìm kiếm toàn cục, trạng thái lưu rõ ràng, liên kết module
+Ưu tiên kỹ thuật
+Tái sử dụng CSS tokens/components; không viết lại toàn bộ app ngay
+Nguyên tắc phát hành
+Làm theo từng giai đoạn, kiểm thử hồi quy và bảo vệ dữ liệu
+2. Nguyên tắc thiết kế
+Calm: hạn chế neon, glow và gradient mạnh; tạo cảm giác yên tĩnh khi sử dụng lâu.
+Clear: mỗi trang có tiêu đề, hành động chính và vùng nội dung trọng tâm.
+Consistent: cùng quy chuẩn button, card, form, modal, badge và trạng thái.
+Fast: thao tác thêm/sửa/tìm kiếm/chuyển trang nhanh, giảm số bước không cần thiết.
+Personal: cho phép tùy biến widget dashboard và ghim module thường dùng.
+Accessible: tương phản đủ, focus rõ, hỗ trợ bàn phím, trình đọc màn hình và reduced motion.
+3. Bảng màu đề xuất
+Dark theme là giao diện chủ đạo. Light theme cần có bộ token riêng, không chỉ đảo màu tự động.
+Token
+Mã màu
+Cách sử dụng
+Background
+#0B0D14
+Nền ứng dụng
+Sidebar
+#0F121C
+Thanh điều hướng
+Surface 1
+#151927
+Card và vùng nội dung
+Surface 2
+#1C2233
+Menu, dropdown, modal
+Primary
+#8B7CFF
+CTA, mục đang chọn, focus
+Primary hover
+#A397FF
+Trạng thái hover
+Secondary accent
+#5DD6C0
+Tiến độ và dữ liệu phụ
+Text primary
+#F3F4FA
+Tiêu đề và nội dung chính
+Text secondary
+#A0A7BA
+Mô tả và metadata
+Border
+#282E40
+Viền và phân cách
+Success
+#4DD4A2
+Hoàn thành/đồng bộ
+Warning
+#F4BE68
+Cảnh báo/deadline gần
+Danger
+#FF7185
+Lỗi/xóa/quá hạn
+3.1. Quy tắc sử dụng màu
+Tím lavender dành cho hành động chính và điểm nhấn; không tô tím tất cả các nút.
+Xanh mint biểu thị thành công hoặc tiến độ; không dùng làm màu trang trí tràn lan.
+Đỏ/hồng dành cho lỗi và thao tác nguy hiểm; vàng dành cho cảnh báo.
+Tỷ lệ tham khảo: 75–85% nền trung tính, 10–20% bề mặt, tối đa khoảng 5% màu nhấn.
+Kiểm tra tương phản theo WCAG 2.2 AA, nhất là chữ phụ, placeholder, badge và viền điều khiển.
+3.2. Light theme
+Token
+Mã màu
+Background
+#F5F6FA
+Sidebar / Card
+#FFFFFF
+Surface secondary
+#F0F1F8
+Text primary
+#202338
+Text secondary
+#687087
+Border
+#E4E7F0
+Primary
+#6958E8
+Success
+#168C6A
+4. Typography, spacing và component
+Hạng mục
+Quy chuẩn
+Ghi chú
+Font
+Inter hoặc system-ui
+Ưu tiên độ rõ và hiệu năng
+Tiêu đề trang
+28–32 px, weight 650–700
+Phân cấp rõ, tránh quá nhiều cỡ
+Tiêu đề card
+16–18 px, weight 600
+Nhìn rõ hơn metadata
+Nội dung
+14–16 px; line-height 1.45–1.65
+Đọc thoải mái
+Metadata
+12–13 px
+Không dùng màu quá mờ
+Spacing
+4, 8, 12, 16, 24, 32, 40 px
+Dùng thang bội số 4
+Card padding
+20–24 px desktop; 16 px mobile
+Khoảng thở ổn định
+Radius
+Card 16–20 px; input/button 10–12 px
+Không bo tròn quá mức
+Icon
+Lucide nhất quán, thường 18–20 px
+Không trộn nhiều phong cách
+Motion
+150–220 ms
+Tôn trọng prefers-reduced-motion
+5. Bố cục tổng thể
+5.1. Sidebar
+Rộng khoảng 240–260 px trên desktop; thu gọn còn khoảng 72 px.
+Nhóm menu: Overview; Tasks/Projects/Calendar/Notes; Habits/Goals/Focus; Finance/Learning/Tools.
+Settings và tài khoản đặt phía dưới. Sidebar thu gọn cần tooltip.
+Mục đang chọn dùng nền tím trầm, icon sáng và chỉ báo nhỏ; hover có nền nhẹ.
+5.2. Topbar
+Breadcrumb hoặc tên module; tìm kiếm toàn cục; nút Create/Quick Add.
+Thông báo, trạng thái đồng bộ và tài khoản/theme được đặt nhất quán.
+Trên mobile, chuyển chức năng phụ vào menu để ưu tiên vùng nội dung.
+5.3. Main content
+Chiều rộng tối đa khoảng 1440 px; padding 28–32 px desktop, 20 px tablet, 16 px mobile.
+Tiêu đề và hành động chính nằm phía trên; card có khoảng cách đồng đều.
+Tránh ép mọi card cùng chiều cao khi nội dung khác nhau; hạn chế trang trí không phục vụ chức năng.
+6. Dashboard Bento Grid
+Khối
+Nội dung/UX
+Welcome & Daily Summary
+Ngày hiện tại, lời chào ngắn và hành động nhanh; tránh banner lớn.
+Today's Tasks
+4–6 việc ưu tiên, checkbox, deadline, priority và nút thêm nhanh; có liên kết xem tất cả.
+Focus & Habits
+Thời gian tập trung, tiến độ thói quen và streak; dùng progress ring/thanh đơn giản.
+Upcoming & Projects
+Sự kiện sắp tới, deadline và tiến độ một vài dự án đang hoạt động.
+Goals & Insights
+Chỉ số tổng hợp hữu ích; chi tiết chuyên sâu nằm trong từng module.
+Customization
+Cho phép ẩn/hiện, đổi vị trí widget và ghi nhớ thiết lập.
+Dashboard phải trả lời nhanh: Hôm nay cần làm gì? Việc nào sắp đến hạn? Mình đang tiến bộ ra sao? Có thể bắt đầu hành động gì ngay? Không đưa toàn bộ số liệu của mọi module lên cùng một màn hình.
+7. Kế hoạch redesign theo module
+Module
+Thiết kế đề xuất
+Tiêu chí UX
+Tasks
+Header My Tasks + New Task; bộ lọc Today/Upcoming/Overdue/Completed; List và Kanban; task row có checkbox, tên, project, due date, priority; Quick Add một dòng.
+Giảm số bước tạo/sửa task; giữ bộ lọc khi chuyển view; hoàn thành task không làm danh sách nhảy mạnh.
+Projects
+Overview có tiến độ, deadline, trạng thái và thành viên; Kanban rõ cột; List/Gantt dùng chung dữ liệu; lọc theo người phụ trách/trạng thái/deadline.
+Đảm bảo mọi view đồng bộ; có empty state hướng dẫn tạo dự án.
+Calendar
+Month/Week/Agenda; phân biệt event/deadline/task bằng nhãn và icon; click ngày để xem chi tiết.
+Mobile mặc định Agenda; chỉ thêm drag-and-drop khi cập nhật ngày giờ và undo được.
+Notes
+Danh sách note, editor rộng và vùng thông tin phụ; search, tag, backlinks, liên kết task/project.
+Autosave có Saving/Saved/Save failed; bảo vệ nội dung chưa lưu; toolbar nâng cao có thể thu gọn.
+Habits
+Card/hàng gọn, icon, lịch, streak; lịch sử 7 ngày hoặc 30 ngày gần nhất.
+Vùng chạm đủ lớn; hỗ trợ ngày nghỉ và lịch lặp; tính streak chính xác theo ngày của người dùng.
+Goals
+Giá trị hiện tại, target, deadline, phần trăm tiến độ và milestones.
+Validate số nhập; quy định rõ xử lý giá trị âm/vượt mục tiêu; lưu lịch sử cập nhật.
+Finance
+Số dư, thu nhập, chi tiêu, ngân sách; biểu đồ theo danh mục; bảng giao dịch; lọc theo tháng/danh mục.
+Nhất quán quy tắc thu/chi; xác nhận xóa; có thể hoàn tác khi phù hợp.
+Focus / Pomodoro
+Timer nổi bật, Start/Pause/Resume/Reset, cấu hình phiên, liên kết task tùy chọn.
+Xử lý tab nền, reload và khôi phục; tránh ghi trùng phiên.
+Vocabulary / Tests / AI
+Vocabulary ưu tiên flashcard và ôn tập; Mock Tests ưu tiên nội dung và thời gian; AI phân biệt nội dung AI/người dùng.
+Có trạng thái xử lý/lỗi rõ; nhóm vào Learning/Tools để giảm tải sidebar.
+8. UX flows và trạng thái hệ thống
+8.1. Quick Add & tìm kiếm
+Nút Create luôn dễ tìm; command palette mở bằng Ctrl+K nếu không xung đột với luồng hiện có.
+Hỗ trợ bàn phím: mũi tên để di chuyển, Enter để chọn, Esc để đóng.
+Tìm kiếm có thể chuyển nhanh tới module hoặc bản ghi phù hợp; không bắt buộc người dùng phải nhớ shortcut.
+8.2. Trạng thái lưu
+Trạng thái
+Quy tắc
+Saving…
+Đang ghi dữ liệu.
+Saved
+Chỉ hiển thị sau khi tầng lưu trữ được quy định xác nhận thành công.
+Offline
+Nêu rõ dữ liệu được lưu cục bộ hay chưa; không hứa đồng bộ khi chưa có kết nối.
+Save failed
+Giữ nội dung, hiển thị lỗi dễ hiểu và nút thử lại.
+8.3. Các trạng thái bắt buộc của module
+Loading: skeleton hoặc chỉ báo tải, không để màn hình trống khó hiểu.
+Empty: lời hướng dẫn ngắn và một hành động chính.
+Error: mô tả ngắn, Retry khi phù hợp.
+Success: xác nhận gọn, không chặn thao tác tiếp theo.
+Xóa mục thông thường: ưu tiên Undo nếu khả thi; thao tác nguy hiểm cần xác nhận.
+Nếu task xuất hiện ở nhiều view, mọi view phải phản ánh cùng dữ liệu và trạng thái.
+9. Responsive & accessibility
+Thiết bị
+Breakpoint tham khảo
+Hành vi
+Desktop
+≥ 1200 px
+Sidebar đầy đủ; dashboard nhiều cột; bảng/biểu đồ có không gian rộng.
+Tablet
+768–1199 px
+Sidebar thu gọn hoặc overlay; card 2 cột; bảng có cách cuộn phù hợp.
+Mobile
+< 768 px
+Một cột; thao tác chạm dễ dùng; Agenda/List ưu tiên; menu gọn.
+Kiểm tra ở 360, 768, 1024 và 1440 px; tránh cuộn ngang toàn trang.
+Vùng chạm mục tiêu khoảng 44×44 px.
+Không dùng màu làm tín hiệu duy nhất; có focus-visible và thứ tự tab hợp lý.
+Tôn trọng prefers-reduced-motion; kiểm tra nhãn form và thông báo lỗi cho screen reader.
+Kiểm tra tương phản theo WCAG 2.2 AA.
+10. Kiến trúc triển khai
+Giữ JavaScript thuần và module hiện có ở giai đoạn đầu; không viết lại toàn bộ ứng dụng chỉ để thay giao diện. Tách design tokens, layout, components, themes và CSS theo module.
+Vị trí
+Trách nhiệm
+css/tokens.css
+Màu sắc, typography, spacing, radius, motion.
+css/base.css
+Reset, body và quy tắc typography.
+css/layout.css
+Sidebar, topbar, main content, responsive shell.
+css/components.css
+Button, card, input, modal, dropdown, toast, empty state.
+css/themes.css
+Dark/Light theme.
+css/modules/*.css
+Style riêng cho từng module.
+js/components/
+Modal, toast, dropdown, command palette, confirm dialog.
+tests/
+Component, module, persistence và checklist responsive.
+Quy tắc kỹ thuật
+Design tokens là nguồn màu duy nhất; tránh hardcode màu mới khi đã có token.
+Tách presentation khỏi logic nghiệp vụ; redesign Tasks không thay đổi logic deadline/lưu task.
+Không render dữ liệu người dùng trực tiếp vào innerHTML; ưu tiên DOM API/textContent hoặc renderer đã được kiểm tra an toàn.
+Tách trạng thái giao diện khỏi dữ liệu nghiệp vụ; xác định rõ quy tắc sync và xung đột.
+Giữ tương thích dữ liệu cũ; schema thay đổi phải có migration và kiểm tra backup/restore.
+Không thêm framework chỉ để làm đẹp; chỉ cân nhắc khi lợi ích về state, component và testing đủ lớn.
+11. Lộ trình phát triển
+Giai đoạn
+Công việc
+Điều kiện hoàn thành
+P0 — Design Foundation
+Chốt token Dark/Light; typography; spacing; button/input/card/modal/toast; sidebar/topbar; trang mẫu.
+Component nền tảng nhất quán; theme hoạt động; điều hướng và dữ liệu không bị ảnh hưởng.
+P1 — Dashboard & Navigation
+Bento dashboard; sidebar/topbar; Quick Add; tìm kiếm; trạng thái loading/empty/error/sync.
+Tìm module nhanh; thấy việc quan trọng; tạo mới không qua nhiều trang.
+P2 — Core Productivity
+Tasks, Projects, Calendar; deadline/priority/status thống nhất; đồng bộ List/Kanban/Gantt.
+Các view phản ánh cùng dữ liệu; luồng tạo/sửa không mất hoặc nhân đôi task trong kiểm thử.
+P3 — Personal Growth & Tools
+Notes, Habits, Goals, Finance, Pomodoro, Vocabulary, Mock Tests, AI.
+Module giữ trải nghiệm đặc thù nhưng dùng cùng ngôn ngữ thiết kế.
+P4 — Hardening & Release
+Responsive, offline, sync, auth, Firebase rules, input safety, performance, regression tests.
+Các luồng quan trọng vượt qua kiểm thử; có phương án rollback khi deploy lỗi.
+12. Mẫu CSS tokens
+:root {  color-scheme: dark;  --bg-base: #0B0D14;  --bg-sidebar: #0F121C;  --surface-1: #151927;  --surface-2: #1C2233;  --surface-hover: #222A3D;  --accent: #8B7CFF;  --accent-hover: #A397FF;  --accent-soft: #282341;  --accent-secondary: #5DD6C0;  --text-primary: #F3F4FA;  --text-secondary: #A0A7BA;  --text-muted: #858DA4;  --success: #4DD4A2;  --warning: #F4BE68;  --danger: #FF7185;  --border: #282E40;  --border-focus: #A397FF;  --radius-sm: 8px;  --radius-md: 12px;  --radius-lg: 16px;  --radius-xl: 20px;  --space-1: 4px;  --space-2: 8px;  --space-3: 12px;  --space-4: 16px;  --space-6: 24px;  --space-8: 32px;  --motion-fast: 150ms;  --motion-normal: 200ms;}[data-theme="light"] {  color-scheme: light;  --bg-base: #F5F6FA;  --bg-sidebar: #FFFFFF;  --surface-1: #FFFFFF;  --surface-2: #F0F1F8;  --surface-hover: #E9EAF4;  --accent: #6958E8;  --accent-hover: #5846D2;  --accent-soft: #EEEBFF;  --accent-secondary: #168C7A;  --text-primary: #202338;  --text-secondary: #687087;  --text-muted: #7A8297;  --border: #E4E7F0;  --border-focus: #6958E8;}
+Đây là mẫu khởi đầu. Trước khi dùng production, cần kiểm tra contrast và ánh xạ token với CSS hiện có; không thay thế hàng loạt mà chưa kiểm tra từng component.
+13. Checklist nghiệm thu
+Design system
+☐  Dark/Light theme có tương phản và trạng thái nhất quán
+☐  Button, input, card, modal, toast dùng component chung
+☐  Typography, spacing và icon thống nhất
+☐  Không có gradient/glow trang trí quá mức
+Dashboard & navigation
+☐  Dashboard ưu tiên Today's Tasks và deadline
+☐  Sidebar thu gọn được, giữ trạng thái điều hướng
+☐  Quick Add và tìm kiếm hoạt động bằng bàn phím
+☐  Widget có thể ẩn/hiện mà không làm mất dữ liệu
+UX & dữ liệu
+☐  Có trạng thái Saving, Saved và Save failed chính xác
+☐  Các view của cùng task phản ánh cùng dữ liệu
+☐  Form có validation và thông báo lỗi rõ ràng
+☐  Backup/restore được kiểm thử, không mất hoặc nhân đôi dữ liệu
+Responsive & accessibility
+☐  Layout được kiểm tra tại 360, 768, 1024 và 1440 px
+☐  Vùng chạm đủ lớn trên thiết bị di động
+☐  Điều hướng bàn phím và focus nhìn thấy được
+☐  Tôn trọng reduced motion và kiểm tra tương phản
+Release quality
+☐  Test chức năng quan trọng và regression đã chạy
+☐  Firebase rules được kiểm thử quyền truy cập
+☐  Input người dùng được xử lý an toàn khi render
+☐  PWA/offline và service worker được kiểm tra trên bản deploy
+14. Ưu tiên thực hiện
+Thứ tự
+Hạng mục
+Lý do
+1
+Design system + sidebar + topbar
+Tạo nền tảng và thay đổi cảm nhận toàn app.
+2
+Dashboard
+Trang xuất hiện thường xuyên nhất; thể hiện định hướng mới.
+3
+Tasks + Projects + Calendar
+Nhóm có liên kết mạnh; ưu tiên UX và tính nhất quán dữ liệu.
+4
+Notes + Habits + Goals + Finance
+Tối ưu từng luồng chuyên biệt.
+5
+Responsive + accessibility + testing
+Kiểm thử xuyên suốt, không đợi đến cuối.
+6
+Performance + security + release
+Bắt buộc trước khi phát hành rộng rãi.
+15. Kết luận
+LifeOS Online nên hướng tới một sản phẩm SaaS cao cấp: nền tối xanh than, tím lavender làm dấu ấn, Bento Grid rõ ràng, component nhất quán và chuyển động tinh tế. Chất lượng redesign không chỉ nằm ở hình thức; nó phải giúp người dùng thao tác nhanh, biết dữ liệu đã lưu hay chưa, và sử dụng các module liền mạch.
+Tài liệu này là đặc tả thiết kế và kế hoạch triển khai. Nó chưa sửa source code hoặc bản deploy. Bước kế tiếp phù hợp là hoàn thiện Design Foundation và Dashboard trên một nhánh phát triển riêng, kiểm thử chức năng hiện có, sau đó mới mở rộng sang toàn bộ module.

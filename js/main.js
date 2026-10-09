@@ -2415,13 +2415,23 @@ function renderToday() {
   const dt = new Date();
   const dateStr = dt.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
   const hr = dt.getHours();
-  let greeting = 'Chào buổi sáng ☀️';
-  if (hr >= 12 && hr < 18) greeting = 'Chào buổi chiều 🌤️';
-  else if (hr >= 18 || hr < 5) greeting = 'Chào buổi tối 🌙';
+  let greetingWord = 'Chào buổi sáng';
+  if (hr >= 12 && hr < 18) greetingWord = 'Chào buổi chiều';
+  else if (hr >= 18 || hr < 5) greetingWord = 'Chào buổi tối';
+
+  // User display name
+  let userName = '';
+  if (window.currentUser) {
+    userName = window.currentUser.displayName || (window.currentUser.email ? window.currentUser.email.split('@')[0] : '');
+  }
+  if (!userName) {
+    try { userName = localStorage.getItem('lifeos_username') || ''; } catch(e){}
+  }
 
   const td = today();
+  const allTodos = window.DB.todos || [];
   // Unified Today Filter: due today, no date specified, or overdue pending
-  const allTodayTodos = (window.DB.todos || []).filter(x => 
+  const allTodayTodos = allTodos.filter(x => 
     x.date === td || (!x.date && !x.done) || (!x.done && x.date && x.date < td)
   );
   // Sort: overdue first, then high priority, then undone first
@@ -2435,104 +2445,327 @@ function renderToday() {
   });
   const doneCount = allTodayTodos.filter(x => x.done).length;
   const totalCount = allTodayTodos.length;
+  const pendingCount = totalCount - doneCount;
   const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
-  const elDate = document.getElementById('todayDateStr');
-  if (elDate) {
-    elDate.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-      <div>
-        <div style="font-size:13px;font-weight:600;color:var(--accent-light);margin-bottom:2px;">${greeting}</div>
-        <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;">Hôm nay, ${dateStr}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);padding:6px 14px;border-radius:20px;">
-        <i data-lucide="check-circle-2" class="ic-16" style="color:var(--success)"></i>
-        <span style="font-size:12px;font-weight:600;color:var(--text-hi);">${doneCount}/${totalCount} việc (${pct}%)</span>
-      </div>
-    </div>`;
+  // 1. Header & Greeting
+  const avatarEl = document.getElementById('bentoUserAvatar');
+  if (avatarEl) {
+    if (window.currentUser && window.currentUser.photoURL) {
+      avatarEl.innerHTML = `<img src="${window.currentUser.photoURL}" alt="avatar" style="width:100%;height:100%;border-radius:14px;object-fit:cover;" />`;
+    } else {
+      const initial = (userName || 'N').charAt(0).toUpperCase();
+      avatarEl.textContent = initial;
+    }
   }
 
-  // 1. Render Todos (Unified & Interactive)
+  const greetTitleEl = document.getElementById('bentoGreetingTitle');
+  if (greetTitleEl) {
+    greetTitleEl.innerHTML = `${greetingWord}${userName ? ', ' + userName : ''}! 👋`;
+  }
+
+  const greetSubEl = document.getElementById('bentoGreetingSub');
+  if (greetSubEl) {
+    if (pendingCount > 0) {
+      greetSubEl.innerHTML = `Hôm nay bạn có <strong style="color:var(--accent-hover)">${pendingCount} công việc</strong> cần hoàn thành.`;
+    } else if (totalCount > 0) {
+      greetSubEl.innerHTML = `Tuyệt vời! Bạn đã hoàn thành toàn bộ công việc hôm nay 🎉`;
+    } else {
+      greetSubEl.innerHTML = `Hôm nay chưa có việc nào được lên lịch. Hãy bắt đầu ngày mới thật hứng khởi!`;
+    }
+  }
+
+  const dateChipEl = document.getElementById('bentoDateText');
+  if (dateChipEl) {
+    dateChipEl.textContent = `${dateStr} • 26°C`;
+  }
+
+  // Legacy header support if element exists
+  const elDate = document.getElementById('todayDateStr');
+  if (elDate) elDate.textContent = `Hôm nay, ${dateStr}`;
+
+  // 2. Bento 4 KPI Cards
+  const kpiGrid = document.getElementById('bentoKpis');
+  if (kpiGrid) {
+    const projects = window.DB.projects || [];
+    const activeProjects = projects.filter(p => p.status !== 'done');
+    let nearDeadlineCount = 0;
+    activeProjects.forEach(p => {
+      if (p.deadline) {
+        const diffDays = Math.ceil((new Date(p.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+        if (diffDays >= 0 && diffDays <= 7) nearDeadlineCount++;
+      }
+    });
+
+    const habits = window.DB.habits || [];
+    const habitsDone = habits.filter(h => (h.log && h.log[td]) || (h.history && h.history.includes(td)) || (h.logs && h.logs.includes(td))).length;
+    const maxStreak = habits.reduce((max, h) => Math.max(max, (typeof getStreak === 'function' ? getStreak(h.log||{}, h.createdAt) : h.streak || 0)), 0);
+    const habitPct = habits.length ? Math.round((habitsDone / habits.length) * 100) : 0;
+
+    const k = typeof computeFin === 'function' ? computeFin() : { balance: 0, savRate: 0 };
+    const curMonth = td.substring(0, 7);
+    const monthExpenses = (window.DB.expense || []).filter(e => (e.date || '').startsWith(curMonth));
+    const totalMonthExp = monthExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+
+    kpiGrid.innerHTML = `
+      <div class="bento-kpi-card" onclick="nav('todos')">
+        <div class="bento-kpi-top">
+          <div class="bento-kpi-icon purple"><i data-lucide="check-circle-2" class="ic-18"></i></div>
+          <span class="bento-kpi-pill purple">${pct}% hoàn thành</span>
+        </div>
+        <div class="bento-kpi-mid">
+          <div class="bento-kpi-value">${doneCount}/${totalCount}</div>
+          <div class="bento-kpi-label">Công việc hôm nay</div>
+        </div>
+        <div class="bento-progress-track">
+          <div class="bento-progress-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--accent),var(--accent-hover));"></div>
+        </div>
+      </div>
+
+      <div class="bento-kpi-card" onclick="nav('projects')">
+        <div class="bento-kpi-top">
+          <div class="bento-kpi-icon amber"><i data-lucide="folder-kanban" class="ic-18"></i></div>
+          <span class="bento-kpi-pill amber">${nearDeadlineCount > 0 ? nearDeadlineCount + ' sắp đến hạn' : 'Đúng tiến độ'}</span>
+        </div>
+        <div class="bento-kpi-mid">
+          <div class="bento-kpi-value">${activeProjects.length}</div>
+          <div class="bento-kpi-label">Dự án đang chạy</div>
+        </div>
+        <div class="bento-progress-track">
+          <div class="bento-progress-fill" style="width:${Math.min(100, activeProjects.length * 25)}%;background:linear-gradient(90deg,var(--warning),#FFD166);"></div>
+        </div>
+      </div>
+
+      <div class="bento-kpi-card" onclick="nav('habits')">
+        <div class="bento-kpi-top">
+          <div class="bento-kpi-icon rose"><i data-lucide="flame" class="ic-18"></i></div>
+          <span class="bento-kpi-pill rose">🔥 Chuỗi ${maxStreak} ngày</span>
+        </div>
+        <div class="bento-kpi-mid">
+          <div class="bento-kpi-value">${habitsDone}/${habits.length}</div>
+          <div class="bento-kpi-label">Thói quen hôm nay</div>
+        </div>
+        <div class="bento-progress-track">
+          <div class="bento-progress-fill" style="width:${habitPct}%;background:linear-gradient(90deg,var(--danger),#FFA8B5);"></div>
+        </div>
+      </div>
+
+      <div class="bento-kpi-card" onclick="nav('finance')">
+        <div class="bento-kpi-top">
+          <div class="bento-kpi-icon mint"><i data-lucide="wallet" class="ic-18"></i></div>
+          <span class="bento-kpi-pill mint">Tiết kiệm ${k.savRate}%</span>
+        </div>
+        <div class="bento-kpi-mid">
+          <div class="bento-kpi-value">${fmt(totalMonthExp)} ₫</div>
+          <div class="bento-kpi-label">Chi tiêu tháng này</div>
+        </div>
+        <div class="bento-progress-track">
+          <div class="bento-progress-fill" style="width:${Math.min(100, k.savRate || 50)}%;background:linear-gradient(90deg,var(--accent-secondary),#4DD4A2);"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 3. Render Todos (Priority list)
   const todoEl = document.getElementById('todayTodoList');
+  const badgeEl = document.getElementById('todayBadge');
+  if (badgeEl) badgeEl.textContent = `${doneCount}/${totalCount}`;
+
   if (todoEl) {
     if (!allTodayTodos.length) {
-      todoEl.innerHTML = `<div class="empty-state" style="padding:24px 16px; margin:0;">
-        <div class="empty-state-icon" style="width:38px;height:38px;"><i data-lucide="check-circle" class="ic-18"></i></div>
-        <div class="empty-state-title" style="font-size:13.5px;">Không có việc nào hôm nay!</div>
-        <div class="empty-state-desc" style="font-size:11.5px; margin-bottom:10px;">Thêm công việc cần xử lý để không bỏ lỡ.</div>
-        <button class="btn btn-p btn-sm" onclick="openTodoModal()"><i data-lucide="plus" class="ic-14"></i> Thêm việc mới</button>
+      todoEl.innerHTML = `<div class="empty-state" style="padding:22px 14px; margin:0; text-align:center;">
+        <div class="empty-state-icon" style="width:36px;height:36px;margin:0 auto 10px;background:rgba(139,124,255,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--accent);"><i data-lucide="check-circle" class="ic-18"></i></div>
+        <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Chưa có việc nào hôm nay!</div>
+        <div style="font-size:11.5px;color:var(--text-muted);margin-bottom:12px;">Thêm công việc để duy trì năng suất và đạt mục tiêu.</div>
       </div>`;
     } else {
-      todoEl.innerHTML = allTodayTodos.map(t => {
+      todoEl.innerHTML = allTodayTodos.slice(0, 6).map(t => {
         const isOverdue = !t.done && t.date && t.date < td;
         const pl = { high: 'Cao', mid: 'TB', low: 'Thấp' };
-        return `<div class="todo-item" style="padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; gap:12px; transition:var(--t); margin-bottom:8px; ${t.done ? 'opacity:0.6;' : ''}">
-          <div class="todo-cb" role="checkbox" aria-checked="${Boolean(t.done)}" onclick="toggleTodo('${t.id}')" style="width:20px; height:20px; border-radius:6px; border:2px solid ${t.done ? 'var(--green)' : 'var(--text3)'}; background:${t.done ? 'var(--green)' : 'transparent'}; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">
-            ${t.done ? '<span style="color:#000;font-size:11px;font-weight:900">✓</span>' : ''}
-          </div>
-          <div style="flex:1; min-width:0;">
-            <div style="font-size:13.5px; font-weight:500; ${t.done ? 'text-decoration:line-through; color:var(--text-low);' : 'color:var(--text-hi);'} ${isOverdue ? 'color:var(--danger);font-weight:600;' : ''}">${t.text}</div>
-            <div style="display:flex; align-items:center; gap:6px; margin-top:2px;">
-              ${isOverdue ? '<span style="color:var(--danger); font-size:10.5px; font-weight:700; background:rgba(255,82,82,0.12); padding:1px 5px; border-radius:3px;">⚠️ Quá hạn</span>' : ''}
-              ${t.priority === 'high' ? '<span style="color:var(--danger); font-size:10.5px; font-weight:600;">Ưu tiên cao</span>' : ''}
-              ${t.note ? '<span style="color:var(--text-low); font-size:10.5px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">💬 ' + t.note + '</span>' : ''}
+        const priClass = t.priority === 'high' ? 'p-high' : t.priority === 'mid' ? 'p-med' : 'p-low';
+        return `
+          <div class="bento-task-row ${t.done ? 'done' : ''}" onclick="toggleTodo('${t.id}')">
+            <div class="bento-task-checkbox">
+              ${t.done ? '<span style="font-size:11px;font-weight:900">✓</span>' : ''}
+            </div>
+            <div class="bento-task-name">${t.text}</div>
+            <div class="bento-task-meta" onclick="event.stopPropagation()">
+              ${isOverdue ? '<span class="bento-priority-badge p-high">⚠️ Quá hạn</span>' : ''}
+              <span class="bento-priority-badge ${priClass}">${pl[t.priority] || 'TB'}</span>
+              ${t.time ? `<span class="bento-task-time">${t.time}</span>` : ''}
+              <button class="icon-btn" onclick="editTodo('${t.id}')" title="Sửa việc" style="width:24px;height:24px;padding:0;"><i data-lucide="edit-2" class="ic-12"></i></button>
             </div>
           </div>
-          <button class="icon-btn" onclick="editTodo('${t.id}')" title="Chỉnh sửa"><i data-lucide="edit-2" class="ic-14"></i></button>
-        </div>`;
+        `;
       }).join('');
     }
   }
 
-  // 2. Render Habits
-  const habits = window.DB.habits || [];
-  const habitEl = document.getElementById('todayHabitList');
-  if (habitEl) {
-    if (!habits.length) {
-      habitEl.innerHTML = `<div class="empty-state" style="padding:24px 16px; margin:0;">
-        <div class="empty-state-icon" style="width:38px;height:38px;"><i data-lucide="flame" class="ic-18"></i></div>
-        <div class="empty-state-title" style="font-size:13.5px;">Chưa có thói quen</div>
-        <div class="empty-state-desc" style="font-size:11.5px; margin-bottom:10px;">Thêm thói quen để rèn luyện mỗi ngày.</div>
-        <button class="btn btn-p btn-sm" onclick="openHabit()"><i data-lucide="plus" class="ic-14"></i> Thêm thói quen</button>
-      </div>`;
-    } else {
-      habitEl.innerHTML = habits.map(h => {
-        const isDone = (h.history && h.history.includes(td)) || (h.logs && h.logs.includes(td));
-        return `<div style="padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-size:13.5px; font-weight:600; ${isDone ? 'text-decoration:line-through;color:var(--text-low)' : 'color:var(--text-hi)'}">${h.name}</div>
-            <div style="font-size:11px; color:var(--warning); margin-top:2px;">🔥 Chuỗi ${h.streak || 0} ngày</div>
-          </div>
-          <button class="btn btn-sm ${isDone ? 'btn-ghost' : 'btn-p'}" onclick="toggleHabitDay('${h.id}', '${td}')" style="font-size:12px; padding:4px 12px;">
-            ${isDone ? '✓ Đã xong' : 'Hoàn thành'}
-          </button>
-        </div>`;
-      }).join('');
-    }
-  }
-
-  // 3. Render Events
+  // 4. Render Events (Schedule)
   const events = (window.DB.events || []).filter(e => e.dateStart <= td && (e.dateEnd || e.dateStart) >= td);
   const eventEl = document.getElementById('todayEventList');
   if (eventEl) {
     if (!events.length) {
-      eventEl.innerHTML = `<div class="empty-state" style="padding:24px 16px; margin:0;">
-        <div class="empty-state-icon" style="width:38px;height:38px;"><i data-lucide="calendar" class="ic-18"></i></div>
-        <div class="empty-state-title" style="font-size:13.5px;">Không có sự kiện hôm nay</div>
-        <div class="empty-state-desc" style="font-size:11.5px; margin-bottom:10px;">Lịch trình hôm nay trống rỗng.</div>
-        <button class="btn btn-p btn-sm" onclick="openEv()"><i data-lucide="plus" class="ic-14"></i> Thêm sự kiện</button>
+      eventEl.innerHTML = `<div class="empty-state" style="padding:22px 14px; margin:0; text-align:center;">
+        <div class="empty-state-icon" style="width:36px;height:36px;margin:0 auto 10px;background:rgba(244,190,104,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--warning);"><i data-lucide="calendar" class="ic-18"></i></div>
+        <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Lịch trình hôm nay trống</div>
+        <div style="font-size:11.5px;color:var(--text-muted);">Không có sự kiện hay cuộc hẹn nào.</div>
       </div>`;
     } else {
-      eventEl.innerHTML = events.map(e => `<div style="padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <div style="font-size:13.5px; font-weight:600; color:var(--text-hi);">${e.title}</div>
-          <div style="font-size:11.5px; color:var(--text-mid); margin-top:2px;">${e.timeStart ? e.timeStart + (e.timeEnd ? ' - ' + e.timeEnd : '') : 'Cả ngày'}</div>
+      eventEl.innerHTML = events.slice(0, 4).map(e => `
+        <div class="bento-schedule-item">
+          <div class="bento-schedule-time">${e.timeStart ? e.timeStart + (e.timeEnd ? ' - ' + e.timeEnd : '') : 'Cả ngày'}</div>
+          <div class="bento-schedule-title">${e.title}</div>
+          <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
+            <button class="icon-btn" onclick="editEv('${e.id}')" title="Sửa" style="width:24px;height:24px;padding:0;"><i data-lucide="edit-2" class="ic-12"></i></button>
+            <button class="icon-btn" onclick="event.stopPropagation();delEvWithConfirm('${e.id}')" title="Xóa" style="width:24px;height:24px;padding:0;color:var(--danger);"><i data-lucide="trash-2" class="ic-12"></i></button>
+          </div>
         </div>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <button class="icon-btn" onclick="editEv('${e.id}')" title="Sửa sự kiện"><i data-lucide="edit-2" class="ic-14"></i></button>
-          <button class="icon-btn" onclick="event.stopPropagation();delEvWithConfirm('${e.id}')" title="Xóa sự kiện" style="color:var(--red);"><i data-lucide="trash-2" class="ic-14"></i></button>
-        </div>
-      </div>`).join('');
+      `).join('');
     }
+  }
+
+  // 5. Weekly Progress (Circular Ring + 7-Day Bar Chart)
+  const weeklyEl = document.getElementById('todayWeeklyProgress');
+  if (weeklyEl) {
+    const curr = new Date();
+    const dayOfWeek = (curr.getDay() + 6) % 7; // 0 is Monday, 6 is Sunday
+    const weekDays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+    const weekStats = [];
+    let weekTotalDone = 0;
+    let weekTotalTasks = 0;
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(curr);
+      d.setDate(curr.getDate() - dayOfWeek + i);
+      const ds = toLocalDateStr(d);
+      const dayTasks = allTodos.filter(x => x.date === ds);
+      const dayDone = allTodos.filter(x => x.date === ds && x.done).length;
+      weekTotalTasks += dayTasks.length;
+      weekTotalDone += dayDone;
+      weekStats.push({
+        label: weekDays[i],
+        count: dayDone,
+        isToday: i === dayOfWeek
+      });
+    }
+
+    const weekPct = weekTotalTasks > 0 ? Math.round((weekTotalDone / weekTotalTasks) * 100) : (weekTotalDone > 0 ? 100 : 0);
+    const ringRadius = 34;
+    const circumference = Math.round(2 * Math.PI * ringRadius * 10) / 10; // ~213.6
+    const offset = Math.round((circumference - (circumference * (weekPct / 100))) * 10) / 10;
+    const maxBarCount = Math.max(1, ...weekStats.map(s => s.count));
+
+    weeklyEl.innerHTML = `
+      <div class="bento-weekly-wrap">
+        <div class="bento-ring-box">
+          <svg class="bento-ring-svg" viewBox="0 0 80 80">
+            <circle class="bento-ring-bg" cx="40" cy="40" r="${ringRadius}"></circle>
+            <circle class="bento-ring-val" cx="40" cy="40" r="${ringRadius}"
+              style="stroke-dasharray:${circumference};stroke-dashoffset:${offset};"></circle>
+          </svg>
+          <div class="bento-ring-text">
+            <div class="num">${weekPct}%</div>
+            <div class="lbl">Tiến độ</div>
+          </div>
+        </div>
+        <div class="bento-bars-box">
+          ${weekStats.map(s => {
+            const hPct = Math.max(8, Math.round((s.count / maxBarCount) * 100));
+            return `
+              <div class="bento-bar-col">
+                <div class="bento-bar-track" title="${s.label}: ${s.count} việc hoàn thành">
+                  <div class="bento-bar-fill ${s.isToday ? 'active' : ''}" style="height:${s.count > 0 ? hPct : 8}%;"></div>
+                </div>
+                <div class="bento-bar-day ${s.isToday ? 'today' : ''}">${s.label}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // 6. Quote Card
+  const quotes = [
+    { text: "Sự tập trung là cầu nối vững chắc giữa ước mơ và thành tựu.", author: "Steve Jobs" },
+    { text: "Thói quen nhỏ mỗi ngày tạo nên sự khác biệt phi thường theo năm tháng.", author: "James Clear" },
+    { text: "Kỷ luật là lựa chọn giữa những gì bạn muốn bây giờ và những gì bạn muốn nhất.", author: "Abraham Lincoln" },
+    { text: "Đừng đếm các ngày trôi qua, hãy làm cho từng ngày đều có giá trị.", author: "Muhammad Ali" },
+    { text: "Hành động là chìa khóa nền tảng dẫn lối tới mọi thành công.", author: "Pablo Picasso" },
+    { text: "Tương lai phụ thuộc vào những gì bạn kiên định thực hiện hôm nay.", author: "Mahatma Gandhi" }
+  ];
+  const dayOfYear = Math.floor((dt - new Date(dt.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+  const q = quotes[dayOfYear % quotes.length];
+  const quoteTextEl = document.getElementById('todayQuoteText');
+  const quoteAuthEl = document.getElementById('todayQuoteAuthor');
+  if (quoteTextEl) quoteTextEl.textContent = `"${q.text}"`;
+  if (quoteAuthEl) quoteAuthEl.textContent = `— ${q.author}`;
+
+  // 7. Recent Projects
+  const projectListEl = document.getElementById('todayProjectList');
+  if (projectListEl) {
+    const activeProjects = (window.DB.projects || []).filter(p => p.status !== 'done');
+    if (!activeProjects.length) {
+      projectListEl.innerHTML = `<div class="empty-state" style="padding:18px 12px; margin:0; text-align:center;">
+        <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Chưa có dự án nào đang chạy.</div>
+        <button class="btn btn-p btn-sm" onclick="nav('projects')"><i data-lucide="plus" class="ic-14"></i> Tạo dự án</button>
+      </div>`;
+    } else {
+      projectListEl.innerHTML = activeProjects.slice(0, 3).map(p => {
+        const pTasks = allTodos.filter(t => t.project === p.id || t.project === p.name);
+        let prog = p.progress || 0;
+        if (pTasks.length > 0) {
+          prog = Math.round((pTasks.filter(t => t.done).length / pTasks.length) * 100);
+        }
+        return `
+          <div class="bento-project-item" onclick="nav('projects')">
+            <div class="bento-project-head">
+              <div class="bento-project-title" style="display:flex;align-items:center;gap:6px;">
+                <span style="width:8px;height:8px;border-radius:50%;background:${p.color || 'var(--accent)'};display:inline-block;"></span>
+                <span>${p.name}</span>
+              </div>
+              <div class="bento-project-percent">${prog}%</div>
+            </div>
+            <div class="bento-progress-track">
+              <div class="bento-progress-fill" style="width:${prog}%;"></div>
+            </div>
+            ${p.deadline ? `<div class="bento-project-due">Hạn: ${fmtDate(p.deadline)}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 8. Daily Habits
+  const habitEl = document.getElementById('todayHabitList');
+  if (habitEl) {
+    const habits = window.DB.habits || [];
+    if (!habits.length) {
+      habitEl.innerHTML = `<div class="empty-state" style="padding:18px 12px; margin:0; text-align:center;">
+        <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Chưa thiết lập thói quen.</div>
+        <button class="btn btn-p btn-sm" onclick="openHabit()"><i data-lucide="plus" class="ic-14"></i> Thêm thói quen</button>
+      </div>`;
+    } else {
+      habitEl.innerHTML = habits.slice(0, 4).map(h => {
+        const isDone = (h.log && h.log[td]) || (h.history && h.history.includes(td)) || (h.logs && h.logs.includes(td));
+        const st = typeof getStreak === 'function' ? getStreak(h.log||{}, h.createdAt) : (h.streak || 0);
+        return `
+          <div class="bento-habit-row ${isDone ? 'completed' : ''}" onclick="toggleHabitDay('${h.id}', '${td}')">
+            <div class="bento-habit-check">
+              ${isDone ? '<span style="font-size:12px;font-weight:900">✓</span>' : ''}
+            </div>
+            <div class="bento-habit-title">${h.name}</div>
+            <div class="bento-habit-streak">🔥 ${st}d</div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 9. Sync Pomodoro Mini display
+  if (typeof pomUpdateDisplay === 'function') {
+    pomUpdateDisplay();
   }
 
   if (window.lucide) window.lucide.createIcons();

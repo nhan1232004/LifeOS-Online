@@ -18,7 +18,8 @@
 <meta name="description" content="Quản lý lịch, dự án và tài chính cá nhân – sync real-time mọi thiết bị">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- Editor.js & Plugins -->
+
+<!-- Editor.js & Plugins -->
 <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@2.30.8"></script>
 <script src="https://cdn.jsdelivr.net/npm/@editorjs/header@2.8.8"></script>
 <script src="https://cdn.jsdelivr.net/npm/@editorjs/list@2.0.8"></script>
@@ -572,7 +573,8 @@ function updatePlatformBadge() {
 document.addEventListener('DOMContentLoaded', updatePlatformBadge);
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=20261009_v3">
+<link rel="stylesheet" href="css/style.css?v=20261009_v4">
+<link rel="stylesheet" href="css/bento.css?v=20261009_v4">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -810,59 +812,153 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
    <!-- ▸ OVERVIEW -->
    
    <!-- ▸ TODAY VIEW -->
-   <div class="page active" id="p-today">
-    <div class="page-hdr">
-     <h2 id="todayDateStr" style="font-size:24px; font-weight:700">Hôm nay</h2>
-     <div style="color:var(--text2); font-size:14px" id="todayQuote">"Mỗi ngày là một khởi đầu mới."</div>
-    </div>
-    
-    <div class="today-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
-     <!-- Cột Trái -->
-     <div style="display:flex; flex-direction:column; gap:20px;">
-      
-      <!-- Todo Hôm nay -->
-      <div class="card" style="padding:15px">
-       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
-        <h3 style="margin:0; font-size:15px; display:flex; align-items:center; gap:8px"><i data-lucide="check-circle-2" style="color:var(--primary); width:18px;height:18px"></i> Cần làm hôm nay</h3>
-        <button class="icon-btn" onclick="openTodoModal()"><i data-lucide="plus" style="width:14px;height:14px"></i></button>
+    <!-- ▸ TODAY BENTO DASHBOARD -->
+    <div class="page active" id="p-today">
+     <div class="bento-dashboard">
+      <!-- 1. Header & Welcome -->
+      <div class="bento-header" id="bentoHeader">
+       <div class="bento-welcome-wrap">
+        <div class="bento-avatar-chip" id="bentoUserAvatar">N</div>
+        <div class="bento-welcome-text">
+         <h2 id="bentoGreetingTitle">Chào buổi sáng, bạn! 👋</h2>
+         <p id="bentoGreetingSub">Hôm nay là một ngày tuyệt vời để hoàn thành các mục tiêu.</p>
+        </div>
        </div>
-       <div id="todayTodoList" style="display:flex; flex-direction:column; gap:10px;"></div>
+       <div class="bento-header-badges">
+        <div class="bento-date-badge" id="bentoDateChip">
+         <i data-lucide="calendar" style="width:14px;height:14px;color:var(--accent)"></i>
+         <span id="bentoDateText">Hôm nay</span>
+        </div>
+        <button class="btn btn-p btn-sm" onclick="openTodoModal()" style="display:inline-flex;align-items:center;gap:6px">
+         <i data-lucide="plus" style="width:14px;height:14px"></i> <span>Thêm việc</span>
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="openEv()" style="display:inline-flex;align-items:center;gap:6px">
+         <i data-lucide="calendar-plus" style="width:14px;height:14px"></i> <span>Sự kiện</span>
+        </button>
+       </div>
       </div>
 
-      <!-- Thói quen -->
-      <div class="card" style="padding:15px">
-       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
-        <h3 style="margin:0; font-size:15px; display:flex; align-items:center; gap:8px"><i data-lucide="repeat" style="color:var(--green); width:18px;height:18px"></i> Thói quen</h3>
-       </div>
-       <div id="todayHabitList" style="display:flex; flex-direction:column; gap:10px;"></div>
+      <!-- 2. Bento 4 KPI Cards -->
+      <div class="bento-kpi-grid" id="bentoKpis">
+       <!-- Dynamically rendered by renderToday() -->
       </div>
-      
-     </div>
 
-     <!-- Cột Phải -->
-     <div style="display:flex; flex-direction:column; gap:20px;">
-      
-      <!-- Lịch Hôm nay -->
-      <div class="card" style="padding:15px">
-       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
-        <h3 style="margin:0; font-size:15px; display:flex; align-items:center; gap:8px"><i data-lucide="calendar" style="color:var(--amber); width:18px;height:18px"></i> Lịch trình</h3>
-        <button class="icon-btn" onclick="openEv()"><i data-lucide="plus" style="width:14px;height:14px"></i></button>
+      <!-- 3. Main 3-Column Bento Grid -->
+      <div class="bento-main-grid">
+       <!-- Cột 1: Việc ưu tiên & Lịch trình -->
+       <div class="bento-col">
+        <!-- Widget: Công việc ưu tiên -->
+        <div class="bento-card">
+         <div class="bento-card-hdr">
+          <div class="bento-card-title">
+           <i data-lucide="check-circle-2" style="width:18px;height:18px"></i>
+           <span>Việc ưu tiên hôm nay</span>
+           <span class="badge bp" id="todayBadge" style="margin-left:4px">0/0</span>
+          </div>
+          <button class="icon-btn" onclick="openTodoModal()" title="Thêm việc mới"><i data-lucide="plus" style="width:15px;height:15px"></i></button>
+         </div>
+         <div class="bento-task-list" id="todayTodoList">
+          <!-- Rendered by renderToday() -->
+         </div>
+         <button class="bento-add-btn" onclick="openTodoModal()">
+          <i data-lucide="plus" style="width:14px;height:14px"></i> Thêm việc cần làm
+         </button>
+        </div>
+
+        <!-- Widget: Lịch trình hôm nay -->
+        <div class="bento-card">
+         <div class="bento-card-hdr">
+          <div class="bento-card-title">
+           <i data-lucide="calendar" style="width:18px;height:18px;color:var(--warning)"></i>
+           <span>Lịch trình hôm nay</span>
+          </div>
+          <button class="icon-btn" onclick="openEv()" title="Thêm sự kiện"><i data-lucide="plus" style="width:15px;height:15px"></i></button>
+         </div>
+         <div class="bento-schedule-list" id="todayEventList">
+          <!-- Rendered by renderToday() -->
+         </div>
+        </div>
        </div>
-       <div id="todayEventList" style="display:flex; flex-direction:column; gap:10px;"></div>
-      </div>
-      
-      <!-- Pomodoro Mini -->
-      <div class="card" style="padding:15px; text-align:center;">
-       <h3 style="margin:0 0 15px 0; font-size:15px; text-align:left; display:flex; align-items:center; gap:8px"><i data-lucide="timer" style="color:var(--red); width:18px;height:18px"></i> Tập trung</h3>
-       <div id="todayPomDisplay" style="font-size:36px; font-weight:700; font-variant-numeric:tabular-nums; margin:10px 0;">25:00</div>
-       <div style="display:flex; justify-content:center; gap:10px;">
-        <button class="btn btn-p" id="btnTodayPomToggle" onclick="pomToggle()">Bắt đầu</button>
-        <button class="btn btn-outline" onclick="pomReset()">Dừng</button>
+
+       <!-- Cột 2: Tiến độ tuần & Quote truyền cảm hứng -->
+       <div class="bento-col">
+        <!-- Widget: Tiến độ tuần -->
+        <div class="bento-card">
+         <div class="bento-card-hdr">
+          <div class="bento-card-title">
+           <i data-lucide="bar-chart-2" style="width:18px;height:18px;color:var(--accent-secondary)"></i>
+           <span>Tiến độ hoàn thành tuần</span>
+          </div>
+          <a class="bento-card-action" onclick="nav('stats')">Chi tiết →</a>
+         </div>
+         <div id="todayWeeklyProgress">
+          <!-- Rendered by renderToday() -->
+         </div>
+        </div>
+
+        <!-- Widget: Câu nói truyền cảm hứng -->
+        <div class="bento-quote-card" id="todayQuoteCard">
+         <div class="bento-quote-icon">❝</div>
+         <div class="bento-quote-text" id="todayQuoteText">"Sự đơn giản là chìa khóa của sự tinh tế và hiệu quả."</div>
+         <div class="bento-quote-author" id="todayQuoteAuthor">— Steve Jobs</div>
+        </div>
+       </div>
+
+       <!-- Cột 3: Dự án đang chạy, Thói quen, Pomodoro Focus Mini -->
+       <div class="bento-col">
+        <!-- Widget: Dự án gần đây -->
+        <div class="bento-card">
+         <div class="bento-card-hdr">
+          <div class="bento-card-title">
+           <i data-lucide="folder-kanban" style="width:18px;height:18px;color:var(--accent)"></i>
+           <span>Dự án đang chạy</span>
+          </div>
+          <a class="bento-card-action" onclick="nav('projects')">Tất cả →</a>
+         </div>
+         <div class="bento-project-list" id="todayProjectList">
+          <!-- Rendered by renderToday() -->
+         </div>
+        </div>
+
+        <!-- Widget: Thói quen hàng ngày -->
+        <div class="bento-card">
+         <div class="bento-card-hdr">
+          <div class="bento-card-title">
+           <i data-lucide="flame" style="width:18px;height:18px;color:var(--danger)"></i>
+           <span>Thói quen mỗi ngày</span>
+          </div>
+          <a class="bento-card-action" onclick="nav('habits')">Quản lý →</a>
+         </div>
+         <div class="bento-habit-list" id="todayHabitList">
+          <!-- Rendered by renderToday() -->
+         </div>
+        </div>
+
+        <!-- Widget: Pomodoro Mini Focus -->
+        <div class="bento-card">
+         <div class="bento-card-hdr">
+          <div class="bento-card-title">
+           <i data-lucide="timer" style="width:18px;height:18px;color:var(--accent-secondary)"></i>
+           <span>Tập trung Focus</span>
+          </div>
+          <a class="bento-card-action" onclick="nav('pomodoro')">Mở rộng →</a>
+         </div>
+         <div class="bento-pom-widget">
+          <div>
+           <div id="todayPomDisplay" class="bento-pom-display">25:00</div>
+           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Phiên làm việc sâu</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+           <button class="bento-pom-btn" id="btnTodayPomToggle" onclick="pomToggle()">Bắt đầu</button>
+           <button class="btn btn-outline btn-sm" onclick="pomReset()" style="padding:6px 12px;font-size:11px">Đặt lại</button>
+          </div>
+         </div>
+        </div>
        </div>
       </div>
      </div>
     </div>
-   </div>
+
 
    <div class="page" id="p-overview">
     <div class="welcome-banner">

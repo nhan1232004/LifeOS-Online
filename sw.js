@@ -1,10 +1,11 @@
-const CACHE = 'lifeos-v10-excel-reports';
+const CACHE = 'lifeos-v11-bento-saas';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
   './css/style.css',
+  './css/bento.css',
   './js/data.js',
   './js/main.js',
   './js/workspace.js',

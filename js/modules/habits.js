@@ -18,13 +18,14 @@ async function saveHabit() {
  renderHabits();
  toast('Đã thêm thói quen!', 'success');
 }
-async function toggleHabitDay(hid, dateStr) {
- const h = (window.DB.habits || []).find(x => x.id === hid); if (!h) return;
- if (!h.log) h.log = {};
- h.log[dateStr] = !h.log[dateStr];
- await persist('habits', window.DB.habits);
- renderHabits();
-}
+ async function toggleHabitDay(hid, dateStr) {
+  const h = (window.DB.habits || []).find(x => x.id === hid); if (!h) return;
+  if (!h.log) h.log = {};
+  h.log[dateStr] = !h.log[dateStr];
+  await persist('habits', window.DB.habits);
+  if (typeof renderHabits === 'function') renderHabits();
+  if (typeof renderToday === 'function') renderToday();
+ }
 async function delHabit(id) {
   const t = (window.DB.habits || []).find(x => x.id === id);
   if (!t) return;
