@@ -71,6 +71,63 @@ function renderGoals() {
   if (window.lucide) lucide.createIcons();
   return;
  }
+
+ const kpiEl = document.getElementById('goalKpis');
+ if (kpiEl && goals.length) {
+  const totalSaved = goals.reduce((sum, g) => sum + (Number(g.saved) || 0), 0);
+  const totalTarget = goals.reduce((sum, g) => sum + (Number(g.target) || 0), 0);
+  const totalPct = totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
+  const completedGoals = goals.filter(g => (Number(g.saved) || 0) >= (Number(g.target) || 0)).length;
+
+  kpiEl.innerHTML = `
+    <div class="bento-kpi-card">
+      <div class="bento-kpi-top">
+        <div class="bento-kpi-icon mint"><i data-lucide="piggy-bank" class="ic-18"></i></div>
+        <span class="bento-kpi-pill mint">Đã tiết kiệm</span>
+      </div>
+      <div class="bento-kpi-mid">
+        <div class="bento-kpi-value">${fmt(totalSaved)} ₫</div>
+        <div class="bento-kpi-label">Tổng tích lũy</div>
+      </div>
+    </div>
+
+    <div class="bento-kpi-card">
+      <div class="bento-kpi-top">
+        <div class="bento-kpi-icon purple"><i data-lucide="target" class="ic-18"></i></div>
+        <span class="bento-kpi-pill purple">${totalPct}% toàn bộ</span>
+      </div>
+      <div class="bento-kpi-mid">
+        <div class="bento-kpi-value">${fmt(totalTarget)} ₫</div>
+        <div class="bento-kpi-label">Mục tiêu cần đạt</div>
+      </div>
+    </div>
+
+    <div class="bento-kpi-card">
+      <div class="bento-kpi-top">
+        <div class="bento-kpi-icon amber"><i data-lucide="check-circle-2" class="ic-18"></i></div>
+        <span class="bento-kpi-pill amber">${completedGoals}/${goals.length}</span>
+      </div>
+      <div class="bento-kpi-mid">
+        <div class="bento-kpi-value">${completedGoals}</div>
+        <div class="bento-kpi-label">Mục tiêu hoàn thành</div>
+      </div>
+    </div>
+
+    <div class="bento-kpi-card">
+      <div class="bento-kpi-top">
+        <div class="bento-kpi-icon cyan"><i data-lucide="trending-up" class="ic-18"></i></div>
+        <span class="bento-kpi-pill cyan">Tiến độ</span>
+      </div>
+      <div class="bento-kpi-mid">
+        <div class="bento-kpi-value">${totalPct}%</div>
+        <div class="bento-kpi-label">Tỷ lệ tích lũy chung</div>
+      </div>
+    </div>
+  `;
+ } else if (kpiEl) {
+  kpiEl.innerHTML = '';
+ }
+
  c.className = 'goals-grid';
  c.innerHTML = goals.map(g => {
   const pct = g.target > 0 ? Math.min(100, Math.round((g.saved / g.target) * 100)) : 0;

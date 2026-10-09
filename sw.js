@@ -1,4 +1,4 @@
-const CACHE = 'lifeos-v14-fix-pomodoro-savings';
+const CACHE = 'lifeos-v15-midnight-aurora';
 const APP_SHELL = [
   './',
   './index.html',

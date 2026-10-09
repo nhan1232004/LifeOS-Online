@@ -148,5 +148,69 @@ function pomSet(mins, el) {
  }
  pomUpdateDisplay();
 }
-function renderPomodoro() { pomUpdateDisplay(); }
+
+let pomActiveTaskId = null;
+
+function setPomActiveTask(taskId) {
+  if (pomActiveTaskId === taskId) {
+    pomActiveTaskId = null;
+  } else {
+    pomActiveTaskId = taskId;
+  }
+  renderPomodoroTasks();
+  updatePomActiveTaskBadge();
+}
+
+function updatePomActiveTaskBadge() {
+  const wrap = document.getElementById('pomActiveTaskWrap');
+  const textEl = document.getElementById('pomActiveTaskText');
+  if (!wrap || !textEl) return;
+  if (!pomActiveTaskId) {
+    wrap.style.display = 'none';
+  } else {
+    const task = (window.DB.todos || []).find(t => t.id === pomActiveTaskId);
+    if (!task) {
+      wrap.style.display = 'none';
+      pomActiveTaskId = null;
+    } else {
+      wrap.style.display = 'block';
+      textEl.innerHTML = `<i data-lucide="target" class="ic-14" style="color:var(--accent-secondary)"></i> <span>Đang tập trung: <b>${window.LifeOSData?.escapeHtml(task.text) || task.text}</b></span> <button onclick="event.stopPropagation();setPomActiveTask('${task.id}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:4px;">✕</button>`;
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+}
+
+function renderPomodoroTasks() {
+  const listEl = document.getElementById('pomTaskList');
+  if (!listEl) return;
+  const todos = (window.DB.todos || []).filter(t => !t.done);
+  if (!todos.length) {
+    listEl.innerHTML = `<div style="text-align:center;padding:24px 10px;font-size:12.5px;color:var(--text-muted);">Không có công việc nào đang chờ. Hãy thêm việc mới để tập trung!</div>`;
+    return;
+  }
+
+  listEl.innerHTML = todos.slice(0, 10).map(t => {
+    const isSelected = t.id === pomActiveTaskId;
+    return `
+      <div class="bento-task-row" style="background:${isSelected ? 'rgba(139,92,246,0.18)' : 'var(--surface-2)'};border:${isSelected ? '1px solid var(--accent)' : '1px solid transparent'};" onclick="setPomActiveTask('${t.id}')">
+        <div class="bento-task-checkbox" onclick="event.stopPropagation();toggleTodo('${t.id}')" style="cursor:pointer;" title="Đánh dấu hoàn thành">
+          ${t.done ? '✓' : ''}
+        </div>
+        <div class="bento-task-name" style="flex:1;font-size:13px;font-weight:${isSelected ? '700' : '500'};color:${isSelected ? 'var(--accent-light)' : 'var(--text-primary)'};">
+          ${window.LifeOSData?.escapeHtml(t.text) || t.text}
+        </div>
+        ${isSelected ? '<span class="badge" style="background:var(--accent);color:#fff;font-size:10px;padding:2px 6px;">Đang chọn</span>' : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPomodoro() { 
+  pomUpdateDisplay(); 
+  renderPomodoroTasks();
+  updatePomActiveTaskBadge();
+}
+
+window.setPomActiveTask = setPomActiveTask;
+window.renderPomodoroTasks = renderPomodoroTasks;
 

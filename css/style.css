@@ -1,51 +1,53 @@
 /* ═══════════════════════════════════════════════════════════
-  DESIGN TOKENS — MODERN DARK SAAS + BENTO SYSTEM
+  DESIGN TOKENS — MIDNIGHT AURORA (MODERN DARK SAAS + GLASSMORPHISM)
 ═══════════════════════════════════════════════════════════ */
 :root {
   color-scheme: dark;
-  /* ── Core Background Layers ── */
-  --bg-base: #0B0D14;
-  --bg-sidebar: #0F121C;
-  --bg-raised: #0F121C;
-  --surface-1: #151927;
-  --surface-2: #1C2233;
-  --surface-hover: #222A3D;
-  --bg-overlay: #151927;
-  --bg-surface: #1C2233;
+  /* ── Core Background Layers (Midnight Aurora) ── */
+  --bg-base: #0B1024;
+  --bg-sidebar: #0D1329;
+  --bg-raised: #0D1329;
+  --surface-1: #171F3B;
+  --surface-2: #1E294B;
+  --surface-hover: #25335E;
+  --bg-overlay: #171F3B;
+  --bg-surface: #1E294B;
 
   /* ── Soft Glass Tokens ── */
-  --glass: #151927;
-  --glass-b: #282E40;
-  --glass-h: #222A3D;
-  --glass-active: rgba(139, 124, 255, 0.18);
+  --glass: rgba(23, 31, 59, 0.78);
+  --glass-b: #232D52;
+  --glass-h: rgba(37, 51, 94, 0.85);
+  --glass-active: rgba(139, 92, 246, 0.22);
 
-  /* ── Modern Lavender & Accent System ── */
-  --accent: #8B7CFF;
-  --accent-hover: #A397FF;
-  --accent-light: #B8AEFF;
-  --accent-soft: #282341;
-  --accent-secondary: #5DD6C0;
-  --accent-cyan: #5DD6C0;
-  --success: #4DD4A2;
-  --warning: #F4BE68;
-  --danger: #FF7185;
-  --pink: #FF7185;
-  --purple: #8B7CFF;
+  /* ── Midnight Aurora Accent System ── */
+  --accent: #8B5CF6;
+  --accent-hover: #9F7AEA;
+  --accent-light: #A78BFA;
+  --accent-soft: rgba(139, 92, 246, 0.16);
+  --accent-secondary: #22D3EE;
+  --accent-cyan: #22D3EE;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --pink: #EC4899;
+  --purple: #8B5CF6;
+  --aurora-gradient: linear-gradient(135deg, #8B5CF6 0%, #22D3EE 100%);
+  --aurora-glow: 0 0 20px rgba(139, 92, 246, 0.35);
 
   /* ── Typographic Hierarchy ── */
-  --text-primary: #F3F4FA;
-  --text-secondary: #A0A7BA;
-  --text-muted: #858DA4;
-  --text-hi: #F3F4FA;
-  --text-mid: #A0A7BA;
-  --text-low: #858DA4;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --text-hi: #F8FAFC;
+  --text-mid: #94A3B8;
+  --text-low: #64748B;
 
   /* ── Borders & Elevation ── */
-  --border: #282E40;
-  --border-focus: #A397FF;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --border: #232D52;
+  --border-focus: #8B5CF6;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.65);
 
   /* ── Geometry & Motion ── */
   --radius-sm: 8px;
@@ -258,8 +260,9 @@ body::before {
  content: '';
  position: fixed; inset: 0; pointer-events: none; z-index: 0;
  background:
-  radial-gradient(ellipse 80% 50% at 10% 5%, rgba(124,77,255,.08) 0, transparent 55%),
-  radial-gradient(ellipse 50% 40% at 90% 90%, rgba(0,229,255,.05) 0, transparent 55%);
+  radial-gradient(ellipse 70% 50% at 15% 10%, rgba(139, 92, 246, 0.14) 0, transparent 60%),
+  radial-gradient(ellipse 60% 45% at 85% 15%, rgba(34, 211, 238, 0.10) 0, transparent 55%),
+  radial-gradient(ellipse 50% 40% at 50% 90%, rgba(139, 92, 246, 0.08) 0, transparent 60%);
 }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-thumb { background: rgba(124,77,255,.2); border-radius: 4px; }
@@ -575,10 +578,10 @@ body::before {
  right: 0;
  width: 100%;
  z-index: 200;
- background: rgba(12, 12, 26, 0.96);
- backdrop-filter: blur(24px) saturate(1.8);
- -webkit-backdrop-filter: blur(24px) saturate(1.8);
- border-top: 1px solid rgba(255, 255, 255, 0.08);
+ background: rgba(13, 19, 41, 0.94);
+ backdrop-filter: blur(20px) saturate(1.8);
+ -webkit-backdrop-filter: blur(20px) saturate(1.8);
+ border-top: 1px solid var(--border);
  box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.5);
  padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
  box-sizing: border-box;
@@ -617,7 +620,7 @@ body::before {
  background: transparent !important;
  border: none !important;
  border-radius: 10px !important;
- color: var(--text3, #8a8a9e) !important;
+ color: var(--text-muted) !important;
  cursor: pointer !important;
  user-select: none !important;
  -webkit-tap-highlight-color: transparent !important;
@@ -652,12 +655,12 @@ body::before {
 }
 
 .mnav-item.active {
- color: #a78bfa !important;
- background: rgba(124, 77, 255, 0.15) !important;
+ color: var(--accent-light) !important;
+ background: rgba(139, 92, 246, 0.16) !important;
 }
 
 .mnav-item.active i, .mnav-item.active svg {
- stroke: #a78bfa !important;
+ stroke: var(--accent-light) !important;
  transform: scale(1.1) !important;
 }
 
@@ -670,8 +673,8 @@ body::before {
  width: 18px;
  height: 2.5px;
  border-radius: 2px;
- background: #7c4dff;
- box-shadow: 0 0 10px rgba(124, 77, 255, 0.9);
+ background: var(--aurora-gradient);
+ box-shadow: 0 0 10px rgba(139, 92, 246, 0.7);
 }
 
 .mnav-badge {

@@ -43,8 +43,8 @@
 }
 
 .sb-logo-ico {
-  background: linear-gradient(135deg, var(--accent), var(--accent-secondary)) !important;
-  box-shadow: 0 4px 14px rgba(139, 124, 255, 0.3) !important;
+  background: var(--aurora-gradient) !important;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35) !important;
   border-radius: 10px !important;
 }
 
@@ -72,15 +72,15 @@
 }
 
 .sb-item.active {
-  background: rgba(139, 124, 255, 0.12) !important;
-  color: var(--accent) !important;
+  background: rgba(139, 92, 246, 0.16) !important;
+  color: var(--accent-light) !important;
   font-weight: 700 !important;
   border-left: 3px solid var(--accent) !important;
 }
 
 .sb-badge {
-  background: rgba(139, 124, 255, 0.16) !important;
-  color: var(--accent) !important;
+  background: rgba(139, 92, 246, 0.2) !important;
+  color: var(--accent-light) !important;
   font-weight: 700 !important;
   border-radius: 99px !important;
   padding: 2px 8px !important;
@@ -103,7 +103,7 @@
 
 .todo-quick-add:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(139, 124, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
 }
 
 .todo-quick-add input {
@@ -162,13 +162,13 @@
 
 .modern-todo-row:hover {
   background: var(--surface-hover);
-  border-color: rgba(139, 124, 255, 0.3);
+  border-color: rgba(139, 92, 246, 0.35);
   transform: translateY(-1px);
 }
 
 .modern-todo-row.done {
   opacity: 0.55;
-  background: rgba(21, 25, 39, 0.6);
+  background: rgba(13, 19, 41, 0.6);
 }
 
 .modern-todo-row.done .modern-todo-text {
@@ -235,8 +235,9 @@
 }
 
 .modern-tag-project {
-  background: rgba(139, 124, 255, 0.12);
-  color: var(--accent-light);
+  background: rgba(34, 211, 238, 0.12);
+  color: var(--accent-secondary);
+  border: 1px solid rgba(34, 211, 238, 0.25);
 }
 
 .modern-tag-date {
@@ -244,9 +245,10 @@
 }
 
 .modern-tag-overdue {
-  background: rgba(255, 113, 133, 0.16);
+  background: rgba(239, 68, 68, 0.16);
   color: var(--danger);
   font-weight: 700;
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 .modern-todo-actions {
@@ -323,19 +325,19 @@
 
 .proj-card:hover {
   transform: translateY(-3px) !important;
-  border-color: rgba(139, 124, 255, 0.35) !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35) !important;
+  border-color: rgba(139, 92, 246, 0.4) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 0 16px rgba(139, 92, 246, 0.1) !important;
 }
 
 .proj-card-create {
-  border: 2px dashed rgba(139, 124, 255, 0.35) !important;
-  background: rgba(139, 124, 255, 0.04) !important;
+  border: 2px dashed rgba(139, 92, 246, 0.35) !important;
+  background: rgba(139, 92, 246, 0.05) !important;
   border-radius: var(--radius-lg) !important;
 }
 
 .proj-card-create:hover {
   border-color: var(--accent) !important;
-  background: rgba(139, 124, 255, 0.1) !important;
+  background: rgba(139, 92, 246, 0.12) !important;
 }
 
 .proj-card-title {
@@ -387,9 +389,9 @@
 }
 
 .kcard:hover {
-  border-color: rgba(139, 124, 255, 0.3) !important;
+  border-color: rgba(139, 92, 246, 0.35) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3) !important;
 }
 
 .kcard-title {
@@ -407,6 +409,8 @@
 
 .note-card {
   background: var(--surface-1) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-lg) !important;
   padding: 18px 20px !important;
@@ -417,8 +421,8 @@
 
 .note-card:hover {
   transform: translateY(-3px) !important;
-  border-color: rgba(139, 124, 255, 0.35) !important;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3) !important;
+  border-color: rgba(139, 92, 246, 0.4) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35) !important;
 }
 
 .note-card .nc-title {
@@ -460,7 +464,8 @@
 }
 
 .modern-habit-card:hover {
-  border-color: rgba(139, 124, 255, 0.25);
+  border-color: rgba(139, 92, 246, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .modern-habit-top {
@@ -500,10 +505,11 @@
   gap: 4px;
   padding: 3px 10px;
   border-radius: 99px;
-  background: rgba(244, 190, 104, 0.15);
+  background: rgba(245, 158, 11, 0.16);
   color: var(--warning);
   font-size: 11.5px;
   font-weight: 700;
+  border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
 .modern-habit-tracker-row {
@@ -548,13 +554,13 @@
 .modern-habit-bubble.done .modern-habit-bubble-btn {
   background: var(--accent-secondary);
   border-color: var(--accent-secondary);
-  color: #fff;
-  box-shadow: 0 0 10px rgba(93, 214, 192, 0.3);
+  color: #0B1024;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
 }
 
 .modern-habit-bubble.today .modern-habit-bubble-btn {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(139, 124, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
 }
 
 .modern-habit-bubble-label {
@@ -564,7 +570,7 @@
 }
 
 .modern-habit-bubble.today .modern-habit-bubble-label {
-  color: var(--accent);
+  color: var(--accent-light);
   font-weight: 700;
 }
 
@@ -577,6 +583,8 @@
 
 .goal-card {
   background: var(--surface-1) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-lg) !important;
   padding: 20px !important;
@@ -584,11 +592,13 @@
   display: flex !important;
   flex-direction: column !important;
   gap: 12px !important;
-  transition: border-color var(--motion-fast) ease !important;
+  transition: all var(--motion-fast) ease !important;
 }
 
 .goal-card:hover {
-  border-color: rgba(139, 124, 255, 0.25) !important;
+  border-color: rgba(139, 92, 246, 0.35) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+  transform: translateY(-2px);
 }
 
 .goal-card .gc-name {
@@ -615,8 +625,8 @@
 }
 
 .goal-bar-fill {
-  background: linear-gradient(90deg, var(--accent), var(--accent-secondary)) !important;
-  box-shadow: 0 0 10px rgba(139, 124, 255, 0.3) !important;
+  background: var(--aurora-gradient) !important;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.35) !important;
 }
 
 /* ── 8. FINANCE TABLES & KPIS ── */
@@ -712,9 +722,9 @@
 }
 
 .bcd-num.today {
-  background: var(--accent) !important;
+  background: var(--aurora-gradient) !important;
   color: #fff !important;
-  box-shadow: 0 0 12px rgba(139, 124, 255, 0.4) !important;
+  box-shadow: 0 0 14px rgba(139, 92, 246, 0.45) !important;
 }
 
 .ev-pill {
@@ -732,6 +742,118 @@
 .wk-hdr, .wk-hdr-corner {
   background: var(--surface-2) !important;
   border-bottom: 1px solid var(--border) !important;
+}
+
+/* ── CALENDAR MONTH + AGENDA COMBO (Screen 4) ── */
+.cal-combo-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .cal-combo-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cal-agenda-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.cal-agenda-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cal-agenda-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cal-agenda-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.cal-agenda-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.cal-agenda-item:hover {
+  background: var(--surface-hover);
+  transform: translateX(2px);
+}
+
+/* ── POMODORO COMBO LAYOUT (Screen 9) ── */
+.pom-combo-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 20px;
+  max-width: 960px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+@media (max-width: 820px) {
+  .pom-combo-layout {
+    grid-template-columns: 1fr;
+    max-width: 540px;
+  }
+}
+
+.pom-tasks-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pom-focus-task-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  background: rgba(139, 92, 246, 0.16);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: var(--accent-light);
+  font-size: 12px;
+  font-weight: 700;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── 10. MODALS & FORMS POLISH ── */
@@ -790,7 +912,7 @@
 }
 
 .card:hover {
-  border-color: rgba(139, 124, 255, 0.22) !important;
+  border-color: rgba(139, 92, 246, 0.35) !important;
 }
 
 .ch {
@@ -826,7 +948,7 @@
 }
 
 .fin-card:hover {
-  border-color: rgba(139, 124, 255, 0.25) !important;
+  border-color: rgba(139, 92, 246, 0.35) !important;
 }
 
 .fin-card .fin-head {
@@ -840,24 +962,26 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(77, 212, 162, 0.15) !important;
+  background: rgba(16, 185, 129, 0.16) !important;
   color: var(--success) !important;
   padding: 4px 12px;
   border-radius: 99px;
   font-size: 12px;
   font-weight: 700;
+  border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .fin-badge-expense {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 113, 133, 0.15) !important;
+  background: rgba(239, 68, 68, 0.16) !important;
   color: var(--danger) !important;
   padding: 4px 12px;
   border-radius: 99px;
   font-size: 12px;
   font-weight: 700;
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 /* ── 14. JOURNAL MODULE ── */
@@ -872,7 +996,7 @@
 }
 
 .modern-journal-card:hover {
-  border-color: rgba(139, 124, 255, 0.25);
+  border-color: rgba(139, 92, 246, 0.35);
   box-shadow: var(--shadow-md);
 }
 
@@ -913,17 +1037,19 @@
 /* ── 15. VOCABULARY MODULE ── */
 .vocab-card {
   background: var(--surface-1) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-lg) !important;
-  padding: 20px !important;
+  padding: 18px 20px !important;
   box-shadow: var(--shadow-sm) !important;
   transition: all var(--motion-fast) ease !important;
 }
 
 .vocab-card:hover {
-  border-color: var(--accent) !important;
+  border-color: rgba(139, 92, 246, 0.45) !important;
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 16px rgba(139, 92, 246, 0.1) !important;
 }
 
 .vocab-card .vc-word {
@@ -934,7 +1060,7 @@
 
 .vocab-card .vc-type {
   background: var(--surface-2) !important;
-  color: var(--accent) !important;
+  color: var(--accent-secondary) !important;
   border: 1px solid var(--border);
   border-radius: 6px !important;
   padding: 2px 8px !important;
@@ -951,6 +1077,18 @@
   font-size: 14px !important;
   font-weight: 600 !important;
   line-height: 1.4 !important;
+}
+
+.vc-ex-quote {
+  background: var(--surface-2);
+  border-left: 2px solid var(--accent-secondary);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 8px;
+  line-height: 1.4;
 }
 
 .vocab-batch-bar {

@@ -256,12 +256,32 @@ function getNotePreview(bodyStr) {
  return tmp.textContent || tmp.innerText || '';
 }
 
+let currentNoteCategory = 'all';
+
+function setNoteCategoryFilter(cat, btn) {
+  currentNoteCategory = cat;
+  document.querySelectorAll('#noteFilterTabs .seg-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderNotes();
+}
+window.setNoteCategoryFilter = setNoteCategoryFilter;
+
 function renderNotes() {
  const grid = document.getElementById('notesGrid'); if (!grid) return;
  const q = (document.getElementById('noteSearch')?.value || '').toLowerCase();
- const notes = (window.DB.notes || []).filter(n =>
-  !q || (n.title || '').toLowerCase().includes(q) || getNotePreview(n.body).toLowerCase().includes(q)
- );
+ const notes = (window.DB.notes || []).filter(n => {
+   const isSheet = n.isSheet || (n.sheetData && n.sheetData.length > 0);
+   if (currentNoteCategory === 'sheet' && !isSheet) return false;
+   if (currentNoteCategory === 'work') {
+     const matchTag = (n.tags || []).some(t => t.toLowerCase().includes('công việc') || t.toLowerCase().includes('work') || t.toLowerCase().includes('dự án'));
+     if (!matchTag && isSheet) return false;
+   }
+   if (currentNoteCategory === 'personal') {
+     const matchTag = (n.tags || []).some(t => t.toLowerCase().includes('cá nhân') || t.toLowerCase().includes('personal') || t.toLowerCase().includes('đời sống'));
+     if (!matchTag && isSheet) return false;
+   }
+   return !q || (n.title || '').toLowerCase().includes(q) || getNotePreview(n.body).toLowerCase().includes(q);
+ });
  if (!notes.length) {
   grid.innerHTML = `
    <div class="empty-state" style="grid-column:1/-1;padding:48px 16px;text-align:center;">

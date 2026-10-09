@@ -1648,7 +1648,7 @@ function renderFinKpi(){
     <div class="bento-kpi-label">Số dư kỳ này</div>
    </div>
    <div class="bento-progress-track">
-    <div class="bento-progress-fill" style="width:${Math.min(100, k.savRate || 50)}%;background:linear-gradient(90deg,var(--accent-secondary),#4DD4A2);"></div>
+    <div class="bento-progress-fill" style="width:${Math.min(100, k.savRate || 50)}%;background:linear-gradient(90deg,var(--accent-secondary),var(--success));"></div>
    </div>
   </div>
 
@@ -1662,7 +1662,7 @@ function renderFinKpi(){
     <div class="bento-kpi-label">Tổng thu nhập</div>
    </div>
    <div class="bento-progress-track">
-    <div class="bento-progress-fill" style="width:100%;background:linear-gradient(90deg,#4DD4A2,#5DD6C0);"></div>
+    <div class="bento-progress-fill" style="width:100%;background:linear-gradient(90deg,var(--success),var(--accent-secondary));"></div>
    </div>
   </div>
 
@@ -1676,7 +1676,7 @@ function renderFinKpi(){
     <div class="bento-kpi-label">Tổng chi tiêu</div>
    </div>
    <div class="bento-progress-track">
-    <div class="bento-progress-fill" style="width:${k.totalInc > 0 ? Math.min(100, Math.round((k.totalExp / k.totalInc) * 100)) : 100}%;background:linear-gradient(90deg,var(--danger),#FFA8B5);"></div>
+    <div class="bento-progress-fill" style="width:${k.totalInc > 0 ? Math.min(100, Math.round((k.totalExp / k.totalInc) * 100)) : 100}%;background:linear-gradient(90deg,var(--danger),#F87171);"></div>
    </div>
   </div>
 
@@ -1690,7 +1690,7 @@ function renderFinKpi(){
     <div class="bento-kpi-label">Chi tiêu lớn nhất</div>
    </div>
    <div class="bento-progress-track">
-    <div class="bento-progress-fill" style="width:65%;background:linear-gradient(90deg,var(--warning),#FFD166);"></div>
+    <div class="bento-progress-fill" style="width:65%;background:linear-gradient(90deg,var(--warning),#FBBF24);"></div>
    </div>
   </div>
  `;
@@ -1719,8 +1719,73 @@ function renderFinTables(){
   CALENDAR
 ──────────────────────────────────────────────────────── */
 let calY=new Date().getFullYear(), calM=new Date().getMonth();
+let selectedCalDate = today();
+
 function calNav(d){calM+=d;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}renderCal();}
-function calToday(){calY=new Date().getFullYear();calM=new Date().getMonth();renderCal();}
+function calToday(){calY=new Date().getFullYear();calM=new Date().getMonth();selectedCalDate=today();renderCal();}
+
+function selectCalDate(ds) {
+  selectedCalDate = ds;
+  renderCal();
+  renderCalAgenda(ds);
+}
+
+function renderCalAgenda(ds = selectedCalDate || today()) {
+  selectedCalDate = ds;
+  const labelEl = document.getElementById('calAgendaDateLabel');
+  if (labelEl) {
+    const isTd = ds === today();
+    labelEl.textContent = isTd ? `Lịch trình hôm nay (${fmtDs(ds)})` : `Lịch trình ngày ${fmtDate(ds)}`;
+  }
+  
+  const evListEl = document.getElementById('calAgendaEvents');
+  if (evListEl) {
+    const evs = (window.DB.events || []).filter(e => e.dateStart <= ds && (e.dateEnd || e.dateStart) >= ds);
+    if (!evs.length) {
+      evListEl.innerHTML = `<div style="text-align:center;padding:16px 8px;font-size:12px;color:var(--text-muted);">Không có sự kiện nào trong ngày này.</div>`;
+    } else {
+      evListEl.innerHTML = evs.map(e => `
+        <div class="cal-agenda-item" onclick="editEv('${e.id}')" style="border-left-color:${EC[e.type] || 'var(--accent)'}">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              ${window.LifeOSData?.escapeHtml(e.title) || e.title}
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:2px;font-size:11px;color:var(--text-muted);">
+              ${e.timeStart ? `<span>${e.timeStart}${e.timeEnd ? ' - ' + e.timeEnd : ''}</span>` : '<span>Cả ngày</span>'}
+              <span class="badge" style="background:${EC[e.type] || '#8B5CF6'}22;color:${EC[e.type] || '#8B5CF6'};font-size:10px;padding:1px 6px;">${e.type || 'Sự kiện'}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  const taskListEl = document.getElementById('calAgendaTasks');
+  if (taskListEl) {
+    const tasks = (window.DB.todos || []).filter(t => t.date === ds);
+    if (!tasks.length) {
+      taskListEl.innerHTML = `<div style="text-align:center;padding:14px 8px;font-size:12px;color:var(--text-muted);">Không có công việc nào có hạn ngày này.</div>`;
+    } else {
+      taskListEl.innerHTML = tasks.map(t => `
+        <div class="cal-agenda-item" onclick="nav('todos')" style="border-left-color:${t.done ? 'var(--success)' : (t.priority === 'high' ? 'var(--danger)' : 'var(--accent-secondary)')}">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:${t.done ? 'var(--text-muted)' : 'var(--text-primary)'};text-decoration:${t.done ? 'line-through' : 'none'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              ${window.LifeOSData?.escapeHtml(t.text) || t.text}
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:2px;font-size:11px;">
+              <span class="badge" style="font-size:10px;padding:1px 6px;background:${t.done ? 'rgba(16,185,129,0.15)' : 'rgba(139,92,246,0.15)'};color:${t.done ? 'var(--success)' : 'var(--accent-light)'}">
+                ${t.done ? '✓ Đã xong' : 'Đang chờ'}
+              </span>
+              ${t.priority ? `<span class="badge" style="font-size:10px;padding:1px 6px;color:${t.priority === 'high' ? 'var(--danger)' : 'var(--warning)'}">${t.priority === 'high' ? 'Ưu tiên cao' : 'Trung bình'}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
 
 function renderCal(){
  const t=today();
@@ -1734,19 +1799,21 @@ function renderCal(){
  for(let i=0;i<startDow;i++){const dd=new Date(calY,calM,1-startDow+i);cells+=`<div class="bcd"><div class="bcd-num om">${dd.getDate()}</div></div>`;}
  for(let d=1;d<=last.getDate();d++){
   const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const isSel = ds === (selectedCalDate || t);
   const evs=(window.DB.events||[]).filter(e=>e.dateStart<=ds&&(e.dateEnd||e.dateStart)>=ds);
-  const pills=evs.slice(0,3).map(e=>`<span class="ev-pill" style="background:${EC[e.type]||'#7c4dff'}22;color:${EC[e.type]||'#7c4dff'}" onclick="event.stopPropagation();editEv('${e.id}')">${e.timeStart?e.timeStart+' ':''}${e.title}</span>`).join('');
-  const more=evs.length>3?`<span class="ev-pill" style="background:var(--glass);color:var(--text3)">+${evs.length-3}</span>`:'';
+  const pills=evs.slice(0,3).map(e=>`<span class="ev-pill" style="background:${EC[e.type]||'#8B5CF6'}22;color:${EC[e.type]||'#8B5CF6'}" onclick="event.stopPropagation();editEv('${e.id}')">${e.timeStart?e.timeStart+' ':''}${e.title}</span>`).join('');
+  const more=evs.length>3?`<span class="ev-pill" style="background:var(--surface-2);color:var(--text-muted)">+${evs.length-3}</span>`:'';
   
   // Responsive dots on mobile (<640px)
-  const dots=evs.slice(0,3).map(e=>`<span class="cal-dot" style="background:${EC[e.type]||'#7c4dff'}"></span>`).join('');
-  const dotHtml=evs.length>0?`<div class="cal-dots">${dots}${evs.length>3?'<span style="font-size:8px;color:var(--text-low);line-height:1;">+</span>':''}</div>`:'';
+  const dots=evs.slice(0,3).map(e=>`<span class="cal-dot" style="background:${EC[e.type]||'#8B5CF6'}"></span>`).join('');
+  const dotHtml=evs.length>0?`<div class="cal-dots">${dots}${evs.length>3?'<span style="font-size:8px;color:var(--text-muted);line-height:1;">+</span>':''}</div>`:'';
   
-  cells+=`<div class="bcd" onclick="openEv('${ds}')"><div class="bcd-num${ds===t?' today':''}">${d}</div>${pills}${more}${dotHtml}</div>`;
+  cells+=`<div class="bcd${isSel?' selected-day':''}" onclick="selectCalDate('${ds}')" ondblclick="openEv('${ds}')" style="${isSel?'border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);':''}"><div class="bcd-num${ds===t?' today':''}">${d}</div>${pills}${more}${dotHtml}</div>`;
  }
  const total=startDow+last.getDate(), rem=7-(total%7===0?7:total%7);
  for(let i=1;i<=rem&&rem<7;i++)cells+=`<div class="bcd"><div class="bcd-num om">${i}</div></div>`;
  document.getElementById('calGrid').innerHTML=cells;
+ renderCalAgenda(selectedCalDate || t);
 }
 
 /* ────────────────────────────────────────────────────────

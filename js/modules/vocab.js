@@ -929,7 +929,7 @@ function renderVocab() {
     </button>
    </div>
    <div class="vc-mean">${v.mean}</div>
-   ${v.ex ? `<div style="font-size:11.5px; color:var(--text-low); margin-top:8px; font-style:italic; line-height:1.4;">"${v.ex}"</div>` : ''}
+   ${v.ex ? `<div class="vc-ex-quote">"${v.ex}"</div>` : ''}
    <div class="vc-actions">
     <button class="btn btn-sm btn-r" style="padding:2px 6px; font-size:11px;" onclick="event.stopPropagation();delVocab('${v.id}')" title="Xóa">
      <i data-lucide="trash-2" style="width:12px;height:12px;"></i>

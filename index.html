@@ -1011,9 +1011,28 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
      </div>
      <button class="btn btn-p btn-sm" onclick="openEv()"><i data-lucide="plus" style="width:14px;height:14px;margin-right:4px"></i> Thêm sự kiện</button>
     </div>
-    <div class="card cal-scroll">
-     <div class="big-cal-hdr" id="calHdr"></div>
-     <div class="big-cal-grid" id="calGrid"></div>
+    <div class="cal-combo-layout">
+     <div class="card cal-scroll">
+      <div class="big-cal-hdr" id="calHdr"></div>
+      <div class="big-cal-grid" id="calGrid"></div>
+     </div>
+     <div class="cal-agenda-card" id="calAgendaPanel">
+      <div class="cal-agenda-hdr">
+       <div class="cal-agenda-title">
+        <i data-lucide="calendar" class="ic-16" style="color:var(--accent-secondary)"></i>
+        <span id="calAgendaDateLabel">Lịch trình hôm nay</span>
+       </div>
+       <button class="btn btn-outline btn-sm" onclick="openEv(selectedCalDate || today())" style="padding:4px 8px;font-size:11px" title="Thêm sự kiện ngày này">+ Sự kiện</button>
+      </div>
+      <div>
+       <div style="font-size:11.5px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Sự kiện trong ngày</div>
+       <div id="calAgendaEvents" class="cal-agenda-list"></div>
+      </div>
+      <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:12px;">
+       <div style="font-size:11.5px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Nhiệm vụ đến hạn</div>
+       <div id="calAgendaTasks" class="cal-agenda-list"></div>
+      </div>
+     </div>
     </div>
    </div>
 
@@ -1323,11 +1342,17 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
     <div class="page-toolbar">
      <div class="page-toolbar-title"><i data-lucide="sticky-note" class="ic-18" style="color:var(--accent)"></i> <span>Ghi chú của tôi</span></div>
      <div class="page-toolbar-actions">
-      <input type="text" id="noteSearch" placeholder="Tìm kiếm ghi chú..." class="inp" style="padding:6px 12px;border-radius:var(--radius-md);font-size:12.5px;width:180px">
+      <input type="text" id="noteSearch" placeholder="Tìm kiếm ghi chú..." class="inp" style="padding:6px 12px;border-radius:var(--radius-md);font-size:12.5px;width:180px" oninput="renderNotes()">
       <button class="btn btn-sm btn-subtle" onclick="openNotesTrash()" title="Thùng rác & Khôi phục ghi chú"><i data-lucide="trash-2" class="ic-14"></i> <span class="hide-mobile">Thùng rác</span></button>
-      <button class="btn btn-sm btn-outline" onclick="openNoteSpreadsheet()" style="border-color:rgba(77,212,162,0.4);color:var(--success);font-weight:600" title="Tạo bảng tính Excel mới"><i data-lucide="file-spreadsheet" class="ic-14"></i> <span>+ Excel</span></button>
+      <button class="btn btn-sm btn-outline" onclick="openNoteSpreadsheet()" style="border-color:rgba(16,185,129,0.4);color:var(--success);font-weight:600" title="Tạo bảng tính Excel mới"><i data-lucide="file-spreadsheet" class="ic-14"></i> <span>+ Excel</span></button>
       <button class="btn btn-sm btn-p" onclick="openNote()"><i data-lucide="plus" class="ic-14"></i> <span>Ghi chú mới</span></button>
      </div>
+    </div>
+    <div class="segmented-control" id="noteFilterTabs" style="display:inline-flex;margin-bottom:16px;">
+     <button class="seg-btn active" onclick="setNoteCategoryFilter('all', this)">Tất cả</button>
+     <button class="seg-btn" onclick="setNoteCategoryFilter('work', this)">Công việc</button>
+     <button class="seg-btn" onclick="setNoteCategoryFilter('personal', this)">Cá nhân</button>
+     <button class="seg-btn" onclick="setNoteCategoryFilter('sheet', this)">Bảng tính Excel</button>
     </div>
     <div class="notes-grid" id="notesGrid"></div>
    </div>
@@ -1340,6 +1365,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
       <button class="btn btn-sm btn-p" onclick="openHabit()"><i data-lucide="plus" class="ic-14"></i> <span>Thêm thói quen</span></button>
      </div>
     </div>
+    <div class="bento-kpi-grid" id="habitKpis" style="margin-bottom:18px;"></div>
     <div id="habitsContainer"></div>
    </div>
 
@@ -1351,6 +1377,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
       <button class="btn btn-sm btn-p" onclick="openGoal()"><i data-lucide="plus" class="ic-14"></i> <span>Thêm mục tiêu</span></button>
      </div>
     </div>
+    <div class="bento-kpi-grid" id="goalKpis" style="margin-bottom:18px;"></div>
     <div id="goalsContainer"></div>
    </div>
 
@@ -1368,15 +1395,18 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
    <!-- ▸ POMODORO -->
    <!-- ▸ POMODORO FOCUS -->
    <div class="page" id="p-pomodoro">
-    <div style="max-width:540px;margin:0 auto">
-     <div class="card" style="text-align:center;padding:36px 24px;border-radius:var(--radius-xl);background:var(--surface-1);border:1px solid var(--border);box-shadow:var(--shadow-md);">
-      <div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:20px;font-weight:800;color:var(--text-primary);margin-bottom:6px">
+    <div class="pom-combo-layout">
+     <div class="card" style="text-align:center;padding:32px 24px;border-radius:var(--radius-xl);background:var(--surface-1);border:1px solid var(--border);box-shadow:var(--shadow-md);">
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:20px;font-weight:800;color:var(--text-primary);margin-bottom:4px">
        <i data-lucide="timer" class="ic-24" style="color:var(--accent)"></i> <span>Pomodoro Focus</span>
       </div>
-      <div id="pomodoroStatus" style="font-size:13.5px;color:var(--text-secondary);margin-bottom:14px">Tập trung làm việc sâu</div>
+      <div id="pomodoroStatus" style="font-size:13.5px;color:var(--text-secondary);margin-bottom:8px">Tập trung làm việc sâu</div>
+      <div id="pomActiveTaskWrap" style="display:none;margin-bottom:12px;">
+       <span class="pom-focus-task-pill" id="pomActiveTaskText"><i data-lucide="target" class="ic-14"></i> <span>Chưa chọn task</span></span>
+      </div>
       
       <!-- Circular Progress Ring -->
-      <div class="pom-ring-wrap" style="position:relative; width:220px; height:220px; margin:20px auto;">
+      <div class="pom-ring-wrap" style="position:relative; width:220px; height:220px; margin:16px auto;">
         <svg viewBox="0 0 100 100" style="width:100%; height:100%; transform:rotate(-90deg);">
           <circle cx="50" cy="50" r="44" fill="none" stroke="var(--surface-2)" stroke-width="6"></circle>
           <circle id="pomRingProgress" cx="50" cy="50" r="44" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="0" style="transition:stroke-dashoffset 0.5s linear, stroke 0.3s;"></circle>
@@ -1387,7 +1417,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
         </div>
       </div>
 
-      <div style="display:flex;gap:12px;justify-content:center;margin:22px 0 18px">
+      <div style="display:flex;gap:12px;justify-content:center;margin:20px 0 16px">
        <button class="btn btn-p" id="pomStartBtn" onclick="pomToggle()" style="min-width:130px; padding:10px 24px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
         <i data-lucide="play" class="ic-16"></i> Bắt đầu
        </button>
@@ -1397,7 +1427,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
       </div>
 
       <!-- Session Presets -->
-      <div class="segmented-control" style="display:inline-flex; justify-content:center; margin-bottom:24px; flex-wrap:wrap;">
+      <div class="segmented-control" style="display:inline-flex; justify-content:center; margin-bottom:20px; flex-wrap:wrap;">
        <button class="seg-btn active" onclick="pomSet(25,this)">25p Focus</button>
        <button class="seg-btn" onclick="pomSet(30,this)">30p</button>
        <button class="seg-btn" onclick="pomSet(45,this)">45p</button>
@@ -1429,6 +1459,19 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
         </div>
        </div>
       </div>
+     </div>
+
+     <!-- Right Panel: Tasks linked to Pomodoro Focus -->
+     <div class="pom-tasks-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1px solid var(--border)">
+       <div style="font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text-primary)">
+        <i data-lucide="check-circle-2" class="ic-16" style="color:var(--accent-secondary)"></i>
+        <span>Nhiệm vụ cho phiên này</span>
+       </div>
+       <button class="btn btn-outline btn-sm" onclick="openTodoModal()" style="padding:4px 10px;font-size:11px">+ Thêm việc</button>
+      </div>
+      <div style="font-size:12px;color:var(--text-secondary)">Chọn một công việc để tập trung cao độ trong phiên làm việc này:</div>
+      <div id="pomTaskList" style="display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto"></div>
      </div>
     </div>
    </div>
@@ -2124,32 +2167,32 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
   observer.observe(document.body, { childList: true, subtree: true });
 </script>
 
-<!-- AI ASSISTANT BUTTON & PANEL -->
-<div id="aiFloatingBtn" onclick="toggleAiChat()" style="position:fixed; bottom:20px; right:20px; width:50px; height:50px; border-radius:25px; background:var(--pri); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.3); cursor:pointer; z-index:9999; transition:transform 0.2s;">
-  <i data-lucide="bot" style="width:24px; height:24px;"></i>
+<!-- AI ASSISTANT BUTTON & PANEL (Midnight Aurora) -->
+<div id="aiFloatingBtn" onclick="toggleAiChat()" style="position:fixed; bottom:20px; right:20px; width:52px; height:52px; border-radius:26px; background:var(--aurora-gradient); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(139, 92, 246, 0.45); cursor:pointer; z-index:9999; transition:all 0.2s ease;">
+  <i data-lucide="bot" style="width:26px; height:26px;"></i>
 </div>
 
-<div id="aiModal" style="display:none; position:fixed; bottom:82px; right:18px; width:380px; max-width:calc(100vw - 36px); max-height:560px; height:75vh; background:var(--bg-raised); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-lg); z-index:9999; flex-direction:column; overflow:hidden; animation:pageFadeIn 0.25s ease;">
+<div id="aiModal" style="display:none; position:fixed; bottom:84px; right:18px; width:400px; max-width:calc(100vw - 36px); max-height:580px; height:76vh; background:rgba(23, 31, 59, 0.94); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(139, 92, 246, 0.35); border-radius:20px; box-shadow:0 16px 48px rgba(0,0,0,0.65), 0 0 24px rgba(139, 92, 246, 0.15); z-index:9999; flex-direction:column; overflow:hidden; animation:pageFadeIn 0.25s ease;">
   <!-- Header -->
-  <div style="padding:14px 18px; background:linear-gradient(135deg, var(--accent), #5e35b1); color:#fff; display:flex; justify-content:space-between; align-items:center;">
+  <div style="padding:14px 18px; background:linear-gradient(135deg, #8B5CF6, #7C3AED); color:#fff; display:flex; justify-content:space-between; align-items:center;">
     <div style="display:flex; align-items:center; gap:8px;">
-      <i data-lucide="sparkles" class="ic-18"></i>
+      <i data-lucide="sparkles" class="ic-18" style="color:#22D3EE;"></i>
       <strong style="font-size:15px; font-weight:700;">LifeOS AI Trợ Lý</strong>
     </div>
     <div style="display:flex; align-items:center; gap:8px;">
-      <button onclick="openAiKeyModal()" style="background:rgba(255,255,255,0.15); border:none; color:#fff; cursor:pointer; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600;" title="Cấu hình Gemini API Key">🔑 Key</button>
+      <button onclick="openAiKeyModal()" style="background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; padding:4px 9px; border-radius:6px; font-size:11px; font-weight:600;" title="Cấu hình Gemini API Key">🔑 Key</button>
       <button onclick="clearAiHistory()" style="background:transparent; border:none; color:#fff; cursor:pointer; padding:2px;" title="Xóa lịch sử"><i data-lucide="trash-2" class="ic-16"></i></button>
       <button onclick="toggleAiChat()" style="background:transparent; border:none; color:#fff; cursor:pointer; padding:2px;"><i data-lucide="x" class="ic-18"></i></button>
     </div>
   </div>
 
   <!-- Undo Pill Container -->
-  <div id="aiUndoPill" style="display:none; align-items:center; justify-content:space-between; padding:6px 14px; background:rgba(124,77,255,0.15); border-bottom:1px solid var(--border); font-size:12px; color:var(--text-hi);"></div>
+  <div id="aiUndoPill" style="display:none; align-items:center; justify-content:space-between; padding:6px 14px; background:rgba(139,92,246,0.16); border-bottom:1px solid var(--border); font-size:12px; color:var(--text-hi);"></div>
 
   <!-- Messages List -->
   <div id="aiMessages" style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; font-size:13px; line-height:1.5;">
-    <div class="ai-msg ai-msg-bot" style="align-self:flex-start; background:var(--surface); border:1px solid var(--border); color:var(--text-hi); padding:12px 16px; border-radius:14px 14px 14px 2px; max-width:90%; font-size:13.5px; line-height:1.6;">
-      Xin chào! Tôi là <b>LifeOS AI</b>. Tôi có thể giúp bạn:<br>
+    <div class="ai-msg ai-msg-bot" style="align-self:flex-start; background:var(--surface-2); border:1px solid var(--border); color:var(--text-hi); padding:12px 16px; border-radius:14px 14px 14px 2px; max-width:92%; font-size:13.5px; line-height:1.6;">
+      Xin chào! Tôi là <b>LifeOS AI Trợ Lý</b> ⚡ Tôi có thể hỗ trợ bạn:<br>
       • Thêm / sửa / xóa công việc, lịch trình, ghi chú, thói quen<br>
       • Ghi chép thu chi & phân tích ngân sách tài chính<br>
       • Bật / chỉnh đồng hồ Pomodoro tập trung<br>
@@ -2157,13 +2200,21 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
     </div>
   </div>
 
+  <!-- Quick Suggestion Prompts -->
+  <div style="padding:6px 12px 6px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; background:var(--surface-1); border-top:1px solid rgba(255,255,255,0.04);">
+    <button class="btn btn-outline btn-sm" onclick="sendAiQuickPrompt('Lập kế hoạch công việc hôm nay')" style="white-space:nowrap; font-size:11px; padding:4px 10px; border-radius:99px; background:rgba(139, 92, 246, 0.12); border-color:rgba(139, 92, 246, 0.3); color:var(--accent-light); cursor:pointer;">✨ Lập kế hoạch</button>
+    <button class="btn btn-outline btn-sm" onclick="sendAiQuickPrompt('Thêm khoản chi 50k cà phê')" style="white-space:nowrap; font-size:11px; padding:4px 10px; border-radius:99px; background:rgba(34, 211, 238, 0.12); border-color:rgba(34, 211, 238, 0.3); color:var(--accent-secondary); cursor:pointer;">☕ Chi 50k cafe</button>
+    <button class="btn btn-outline btn-sm" onclick="sendAiQuickPrompt('Tóm tắt tiến độ tuần này')" style="white-space:nowrap; font-size:11px; padding:4px 10px; border-radius:99px; background:rgba(16, 185, 129, 0.12); border-color:rgba(16, 185, 129, 0.3); color:var(--success); cursor:pointer;">📈 Tóm tắt tuần</button>
+    <button class="btn btn-outline btn-sm" onclick="sendAiQuickPrompt('Bật Pomodoro 25 phút')" style="white-space:nowrap; font-size:11px; padding:4px 10px; border-radius:99px; background:rgba(245, 158, 11, 0.12); border-color:rgba(245, 158, 11, 0.3); color:var(--warning); cursor:pointer;">⏱️ Pomodoro 25p</button>
+  </div>
+
   <!-- Input & Controls -->
-  <div style="padding:12px; border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; background:var(--bg-overlay);">
-    <input type="text" id="aiInput" placeholder="Nhập yêu cầu (VD: thêm việc họp lúc 9h)..." style="flex:1; padding:9px 14px; border-radius:20px; border:1px solid var(--border); background:var(--bg-raised); color:var(--text-hi); font-size:13px; outline:none;" onkeypress="if(event.key==='Enter') sendAiChat()">
-    <button id="aiMicBtn" onclick="startVoiceInput()" style="background:var(--surface); border:1px solid var(--border); color:var(--text-hi); border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;" title="Nhập bằng giọng nói">
+  <div style="padding:12px; border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; background:var(--surface-2);">
+    <input type="text" id="aiInput" placeholder="Nhập yêu cầu (VD: thêm việc họp lúc 9h)..." style="flex:1; padding:9px 14px; border-radius:20px; border:1px solid var(--border); background:var(--surface-1); color:var(--text-hi); font-size:13px; outline:none;" onkeypress="if(event.key==='Enter') sendAiChat()">
+    <button id="aiMicBtn" onclick="startVoiceInput()" style="background:var(--surface-1); border:1px solid var(--border); color:var(--text-hi); border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;" title="Nhập bằng giọng nói">
       <i data-lucide="mic" class="ic-16"></i>
     </button>
-    <button onclick="sendAiChat()" style="background:var(--accent); color:#fff; border:none; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 2px 8px rgba(124,77,255,0.4);" title="Gửi tin nhắn">
+    <button onclick="sendAiChat()" style="background:var(--aurora-gradient); color:#fff; border:none; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 2px 10px rgba(139,92,246,0.4);" title="Gửi tin nhắn">
       <i data-lucide="send" class="ic-16"></i>
     </button>
   </div>
@@ -2679,8 +2730,15 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
   <div class="mb-body" style="display:flex;flex-direction:column;gap:14px">
    <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
     <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+     <div style="display:flex;align-items:center;gap:6px"><i data-lucide="palette" style="width:14px;height:14px;color:var(--accent-secondary)"></i> Chủ đề giao diện</div>
+     <span class="badge" style="background:var(--aurora-gradient);color:#fff;font-weight:700;">Midnight Aurora</span>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:0">Dark SaaS hiện đại kết hợp hiệu ứng kính Glassmorphism (Xanh đen #0B1024, Tím #8B5CF6, Cyan #22D3EE).</p>
+   </div>
+   <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
      <div style="display:flex;align-items:center;gap:6px"><i data-lucide="user-check" style="width:14px;height:14px;color:var(--accent)"></i> Tài khoản & Đồng bộ</div>
-     <span id="settingsAccountTypeBadge" class="badge" style="background:rgba(124,77,255,0.15);color:var(--accent);">Khách / Offline</span>
+     <span id="settingsAccountTypeBadge" class="badge" style="background:rgba(139,92,246,0.18);color:var(--accent-light);">Khách / Offline</span>
     </div>
     <p id="settingsAccountDesc" style="font-size:12px;color:var(--text2);margin-bottom:10px">Bạn đang sử dụng ứng dụng ở chế độ Khách (dữ liệu lưu trên thiết bị).</p>
     <div style="display:flex; gap:8px;">

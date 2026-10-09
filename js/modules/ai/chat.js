@@ -754,6 +754,10 @@ window.askAiQuick = function(promptText) {
   processUserAiMessage(promptText);
 };
 
+window.sendAiQuickPrompt = function(promptText) {
+  processUserAiMessage(promptText);
+};
+
 // ── Voice Input (Web Speech API) ──
 window.startVoiceInput = function() {
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;

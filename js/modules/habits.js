@@ -64,6 +64,62 @@ function renderHabits() {
   return;
  }
  const todayStr = today();
+ const kpiEl = document.getElementById('habitKpis');
+ if (kpiEl && habits.length) {
+  const todayDone = habits.filter(h => (h.log || {})[todayStr]).length;
+  const todayPct = Math.round((todayDone / habits.length) * 100);
+  const maxStreak = habits.reduce((max, h) => Math.max(max, getStreak(h.log || {}, h.createdAt || todayStr)), 0);
+  const avgStreak = Math.round(habits.reduce((sum, h) => sum + getStreak(h.log || {}, h.createdAt || todayStr), 0) / habits.length);
+  
+  kpiEl.innerHTML = `
+    <div class="bento-kpi-card">
+      <div class="bento-kpi-top">
+        <div class="bento-kpi-icon mint"><i data-lucide="check-circle-2" class="ic-18"></i></div>
+        <span class="bento-kpi-pill mint">${todayPct}% hôm nay</span>
+      </div>
+      <div class="bento-kpi-mid">
+        <div class="bento-kpi-value">${todayDone}/${habits.length}</div>
+        <div class="bento-kpi-label">Thói quen hoàn thành</div>
+      </div>
+    </div>
+
+    <div class="bento-kpi-card">
+      <div class="bento-kpi-top">
+        <div class="bento-kpi-icon amber"><i data-lucide="flame" class="ic-18"></i></div>
+        <span class="bento-kpi-pill amber">Cao nhất</span>
+      </div>
+      <div class="bento-kpi-mid">
+        <div class="bento-kpi-value">${maxStreak} ngày</div>
+        <div class="bento-kpi-label">Kỷ lục chuỗi</div>
+      </div>
+    </div>
+
+    <div class="bento-kpi-card">
+      <div class="bento-kpi-top">
+        <div class="bento-kpi-icon purple"><i data-lucide="award" class="ic-18"></i></div>
+        <span class="bento-kpi-pill purple">Bền bỉ</span>
+      </div>
+      <div class="bento-kpi-mid">
+        <div class="bento-kpi-value">${avgStreak} ngày</div>
+        <div class="bento-kpi-label">Chuỗi trung bình</div>
+      </div>
+    </div>
+
+    <div class="bento-kpi-card">
+      <div class="bento-kpi-top">
+        <div class="bento-kpi-icon cyan"><i data-lucide="repeat" class="ic-18"></i></div>
+        <span class="bento-kpi-pill cyan">Đang duy trì</span>
+      </div>
+      <div class="bento-kpi-mid">
+        <div class="bento-kpi-value">${habits.length}</div>
+        <div class="bento-kpi-label">Tổng số thói quen</div>
+      </div>
+    </div>
+  `;
+ } else if (kpiEl) {
+  kpiEl.innerHTML = '';
+ }
+
  const curr = new Date();
  const dayOfWeek = (curr.getDay() + 6) % 7; // 0 is Monday
  const weekDayNames = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
