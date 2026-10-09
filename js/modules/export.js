@@ -97,13 +97,16 @@ window.openExportFinanceModal = function() {
         if (customStart && !customStart.value) customStart.value = firstDayOfMonth;
         if (customEnd && !customEnd.value) customEnd.value = lastDayOfMonth;
 
-        // If currently on stats page, check its interval
-        if (typeof getStatsDateInterval === 'function' && window.currentStatsPeriod) {
-            try {
-                const interval = getStatsDateInterval();
-                const curLbl = document.getElementById('expFinCurLabel');
-                if (curLbl) curLbl.textContent = `(${interval.label})`;
-            } catch(e) {}
+        // If currently on finance or stats page, check its interval
+        let activeInterval = null;
+        if (typeof getFinDateInterval === 'function' && document.getElementById('p-finance')?.classList.contains('active')) {
+            try { activeInterval = getFinDateInterval(); } catch(e) {}
+        } else if (typeof getStatsDateInterval === 'function') {
+            try { activeInterval = getStatsDateInterval(); } catch(e) {}
+        }
+        if (activeInterval) {
+            const curLbl = document.getElementById('expFinCurLabel');
+            if (curLbl) curLbl.textContent = `(${activeInterval.label})`;
         }
 
         modal.style.display = 'flex';
@@ -139,8 +142,13 @@ window.triggerFinanceExportFromModal = function() {
     };
 
     if (rangeType === 'current') {
-        if (typeof getStatsDateInterval === 'function' && window.currentStatsPeriod) {
-            const interval = getStatsDateInterval();
+        let interval = null;
+        if (typeof getFinDateInterval === 'function' && document.getElementById('p-finance')?.classList.contains('active')) {
+            try { interval = getFinDateInterval(); } catch(e) {}
+        } else if (typeof getStatsDateInterval === 'function') {
+            try { interval = getStatsDateInterval(); } catch(e) {}
+        }
+        if (interval) {
             start = interval.start;
             end = interval.end;
             label = interval.label;
@@ -193,8 +201,13 @@ window.exportFinanceExcel = function(opts = {}) {
 
     // If no start/end provided, fallback to current context
     if (!start && !end) {
-        if (typeof getStatsDateInterval === 'function' && window.currentStatsPeriod) {
-            const interval = getStatsDateInterval();
+        let interval = null;
+        if (typeof getFinDateInterval === 'function' && document.getElementById('p-finance')?.classList.contains('active')) {
+            try { interval = getFinDateInterval(); } catch(e) {}
+        } else if (typeof getStatsDateInterval === 'function') {
+            try { interval = getStatsDateInterval(); } catch(e) {}
+        }
+        if (interval) {
             start = interval.start;
             end = interval.end;
             label = interval.label;

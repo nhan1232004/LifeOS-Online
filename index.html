@@ -572,7 +572,7 @@ function updatePlatformBadge() {
 document.addEventListener('DOMContentLoaded', updatePlatformBadge);
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=1790108515663">
+<link rel="stylesheet" href="css/style.css?v=20261009_v3">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -1035,11 +1035,31 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
    <!-- ▸ FINANCE -->
    <div class="page" id="p-finance">
     
-    <div class="page-toolbar">
-     <div class="ct" style="display:flex;align-items:center;gap:6px;font-weight:700;"><i data-lucide="wallet" class="ic-18" style="color:var(--accent);"></i> <span>Thu chi</span></div>
-     <div style="display:flex; gap:8px; align-items:center;">
-      <input type="month" id="finMonth" class="inp" style="padding:6px 10px; font-size:12.5px; border-radius:8px; width:auto;" onchange="renderFinKpi(); renderFinTables();">
-      <button class="btn btn-outline btn-sm" onclick="openExportFinanceModal()" title="Xuất báo cáo Excel"><i data-lucide="file-spreadsheet" class="ic-14"></i> <span class="hide-mobile">Xuất Excel</span></button>
+    <div class="page-toolbar fin-toolbar" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px;">
+     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <div class="ct" style="display:flex;align-items:center;gap:6px;font-weight:700;margin-right:4px;"><i data-lucide="wallet" class="ic-18" style="color:var(--accent);"></i> <span>Thu chi</span></div>
+      <div class="segmented-control" id="finPeriodTabs" style="display:inline-flex;">
+       <button class="seg-btn" onclick="setFinPeriod('day', this)">Ngày</button>
+       <button class="seg-btn" onclick="setFinPeriod('week', this)">Tuần</button>
+       <button class="seg-btn active" onclick="setFinPeriod('month', this)">Tháng</button>
+       <button class="seg-btn" onclick="setFinPeriod('year', this)">Năm</button>
+       <button class="seg-btn" onclick="setFinPeriod('all', this)">Tất cả</button>
+      </div>
+      <select class="inp" id="finSubRange" onchange="onFinSubRangeChange()" style="padding:6px 12px; font-size:12.5px; border-radius:8px; width:auto; font-weight:600; cursor:pointer; background:var(--surface); border:1px solid var(--border); color:var(--text-hi);">
+       <option value="thisMonth" selected>Tháng này</option>
+       <option value="lastMonth">Tháng trước</option>
+       <option value="last3months">3 tháng qua (Quý)</option>
+       <option value="last6months">6 tháng qua</option>
+       <option value="last12months">12 tháng qua</option>
+       <option value="pickMonth">📅 Chọn tháng khác...</option>
+      </select>
+      <input type="month" id="finMonth" class="inp" style="padding:6px 10px; font-size:12.5px; border-radius:8px; width:auto; display:none;" onchange="onFinMonthChange();">
+     </div>
+     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <span class="badge" id="finDateRangeLabel" style="font-size:12px; padding:6px 12px; border-radius:8px; background:var(--surface); border:1px solid var(--border); color:var(--accent-light); font-weight:700;">
+       Tháng này
+      </span>
+      <button class="btn btn-g btn-sm" onclick="openExportFinanceModal()" title="Xuất báo cáo tài chính Excel (.xls)"><i data-lucide="file-spreadsheet" class="ic-14"></i> <span>Xuất Excel</span></button>
       <button class="btn btn-p btn-sm" onclick="openQuickFinanceModal()"><i data-lucide="plus" class="ic-14"></i> <span class="hide-mobile">Ghi nhận</span><span class="show-mobile">+ Giao dịch</span></button>
      </div>
     </div>
@@ -1985,20 +2005,20 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
   window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
  }
 </script>
-<script src="js/data.js?v=20261004_v2"></script>
-<script src="js/workspace.js?v=20261004_v2"></script>
-<script src="js/projViews.js?v=20261004_v2"></script>
-<script src="js/main.js?v=20261004_v2"></script>
-<script src="js/modules/todos.js?v=20261004_v2"></script>
-<script src="js/modules/notes.js?v=20261004_v2"></script>
-<script src="js/modules/habits.js?v=20261004_v2"></script>
-<script src="js/modules/goals.js?v=20261004_v2"></script>
-<script src="js/modules/journal.js?v=20261004_v2"></script>
-<script src="js/modules/pomodoro.js?v=20261004_v2"></script>
-<script src="js/modules/vocab.js?v=20261004_v2"></script>
-<script src="js/modules/mocktests.js?v=20261004_v2"></script>
-<script src="js/modules/cmd.js?v=20261004_v2"></script>
-<script src="js/modules/mobile.js?v=20261004_v2"></script>
+<script src="js/data.js?v=20261009_v3"></script>
+<script src="js/workspace.js?v=20261009_v3"></script>
+<script src="js/projViews.js?v=20261009_v3"></script>
+<script src="js/main.js?v=20261009_v3"></script>
+<script src="js/modules/todos.js?v=20261009_v3"></script>
+<script src="js/modules/notes.js?v=20261009_v3"></script>
+<script src="js/modules/habits.js?v=20261009_v3"></script>
+<script src="js/modules/goals.js?v=20261009_v3"></script>
+<script src="js/modules/journal.js?v=20261009_v3"></script>
+<script src="js/modules/pomodoro.js?v=20261009_v3"></script>
+<script src="js/modules/vocab.js?v=20261009_v3"></script>
+<script src="js/modules/mocktests.js?v=20261009_v3"></script>
+<script src="js/modules/cmd.js?v=20261009_v3"></script>
+<script src="js/modules/mobile.js?v=20261009_v3"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -2507,8 +2527,8 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
   </div>
  </div>
 </div>
-<script type="module" src="js/modules/ai/chat.js?v=20261004_v2"></script>
-<script src="js/modules/export.js?v=20261004_v2"></script>
+<script type="module" src="js/modules/ai/chat.js?v=20261009_v3"></script>
+<script src="js/modules/export.js?v=20261009_v3"></script>
 
 <!-- QUICK FINANCE MODAL -->
 <div class="overlay" id="mQuickFin" onclick="if(event.target===this)closeModal('mQuickFin')">

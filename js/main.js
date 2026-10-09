@@ -1415,26 +1415,224 @@ async function delExpense(id){
 }
 
 
+function calcDateInterval(period, sub, customMonth) {
+ const now = new Date();
+ const localStr = d => toLocalDateStr(d);
+ let start, end, label, step;
+
+ if (period === 'day') {
+  if (sub === 'today') {
+   start = end = localStr(now);
+   label = 'Hôm nay (' + fmtDate(start) + ')';
+   step = 'day';
+  } else if (sub === 'yesterday') {
+   const y = new Date(now); y.setDate(y.getDate() - 1);
+   start = end = localStr(y);
+   label = 'Hôm qua (' + fmtDate(start) + ')';
+   step = 'day';
+  } else if (sub === 'last7days') {
+   const d = new Date(now); d.setDate(d.getDate() - 6);
+   start = localStr(d); end = localStr(now);
+   label = '7 ngày qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'day';
+  } else if (sub === 'last14days') {
+   const d = new Date(now); d.setDate(d.getDate() - 13);
+   start = localStr(d); end = localStr(now);
+   label = '14 ngày qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'day';
+  } else {
+   const d = new Date(now); d.setDate(d.getDate() - 29);
+   start = localStr(d); end = localStr(now);
+   label = '30 ngày qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'day';
+  }
+ } else if (period === 'week') {
+  const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dayOfWeek - 1));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  if (sub === 'thisWeek') {
+   start = localStr(monday); end = localStr(sunday);
+   label = 'Tuần này (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'day';
+  } else if (sub === 'lastWeek') {
+   const lastMon = new Date(monday); lastMon.setDate(lastMon.getDate() - 7);
+   const lastSun = new Date(lastMon); lastSun.setDate(lastMon.getDate() + 6);
+   start = localStr(lastMon); end = localStr(lastSun);
+   label = 'Tuần trước (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'day';
+  } else if (sub === 'last8weeks') {
+   const d = new Date(now); d.setDate(d.getDate() - 55);
+   start = localStr(d); end = localStr(now);
+   label = '8 tuần qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'week';
+  } else {
+   const d = new Date(now); d.setDate(d.getDate() - 27);
+   start = localStr(d); end = localStr(now);
+   label = '4 tuần qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
+   step = 'week';
+  }
+ } else if (period === 'month') {
+  const y = now.getFullYear(), m = now.getMonth();
+  if (sub === 'pickMonth' && customMonth) {
+   const [cy, cm] = customMonth.split('-').map(Number);
+   start = `${customMonth}-01`;
+   const lastD = new Date(cy, cm, 0).getDate();
+   end = `${customMonth}-${String(lastD).padStart(2, '0')}`;
+   label = `Tháng ${cm}/${cy}`;
+   step = 'day';
+  } else if (sub === 'thisMonth') {
+   start = localStr(new Date(y, m, 1));
+   end = localStr(new Date(y, m + 1, 0));
+   label = 'Tháng ' + (m + 1) + '/' + y;
+   step = 'day';
+  } else if (sub === 'lastMonth') {
+   start = localStr(new Date(y, m - 1, 1));
+   end = localStr(new Date(y, m, 0));
+   const lastMDate = new Date(y, m - 1, 1);
+   label = 'Tháng ' + (lastMDate.getMonth() + 1) + '/' + lastMDate.getFullYear();
+   step = 'day';
+  } else if (sub === 'last3months') {
+   start = localStr(new Date(y, m - 2, 1));
+   end = localStr(new Date(y, m + 1, 0));
+   label = '3 tháng qua (Quý)';
+   step = 'month';
+  } else if (sub === 'last6months') {
+   start = localStr(new Date(y, m - 5, 1));
+   end = localStr(new Date(y, m + 1, 0));
+   label = '6 tháng qua';
+   step = 'month';
+  } else {
+   start = localStr(new Date(y - 1, m + 1, 1));
+   end = localStr(new Date(y, m + 1, 0));
+   label = '12 tháng qua';
+   step = 'month';
+  }
+ } else if (period === 'year') {
+  const y = now.getFullYear();
+  if (sub === 'lastYear') {
+   start = (y - 1) + '-01-01'; end = (y - 1) + '-12-31';
+   label = 'Năm ' + (y - 1);
+   step = 'month';
+  } else {
+   start = y + '-01-01'; end = y + '-12-31';
+   label = 'Năm ' + y;
+   step = 'month';
+  }
+ } else {
+  start = '1970-01-01'; end = '2099-12-31';
+  label = 'Toàn bộ thời gian';
+  step = 'month';
+ }
+
+ return { start, end, label, step, period };
+}
+
+let currentFinPeriod = 'month';
+
+function getFinDateInterval() {
+ const period = currentFinPeriod || 'month';
+ const sub = document.getElementById('finSubRange')?.value || 'thisMonth';
+ const customMonth = document.getElementById('finMonth')?.value;
+ return calcDateInterval(period, sub, customMonth);
+}
+window.getFinDateInterval = getFinDateInterval;
+
+window.setFinPeriod = function(period, btn) {
+ currentFinPeriod = period;
+ if (btn) {
+  document.querySelectorAll('#finPeriodTabs .seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+ }
+ const subEl = document.getElementById('finSubRange');
+ const monthEl = document.getElementById('finMonth');
+ if (!subEl) return;
+ const y = new Date().getFullYear();
+ const optionsMap = {
+  day: [
+   { v: 'today', t: 'Hôm nay' },
+   { v: 'yesterday', t: 'Hôm qua' },
+   { v: 'last7days', t: '7 ngày qua' },
+   { v: 'last14days', t: '14 ngày qua' },
+   { v: 'last30days', t: '30 ngày qua' }
+  ],
+  week: [
+   { v: 'thisWeek', t: 'Tuần này' },
+   { v: 'lastWeek', t: 'Tuần trước' },
+   { v: 'last4weeks', t: '4 tuần qua' },
+   { v: 'last8weeks', t: '8 tuần qua' }
+  ],
+  month: [
+   { v: 'thisMonth', t: 'Tháng này' },
+   { v: 'lastMonth', t: 'Tháng trước' },
+   { v: 'last3months', t: '3 tháng qua (Quý)' },
+   { v: 'last6months', t: '6 tháng qua' },
+   { v: 'last12months', t: '12 tháng qua' },
+   { v: 'pickMonth', t: '📅 Chọn tháng khác...' }
+  ],
+  year: [
+   { v: 'thisYear', t: 'Năm nay (' + y + ')' },
+   { v: 'lastYear', t: 'Năm trước (' + (y - 1) + ')' }
+  ],
+  all: [
+   { v: 'all', t: 'Toàn bộ thời gian' }
+  ]
+ };
+
+ const list = optionsMap[period] || optionsMap.month;
+ subEl.innerHTML = list.map((opt, i) => `<option value="${opt.v}" ${i === 0 ? 'selected' : ''}>${opt.t}</option>`).join('');
+ if (monthEl) monthEl.style.display = 'none';
+ renderFinKpi();
+ renderFinTables();
+};
+
+window.onFinSubRangeChange = function() {
+ const subEl = document.getElementById('finSubRange');
+ const monthEl = document.getElementById('finMonth');
+ if (subEl && subEl.value === 'pickMonth') {
+  if (monthEl) {
+   monthEl.style.display = 'inline-block';
+   if (!monthEl.value) monthEl.value = today().substring(0, 7);
+  }
+ } else {
+  if (monthEl) monthEl.style.display = 'none';
+ }
+ renderFinKpi();
+ renderFinTables();
+};
+
+window.onFinMonthChange = function() {
+ renderFinKpi();
+ renderFinTables();
+};
+
 function getFinMonth() {
   const m = document.getElementById('finMonth');
   if (m && !m.value) m.value = today().substring(0, 7);
   return m ? m.value : today().substring(0, 7);
 }
 
-function computeFin(){
- const fm = getFinMonth();
- const totalInc=(window.DB.income||[]).filter(x => (x.date||'').startsWith(fm)).reduce((a,x)=>a+x.amt,0);
- const totalExp=(window.DB.expense||[]).filter(x => (x.date||'').startsWith(fm)).reduce((a,x)=>a+x.amt,0);
+function computeFin(customInterval){
+ const { start, end } = customInterval || getFinDateInterval();
+ const totalInc=(window.DB.income||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).reduce((a,x)=>a+x.amt,0);
+ const totalExp=(window.DB.expense||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).reduce((a,x)=>a+x.amt,0);
  const balance=totalInc-totalExp;
  const savRate=totalInc>0?((balance/totalInc)*100).toFixed(1):0;
  return{totalInc,totalExp,balance,savRate};
 }
 function renderFinKpi(){
- const k=computeFin();
- const fm = getFinMonth();
- const incCount = (window.DB.income||[]).filter(x => (x.date||'').startsWith(fm)).length;
- const expCount = (window.DB.expense||[]).filter(x => (x.date||'').startsWith(fm)).length;
- const expMax = expCount ? Math.max(...(window.DB.expense||[]).filter(x => (x.date||'').startsWith(fm)).map(e=>e.amt)) : 0;
+ const interval = getFinDateInterval();
+ const { start, end, label } = interval;
+ const rangeLbl = document.getElementById('finDateRangeLabel');
+ if (rangeLbl) rangeLbl.textContent = label;
+
+ const k=computeFin(interval);
+ const incCount = (window.DB.income||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).length;
+ const expCount = (window.DB.expense||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).length;
+ const expInPeriod = (window.DB.expense||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end));
+ const expMax = expCount ? Math.max(...expInPeriod.map(e=>e.amt)) : 0;
  document.getElementById('finKpi').innerHTML=[
   {l:'Tổng thu nhập',v:fmt(k.totalInc)+' ₫',c:'cg',i:'',s:incCount+' giao dịch'},
   {l:'Tổng chi tiêu',v:fmt(k.totalExp)+' ₫',c:'cr',i:'<i data-lucide="heart" style="width:20px;height:20px"></i>',s:expCount+' giao dịch'},
@@ -1446,21 +1644,21 @@ function renderFinKpi(){
  if(window.lucide) window.lucide.createIcons();
 }
 function renderFinTables(){
- const fm = getFinMonth();
+ const { start, end } = getFinDateInterval();
  const it=document.getElementById('incTb'); const et=document.getElementById('expTb');
  if(!it||!et)return;
  
- const incomes = (window.DB.income||[]).filter(x => (x.date||'').startsWith(fm)).sort((a,b)=>b.date.localeCompare(a.date));
- const expenses = (window.DB.expense||[]).filter(x => (x.date||'').startsWith(fm)).sort((a,b)=>b.date.localeCompare(a.date));
+ const incomes = (window.DB.income||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).sort((a,b)=>b.date.localeCompare(a.date));
+ const expenses = (window.DB.expense||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).sort((a,b)=>b.date.localeCompare(a.date));
  
  it.innerHTML=incomes.slice(0,30).map(x=>`<tr><td style="font-weight:600">${x.src}</td><td class="money mg">+${fmt(x.amt)} ₫</td><td style="color:var(--text3);font-size:11.5px">${fmtDate(x.date)}</td><td style="color:var(--text3);font-size:11.5px">${x.note||'—'}</td><td><button class="btn btn-sm btn-r" style="padding:2px 6px" onclick="delIncome('${x.id}')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">Chưa có dữ liệu</div></td></tr>';
  et.innerHTML=expenses.slice(0,30).map(x=>`<tr><td style="font-weight:600">${x.cat}</td><td class="money mr">−${fmt(x.amt)} ₫</td><td style="color:var(--text3);font-size:11.5px">${fmtDate(x.date)}</td><td style="color:var(--text3);font-size:11.5px">${x.pay}</td><td><button class="btn btn-sm btn-r" style="padding:2px 6px" onclick="delExpense('${x.id}')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">Chưa có dữ liệu</div></td></tr>';
  
- // Default date inputs to the selected month
- const tm = today().substring(0,7);
- const defaultDate = (fm === tm) ? today() : fm + '-01';
- document.getElementById('incDate').value = defaultDate;
- document.getElementById('expDate').value = defaultDate;
+ // Default date inputs
+ const incDateEl = document.getElementById('incDate');
+ const expDateEl = document.getElementById('expDate');
+ if (incDateEl && !incDateEl.value) incDateEl.value = today();
+ if (expDateEl && !expDateEl.value) expDateEl.value = today();
  
  if(window.lucide) window.lucide.createIcons();
 }
@@ -2015,112 +2213,7 @@ window.setStatsPeriod = function(period, el) {
 function getStatsDateInterval() {
  const period = currentStatsPeriod || 'month';
  const sub = document.getElementById('statsSubRange')?.value || 'thisMonth';
- const now = new Date();
- const localStr = d => toLocalDateStr(d);
- 
- let start, end, label, step;
- 
- if (period === 'day') {
-  if (sub === 'today') {
-   start = end = localStr(now);
-   label = 'Hôm nay (' + fmtDate(start) + ')';
-   step = 'day';
-  } else if (sub === 'yesterday') {
-   const y = new Date(now); y.setDate(y.getDate() - 1);
-   start = end = localStr(y);
-   label = 'Hôm qua (' + fmtDate(start) + ')';
-   step = 'day';
-  } else if (sub === 'last7days') {
-   const d = new Date(now); d.setDate(d.getDate() - 6);
-   start = localStr(d); end = localStr(now);
-   label = '7 ngày qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
-   step = 'day';
-  } else if (sub === 'last14days') {
-   const d = new Date(now); d.setDate(d.getDate() - 13);
-   start = localStr(d); end = localStr(now);
-   label = '14 ngày qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
-   step = 'day';
-  } else {
-   const d = new Date(now); d.setDate(d.getDate() - 29);
-   start = localStr(d); end = localStr(now);
-   label = '30 ngày qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
-   step = 'day';
-  }
- } else if (period === 'week') {
-  const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - (dayOfWeek - 1));
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-
-  if (sub === 'thisWeek') {
-   start = localStr(monday); end = localStr(sunday);
-   label = 'Tuần này (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
-   step = 'day';
-  } else if (sub === 'lastWeek') {
-   const lastMon = new Date(monday); lastMon.setDate(lastMon.getDate() - 7);
-   const lastSun = new Date(lastMon); lastSun.setDate(lastMon.getDate() + 6);
-   start = localStr(lastMon); end = localStr(lastSun);
-   label = 'Tuần trước (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
-   step = 'day';
-  } else if (sub === 'last8weeks') {
-   const d = new Date(now); d.setDate(d.getDate() - 55);
-   start = localStr(d); end = localStr(now);
-   label = '8 tuần qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
-   step = 'week';
-  } else {
-   const d = new Date(now); d.setDate(d.getDate() - 27);
-   start = localStr(d); end = localStr(now);
-   label = '4 tuần qua (' + fmtDs(start) + ' – ' + fmtDs(end) + ')';
-   step = 'week';
-  }
- } else if (period === 'month') {
-  const y = now.getFullYear(), m = now.getMonth();
-  if (sub === 'thisMonth') {
-   start = localStr(new Date(y, m, 1));
-   end = localStr(new Date(y, m + 1, 0));
-   label = 'Tháng ' + (m + 1) + '/' + y;
-   step = 'day';
-  } else if (sub === 'lastMonth') {
-   start = localStr(new Date(y, m - 1, 1));
-   end = localStr(new Date(y, m, 0));
-   const lastMDate = new Date(y, m - 1, 1);
-   label = 'Tháng ' + (lastMDate.getMonth() + 1) + '/' + lastMDate.getFullYear();
-   step = 'day';
-  } else if (sub === 'last3months') {
-   start = localStr(new Date(y, m - 2, 1));
-   end = localStr(new Date(y, m + 1, 0));
-   label = '3 tháng qua (Quý)';
-   step = 'month';
-  } else if (sub === 'last6months') {
-   start = localStr(new Date(y, m - 5, 1));
-   end = localStr(new Date(y, m + 1, 0));
-   label = '6 tháng qua';
-   step = 'month';
-  } else {
-   start = localStr(new Date(y - 1, m + 1, 1));
-   end = localStr(new Date(y, m + 1, 0));
-   label = '12 tháng qua';
-   step = 'month';
-  }
- } else if (period === 'year') {
-  const y = now.getFullYear();
-  if (sub === 'lastYear') {
-   start = (y - 1) + '-01-01'; end = (y - 1) + '-12-31';
-   label = 'Năm ' + (y - 1);
-   step = 'month';
-  } else {
-   start = y + '-01-01'; end = y + '-12-31';
-   label = 'Năm ' + y;
-   step = 'month';
-  }
- } else {
-  start = '1970-01-01'; end = '2099-12-31';
-  label = 'Toàn bộ thời gian';
-  step = 'month';
- }
- 
- return { start, end, label, step, period };
+ return calcDateInterval(period, sub);
 }
 
 function renderStats(){

@@ -1,4 +1,4 @@
-const CACHE = 'lifeos-v9-flash';
+const CACHE = 'lifeos-v10-excel-reports';
 const APP_SHELL = [
   './',
   './index.html',
