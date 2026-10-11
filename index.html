@@ -6,9 +6,16 @@
 <meta name="theme-color" id="meta-theme-color" content="#07070f">
 <title>LifeOS – Quản lý cuộc sống</title>
 <script>
- const t = localStorage.getItem('lifeos_theme') || 'dark';
- document.documentElement.setAttribute('data-theme', t);
- if(t==='light') document.getElementById('meta-theme-color').setAttribute('content', '#f4f5f8');
+ (function() {
+  var saved = localStorage.getItem('lifeos_theme') || 'dark';
+  var effective = saved;
+  if (saved === 'system') {
+   effective = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+  }
+  document.documentElement.setAttribute('data-theme', effective);
+  var metaTheme = document.getElementById('meta-theme-color');
+  if (metaTheme) metaTheme.setAttribute('content', effective === 'light' ? '#F5F6FA' : '#0B0D14');
+ })();
 </script>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -573,9 +580,14 @@ function updatePlatformBadge() {
 document.addEventListener('DOMContentLoaded', updatePlatformBadge);
 </script>
 
-<link rel="stylesheet" href="css/style.css?v=20261009_v4">
-<link rel="stylesheet" href="css/bento.css?v=20261009_v4">
-<link rel="stylesheet" href="css/modules.css?v=20261009_v5">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/themes.css">
+<link rel="stylesheet" href="css/style.css?v=20261011_p0">
+<link rel="stylesheet" href="css/bento.css?v=20261011_p0">
+<link rel="stylesheet" href="css/modules.css?v=20261011_p0">
 
 <style>
  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
@@ -710,68 +722,70 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
 
  <!-- SIDEBAR -->
  <aside class="sidebar" id="sidebar">
-  <div class="sb-logo" onclick="openWorkspaceSwitcher()" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between" title="Chuyển Workspace">
-   <div style="display:flex; align-items:center; gap:10px">
-    <div class="sb-logo-ico" id="currentWsIcon" style="background:var(--primary);color:#fff;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:600">P</div>
+  <div class="sb-logo" style="display:flex; align-items:center; justify-content:space-between; padding:14px 14px 12px;">
+   <div onclick="openWorkspaceSwitcher()" style="cursor:pointer; display:flex; align-items:center; gap:10px; flex:1; min-width:0" title="Chuyển Workspace">
+    <div class="sb-logo-ico" id="currentWsIcon" style="background:var(--accent-primary,#8B7CFF);color:#fff;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:700">P</div>
     <span class="sb-logo-txt gradient-text" id="currentWsName" style="font-size:15px; font-weight:800">Personal</span>
    </div>
-   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text3)"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+   <button class="sb-collapse-btn" id="sbCollapseBtn" onclick="toggleSidebarCollapse()" title="Thu gọn Sidebar">
+    <i data-lucide="panel-left-close" class="ic-16"></i>
+   </button>
   </div>
   <nav class="sb-nav">
+   <!-- 1. TỔNG QUAN -->
    <div class="sb-sec" onclick="toggleSbGroup('sg1')">
      <span>Tổng quan</span>
      <svg id="sg1-ic" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><path d="m18 15-6-6-6 6"/></svg>
    </div>
    <div class="sb-group" id="sg1">
-     <div class="sb-item active" onclick="nav('today',this)"><i data-lucide="sun" class="ic-18"></i><span>Hôm nay</span></div>
-     <div class="sb-item" onclick="nav('overview',this)"><i data-lucide="layout-dashboard" class="ic-18"></i><span>Dashboard</span></div>
+     <div class="sb-item active" onclick="nav('today',this)" data-tooltip="Hôm nay"><i data-lucide="sun" class="ic-18"></i><span>Hôm nay</span></div>
+     <div class="sb-item" onclick="nav('overview',this)" data-tooltip="Dashboard"><i data-lucide="layout-dashboard" class="ic-18"></i><span>Dashboard</span></div>
    </div>
 
+   <!-- 2. CÔNG VIỆC -->
    <div class="sb-sec" onclick="toggleSbGroup('sg2')">
-     <span>Lịch</span>
+     <span>Công việc</span>
      <svg id="sg2-ic" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><path d="m18 15-6-6-6 6"/></svg>
    </div>
    <div class="sb-group" id="sg2">
-     <div class="sb-item" onclick="nav('calendar',this)"><i data-lucide="calendar" class="ic-18"></i><span>Lịch tháng</span></div>
-     <div class="sb-item" onclick="nav('schedule',this)"><i data-lucide="calendar-range" class="ic-18"></i><span>Lịch tuần</span></div>
+     <div class="sb-item" onclick="nav('todos',this)" data-tooltip="Việc cần làm"><i data-lucide="check-square" class="ic-18"></i><span>Việc cần làm</span><span class="sb-badge" id="badgeTodo">0</span></div>
+     <div class="sb-item" onclick="nav('projects',this)" data-tooltip="Dự án"><i data-lucide="folder-kanban" class="ic-18"></i><span>Dự án</span><span class="sb-badge" id="badgeProj">0</span></div>
+     <div class="sb-item" onclick="nav('calendar',this)" data-tooltip="Lịch tháng"><i data-lucide="calendar" class="ic-18"></i><span>Lịch tháng</span></div>
+     <div class="sb-item" onclick="nav('schedule',this)" data-tooltip="Lịch tuần"><i data-lucide="calendar-range" class="ic-18"></i><span>Lịch tuần</span></div>
+     <div class="sb-item" onclick="nav('notes',this)" data-tooltip="Ghi chú"><i data-lucide="sticky-note" class="ic-18"></i><span>Ghi chú</span><span class="sb-badge" id="badgeNote">0</span></div>
    </div>
 
+   <!-- 3. CÁ NHÂN & PHÁT TRIỂN -->
    <div class="sb-sec" onclick="toggleSbGroup('sg3')">
-     <span>Công việc</span>
+     <span>Cá nhân &amp; Phát triển</span>
      <svg id="sg3-ic" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><path d="m18 15-6-6-6 6"/></svg>
    </div>
    <div class="sb-group" id="sg3">
-     <div class="sb-item" onclick="nav('projects',this)"><i data-lucide="folders" class="ic-18"></i><span>Dự án</span><span class="sb-badge" id="badgeProj">0</span></div>
-     <div class="sb-item" onclick="nav('todos',this)"><i data-lucide="check-square" class="ic-18"></i><span>Việc cần làm</span><span class="sb-badge" id="badgeTodo">0</span></div>
+     <div class="sb-item" onclick="nav('habits',this)" data-tooltip="Thói quen"><i data-lucide="flame" class="ic-18"></i><span>Thói quen</span></div>
+     <div class="sb-item" onclick="nav('goals',this)" data-tooltip="Mục tiêu"><i data-lucide="target" class="ic-18"></i><span>Mục tiêu</span></div>
+     <div class="sb-item" onclick="nav('pomodoro',this)" data-tooltip="Pomodoro Focus"><i data-lucide="timer" class="ic-18"></i><span>Pomodoro</span></div>
+     <div class="sb-item" onclick="nav('journal',this)" data-tooltip="Nhật ký"><i data-lucide="book" class="ic-18"></i><span>Nhật ký</span></div>
    </div>
 
+   <!-- 4. TÀI CHÍNH -->
    <div class="sb-sec" onclick="toggleSbGroup('sg4')">
      <span>Tài chính</span>
      <svg id="sg4-ic" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><path d="m18 15-6-6-6 6"/></svg>
    </div>
    <div class="sb-group" id="sg4">
-     <div class="sb-item" onclick="nav('finance',this)"><i data-lucide="wallet" class="ic-18"></i><span>Thu chi</span></div>
-     <div class="sb-item" onclick="nav('stats',this)"><i data-lucide="bar-chart-3" class="ic-18"></i><span>Thống kê</span></div>
-     <div class="sb-item" onclick="nav('goals',this)"><i data-lucide="target" class="ic-18"></i><span>Mục tiêu</span></div>
+     <div class="sb-item" onclick="nav('finance',this)" data-tooltip="Thu chi"><i data-lucide="wallet" class="ic-18"></i><span>Thu chi</span></div>
+     <div class="sb-item" onclick="nav('stats',this)" data-tooltip="Thống kê"><i data-lucide="bar-chart-3" class="ic-18"></i><span>Thống kê</span></div>
    </div>
 
+   <!-- 5. HỌC TẬP & CÔNG CỤ -->
    <div class="sb-sec" onclick="toggleSbGroup('sg5')">
-     <span>Cá nhân</span>
+     <span>Học tập &amp; Công cụ</span>
      <svg id="sg5-ic" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><path d="m18 15-6-6-6 6"/></svg>
    </div>
    <div class="sb-group" id="sg5">
-     <div class="sb-item" onclick="nav('notes',this)"><i data-lucide="sticky-note" class="ic-18"></i><span>Ghi chú</span></div>
-     <div class="sb-item" onclick="nav('habits',this)"><i data-lucide="repeat" class="ic-18"></i><span>Thói quen</span></div>
-     <div class="sb-item" onclick="nav('journal',this)"><i data-lucide="book" class="ic-18"></i><span>Nhật ký</span></div>
-     <div class="sb-item" onclick="nav('pomodoro',this)"><i data-lucide="timer" class="ic-18"></i><span>Pomodoro</span></div>
-   </div>
-
-   <div class="sb-sec" onclick="toggleSbGroup('sg6')">
-     <span>Tiếng Anh</span>
-     <svg id="sg6-ic" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s"><path d="m18 15-6-6-6 6"/></svg>
-   </div>
-   <div class="sb-group" id="sg6">
-     <div class="sb-item" onclick="nav('vocab',this)"><i data-lucide="languages" class="ic-18"></i><span>Từ vựng</span></div>
+     <div class="sb-item" onclick="nav('vocab',this)" data-tooltip="Từ vựng"><i data-lucide="languages" class="ic-18"></i><span>Từ vựng</span></div>
+     <div class="sb-item" onclick="nav('mocktests',this)" data-tooltip="Luyện đề (Mock Tests)"><i data-lucide="graduation-cap" class="ic-18"></i><span>Luyện đề</span></div>
+     <div class="sb-item" onclick="toggleAiChat()" data-tooltip="Trợ lý AI"><i data-lucide="sparkles" class="ic-18" style="color:var(--accent-cyan,#5DD6C0)"></i><span>Trợ lý AI</span></div>
    </div>
   </nav>
   <div class="sb-bottom">
@@ -791,11 +805,36 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
   <!-- TOPBAR -->
    <div class="topbar">
     <button class="topbar-menu-btn" onclick="toggleMobileSidebar()" aria-label="Menu"><i data-lucide="menu" class="ic-20"></i></button>
+    
     <div class="topbar-info">
      <div class="topbar-title gradient-text" id="topTitle">Hôm nay</div>
      <div class="topbar-sub" id="topDate"></div>
     </div>
+
+    <!-- Global Search trigger (Ctrl+K) -->
+    <div class="topbar-search-trigger hide-mobile" onclick="openCmd()" title="Tìm kiếm toàn cục (Ctrl+K)">
+     <i data-lucide="search" class="ic-14"></i>
+     <span class="search-placeholder">Tìm việc, ghi chú, dự án...</span>
+     <kbd class="shortcut-pill">Ctrl K</kbd>
+    </div>
+
     <div class="topbar-actions">
+     <!-- Quick Add (+ Tạo mới) -->
+     <div class="quick-add-wrap">
+      <button class="btn btn-sm btn-p quick-add-btn" id="quickAddBtn" onclick="toggleQuickAddDropdown(event)" style="display:inline-flex;align-items:center;gap:6px;">
+       <i data-lucide="plus" class="ic-16"></i> <span class="hide-mobile">Tạo mới</span>
+      </button>
+      <div class="quick-add-dropdown" id="quickAddDropdown">
+       <div class="quick-add-item" onclick="closeQuickAddDropdown(); openTodoModal()"><i data-lucide="check-square" class="ic-14"></i> Việc cần làm</div>
+       <div class="quick-add-item" onclick="closeQuickAddDropdown(); openEv()"><i data-lucide="calendar-plus" class="ic-14"></i> Sự kiện lịch</div>
+       <div class="quick-add-item" onclick="closeQuickAddDropdown(); openNote()"><i data-lucide="sticky-note" class="ic-14"></i> Ghi chú mới</div>
+       <div class="quick-add-item" onclick="closeQuickAddDropdown(); openProjModal()"><i data-lucide="folder-plus" class="ic-14"></i> Dự án mới</div>
+       <div class="quick-add-divider"></div>
+       <div class="quick-add-item" onclick="closeQuickAddDropdown(); openQuickFinanceModal('exp')"><i data-lucide="trending-down" class="ic-14" style="color:var(--status-danger,#F87171)"></i> Khoản chi (💸)</div>
+       <div class="quick-add-item" onclick="closeQuickAddDropdown(); openQuickFinanceModal('inc')"><i data-lucide="trending-up" class="ic-14" style="color:var(--status-success,#34D399)"></i> Khoản thu (💰)</div>
+      </div>
+     </div>
+
      <button class="btn btn-sm btn-p hide-mobile" id="installAppBtn" style="display:none;font-weight:600;padding:4px 10px;font-size:12px" onclick="installApp()">⬇️ Tải App</button>
      <div class="sync-chip hide-mobile" style="backdrop-filter:blur(8px);">
       <span class="sync-dot"></span>
@@ -899,9 +938,16 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
 
         <!-- Widget: Câu nói truyền cảm hứng -->
         <div class="bento-quote-card" id="todayQuoteCard">
-         <div class="bento-quote-icon">❝</div>
-         <div class="bento-quote-text" id="todayQuoteText">"Sự đơn giản là chìa khóa của sự tinh tế và hiệu quả."</div>
-         <div class="bento-quote-author" id="todayQuoteAuthor">— Steve Jobs</div>
+         <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:4px;">
+          <div class="bento-quote-icon" style="margin-bottom:0;">❝</div>
+          <button type="button" onclick="toggleQuoteCollapse()" title="Ẩn/Hiện câu nói" style="background:transparent; border:none; color:var(--text-tertiary); cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center;">
+           <i data-lucide="minimize-2" class="ic-14 quote-toggle-icon"></i>
+          </button>
+         </div>
+         <div class="bento-quote-body" id="todayQuoteBody">
+          <div class="bento-quote-text" id="todayQuoteText">"Sự đơn giản là chìa khóa của sự tinh tế và hiệu quả."</div>
+          <div class="bento-quote-author" id="todayQuoteAuthor">— Steve Jobs</div>
+         </div>
         </div>
        </div>
 
@@ -1146,6 +1192,8 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
       <div class="segmented-control" id="todoFtabs">
        <button class="seg-btn active" onclick="setTodoFilter('all',this)">Tất cả</button>
        <button class="seg-btn" onclick="setTodoFilter('today',this)">Hôm nay</button>
+       <button class="seg-btn" onclick="setTodoFilter('upcoming',this)">Sắp tới</button>
+       <button class="seg-btn" onclick="setTodoFilter('overdue',this)">Quá hạn</button>
        <button class="seg-btn" onclick="setTodoFilter('pending',this)">Chưa xong</button>
        <button class="seg-btn" onclick="setTodoFilter('done',this)">Đã xong</button>
       </div>
@@ -2172,11 +2220,11 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
   <i data-lucide="bot" style="width:26px; height:26px;"></i>
 </div>
 
-<div id="aiModal" style="display:none; position:fixed; bottom:84px; right:18px; width:400px; max-width:calc(100vw - 36px); max-height:580px; height:76vh; background:rgba(23, 31, 59, 0.94); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(139, 92, 246, 0.35); border-radius:20px; box-shadow:0 16px 48px rgba(0,0,0,0.65), 0 0 24px rgba(139, 92, 246, 0.15); z-index:9999; flex-direction:column; overflow:hidden; animation:pageFadeIn 0.25s ease;">
+<div id="aiModal" style="display:none; position:fixed; bottom:84px; right:18px; width:400px; max-width:calc(100vw - 36px); max-height:580px; height:76vh; background:var(--surface-1); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:var(--radius-xl); box-shadow:var(--shadow-lg); z-index:9999; flex-direction:column; overflow:hidden; animation:pageFadeIn 0.25s ease;">
   <!-- Header -->
-  <div style="padding:14px 18px; background:linear-gradient(135deg, #8B5CF6, #7C3AED); color:#fff; display:flex; justify-content:space-between; align-items:center;">
+  <div style="padding:14px 18px; background:linear-gradient(135deg, var(--accent), var(--accent-hover)); color:#fff; display:flex; justify-content:space-between; align-items:center;">
     <div style="display:flex; align-items:center; gap:8px;">
-      <i data-lucide="sparkles" class="ic-18" style="color:#22D3EE;"></i>
+      <i data-lucide="sparkles" class="ic-18" style="color:var(--accent-secondary);"></i>
       <strong style="font-size:15px; font-weight:700;">LifeOS AI Trợ Lý</strong>
     </div>
     <div style="display:flex; align-items:center; gap:8px;">
@@ -2187,11 +2235,11 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
   </div>
 
   <!-- Undo Pill Container -->
-  <div id="aiUndoPill" style="display:none; align-items:center; justify-content:space-between; padding:6px 14px; background:rgba(139,92,246,0.16); border-bottom:1px solid var(--border); font-size:12px; color:var(--text-hi);"></div>
+  <div id="aiUndoPill" style="display:none; align-items:center; justify-content:space-between; padding:6px 14px; background:var(--accent-soft); border-bottom:1px solid var(--border); font-size:12px; color:var(--text-primary);"></div>
 
   <!-- Messages List -->
   <div id="aiMessages" style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; font-size:13px; line-height:1.5;">
-    <div class="ai-msg ai-msg-bot" style="align-self:flex-start; background:var(--surface-2); border:1px solid var(--border); color:var(--text-hi); padding:12px 16px; border-radius:14px 14px 14px 2px; max-width:92%; font-size:13.5px; line-height:1.6;">
+    <div class="ai-msg ai-msg-bot" style="align-self:flex-start; background:var(--surface-2); border:1px solid var(--border); color:var(--text-primary); padding:12px 16px; border-radius:14px 14px 14px 2px; max-width:92%; font-size:13.5px; line-height:1.6; box-shadow:var(--shadow-sm);">
       Xin chào! Tôi là <b>LifeOS AI Trợ Lý</b> ⚡ Tôi có thể hỗ trợ bạn:<br>
       • Thêm / sửa / xóa công việc, lịch trình, ghi chú, thói quen<br>
       • Ghi chép thu chi & phân tích ngân sách tài chính<br>
@@ -2201,20 +2249,20 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
   </div>
 
   <!-- Quick Suggestion Prompts -->
-  <div style="padding:6px 12px 6px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; background:var(--surface-1); border-top:1px solid rgba(255,255,255,0.04);">
-    <button class="btn btn-outline btn-sm" onclick="sendAiQuickPrompt('Lập kế hoạch công việc hôm nay')" style="white-space:nowrap; font-size:11px; padding:4px 10px; border-radius:99px; background:rgba(139, 92, 246, 0.12); border-color:rgba(139, 92, 246, 0.3); color:var(--accent-light); cursor:pointer;">✨ Lập kế hoạch</button>
-    <button class="btn btn-outline btn-sm" onclick="sendAiQuickPrompt('Thêm khoản chi 50k cà phê')" style="white-space:nowrap; font-size:11px; padding:4px 10px; border-radius:99px; background:rgba(34, 211, 238, 0.12); border-color:rgba(34, 211, 238, 0.3); color:var(--accent-secondary); cursor:pointer;">☕ Chi 50k cafe</button>
-    <button class="btn btn-outline btn-sm" onclick="sendAiQuickPrompt('Tóm tắt tiến độ tuần này')" style="white-space:nowrap; font-size:11px; padding:4px 10px; border-radius:99px; background:rgba(16, 185, 129, 0.12); border-color:rgba(16, 185, 129, 0.3); color:var(--success); cursor:pointer;">📈 Tóm tắt tuần</button>
-    <button class="btn btn-outline btn-sm" onclick="sendAiQuickPrompt('Bật Pomodoro 25 phút')" style="white-space:nowrap; font-size:11px; padding:4px 10px; border-radius:99px; background:rgba(245, 158, 11, 0.12); border-color:rgba(245, 158, 11, 0.3); color:var(--warning); cursor:pointer;">⏱️ Pomodoro 25p</button>
+  <div style="padding:8px 12px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; background:var(--surface-1); border-top:1px solid var(--border);">
+    <button class="btn btn-ghost btn-sm" onclick="sendAiQuickPrompt('Lập kế hoạch công việc hôm nay')" style="white-space:nowrap; font-size:11px; padding:4px 10px; border-radius:99px; background:var(--accent-soft); border:1px solid rgba(139,124,255,0.25); color:var(--accent-hover); cursor:pointer;">✨ Lập kế hoạch</button>
+    <button class="btn btn-ghost btn-sm" onclick="sendAiQuickPrompt('Thêm khoản chi 50k cà phê')" style="white-space:nowrap; font-size:11px; padding:4px 10px; border-radius:99px; background:rgba(93,214,192,0.12); border:1px solid rgba(93,214,192,0.25); color:var(--accent-secondary); cursor:pointer;">☕ Chi 50k cafe</button>
+    <button class="btn btn-ghost btn-sm" onclick="sendAiQuickPrompt('Tóm tắt tiến độ tuần này')" style="white-space:nowrap; font-size:11px; padding:4px 10px; border-radius:99px; background:rgba(77,212,162,0.12); border:1px solid rgba(77,212,162,0.25); color:var(--success); cursor:pointer;">📈 Tóm tắt tuần</button>
+    <button class="btn btn-ghost btn-sm" onclick="sendAiQuickPrompt('Bật Pomodoro 25 phút')" style="white-space:nowrap; font-size:11px; padding:4px 10px; border-radius:99px; background:rgba(244,190,104,0.12); border:1px solid rgba(244,190,104,0.25); color:var(--warning); cursor:pointer;">⏱️ Pomodoro 25p</button>
   </div>
 
   <!-- Input & Controls -->
   <div style="padding:12px; border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; background:var(--surface-2);">
-    <input type="text" id="aiInput" placeholder="Nhập yêu cầu (VD: thêm việc họp lúc 9h)..." style="flex:1; padding:9px 14px; border-radius:20px; border:1px solid var(--border); background:var(--surface-1); color:var(--text-hi); font-size:13px; outline:none;" onkeypress="if(event.key==='Enter') sendAiChat()">
-    <button id="aiMicBtn" onclick="startVoiceInput()" style="background:var(--surface-1); border:1px solid var(--border); color:var(--text-hi); border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;" title="Nhập bằng giọng nói">
+    <input type="text" id="aiInput" placeholder="Nhập yêu cầu (VD: thêm việc họp lúc 9h)..." style="flex:1; padding:9px 14px; border-radius:var(--radius-md); border:1px solid var(--border); background:var(--surface-1); color:var(--text-primary); font-size:13px; outline:none;" onkeypress="if(event.key==='Enter') sendAiChat()">
+    <button id="aiMicBtn" onclick="startVoiceInput()" style="background:var(--surface-1); border:1px solid var(--border); color:var(--text-primary); border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;" title="Nhập bằng giọng nói">
       <i data-lucide="mic" class="ic-16"></i>
     </button>
-    <button onclick="sendAiChat()" style="background:var(--aurora-gradient); color:#fff; border:none; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 2px 10px rgba(139,92,246,0.4);" title="Gửi tin nhắn">
+    <button onclick="sendAiChat()" style="background:var(--accent); color:#fff; border:none; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 2px 10px rgba(139,124,255,0.35);" title="Gửi tin nhắn">
       <i data-lucide="send" class="ic-16"></i>
     </button>
   </div>
@@ -2247,10 +2295,11 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
   window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
  }
 </script>
-<script src="js/data.js?v=20261009_v3"></script>
-<script src="js/workspace.js?v=20261009_v3"></script>
-<script src="js/projViews.js?v=20261009_v3"></script>
-<script src="js/main.js?v=20261009_v3"></script>
+<script src="js/components/theme.js"></script>
+<script src="js/data.js?v=20261011_p0"></script>
+<script src="js/workspace.js?v=20261011_p0"></script>
+<script src="js/projViews.js?v=20261011_p0"></script>
+<script src="js/main.js?v=20261011_p0"></script>
 <script src="js/modules/todos.js?v=20261009_v3"></script>
 <script src="js/modules/notes.js?v=20261009_v3"></script>
 <script src="js/modules/habits.js?v=20261009_v3"></script>

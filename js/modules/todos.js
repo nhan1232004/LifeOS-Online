@@ -157,6 +157,10 @@ function renderTodos(){
  let list = [...all];
  if (todoFilter === 'today') {
   list = list.filter(x => x.date === t || (!x.done && x.date && x.date < t) || (!x.date && !x.done));
+ } else if (todoFilter === 'upcoming') {
+  list = list.filter(x => !x.done && x.date && x.date > t);
+ } else if (todoFilter === 'overdue') {
+  list = list.filter(x => !x.done && x.date && x.date < t);
  } else if (todoFilter === 'pending') {
   list = list.filter(x => !x.done);
  } else if (todoFilter === 'done') {
@@ -246,7 +250,10 @@ function renderTodoKanban(list) {
   if (cntEl) cntEl.textContent = cols[pri].length;
   const colEl = document.getElementById('tkcol_' + pri);
   if (colEl) {
-   colEl.innerHTML = cols[pri].map(t => `
+   if (!cols[pri].length) {
+    colEl.innerHTML = `<div class="empty-state" style="padding:24px 10px;text-align:center;font-size:12px;color:var(--text-muted);">Trống</div>`;
+   } else {
+    colEl.innerHTML = cols[pri].map(t => `
    <div class="kcard" draggable="true" ondragstart="todoDragStart(event, '${t.id}')" ondragend="todoDragEnd(event)" onclick="editTodo('${t.id}')" style="${t.done ? 'opacity:0.6' : ''}">
     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
      <div style="font-weight:600; font-size:13.5px; color:var(--text-primary); line-height:1.4; ${t.done ? 'text-decoration:line-through; color:var(--text-muted)' : ''}">${window.LifeOSData.escapeHtml(t.text)}</div>
@@ -260,6 +267,7 @@ function renderTodoKanban(list) {
     </div>
    </div>
    `).join('');
+   }
   }
  });
  if (window.lucide) lucide.createIcons();

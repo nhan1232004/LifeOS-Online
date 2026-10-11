@@ -152,7 +152,7 @@ function pomSet(mins, el) {
 let pomActiveTaskId = null;
 
 function setPomActiveTask(taskId) {
-  if (pomActiveTaskId === taskId) {
+  if (!taskId || (pomActiveTaskId != null && String(pomActiveTaskId) === String(taskId))) {
     pomActiveTaskId = null;
   } else {
     pomActiveTaskId = taskId;
@@ -168,13 +168,14 @@ function updatePomActiveTaskBadge() {
   if (!pomActiveTaskId) {
     wrap.style.display = 'none';
   } else {
-    const task = (window.DB.todos || []).find(t => t.id === pomActiveTaskId);
+    const task = (window.DB.todos || []).find(t => String(t.id) === String(pomActiveTaskId));
     if (!task) {
       wrap.style.display = 'none';
       pomActiveTaskId = null;
     } else {
       wrap.style.display = 'block';
-      textEl.innerHTML = `<i data-lucide="target" class="ic-14" style="color:var(--accent-secondary)"></i> <span>Đang tập trung: <b>${window.LifeOSData?.escapeHtml(task.text) || task.text}</b></span> <button onclick="event.stopPropagation();setPomActiveTask('${task.id}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:4px;">✕</button>`;
+      const safeText = window.LifeOSData?.escapeHtml(task.text) || task.text;
+      textEl.innerHTML = `<i data-lucide="target" class="ic-14" style="color:var(--accent-secondary);flex-shrink:0;"></i> <span style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Đang tập trung: <b>${safeText}</b></span> <button type="button" title="Bỏ chọn việc này" onclick="event.stopPropagation();setPomActiveTask(null)" style="background:none;border:none;color:var(--danger);cursor:pointer;margin-left:6px;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:2px;">✕ Bỏ chọn</button>`;
       if (window.lucide) lucide.createIcons();
     }
   }
@@ -185,21 +186,25 @@ function renderPomodoroTasks() {
   if (!listEl) return;
   const todos = (window.DB.todos || []).filter(t => !t.done);
   if (!todos.length) {
-    listEl.innerHTML = `<div style="text-align:center;padding:24px 10px;font-size:12.5px;color:var(--text-muted);">Không có công việc nào đang chờ. Hãy thêm việc mới để tập trung!</div>`;
+    listEl.innerHTML = `<div style="text-align:center;padding:24px 10px;font-size:12.5px;color:var(--text-secondary);">Không có công việc nào đang chờ. Hãy thêm việc mới để tập trung!</div>`;
     return;
   }
 
   listEl.innerHTML = todos.slice(0, 10).map(t => {
-    const isSelected = t.id === pomActiveTaskId;
+    const isSelected = pomActiveTaskId != null && String(t.id) === String(pomActiveTaskId);
+    const safeText = window.LifeOSData?.escapeHtml(t.text) || t.text;
     return `
-      <div class="bento-task-row" style="background:${isSelected ? 'rgba(139,92,246,0.18)' : 'var(--surface-2)'};border:${isSelected ? '1px solid var(--accent)' : '1px solid transparent'};" onclick="setPomActiveTask('${t.id}')">
+      <div class="bento-task-row" style="cursor:pointer;background:${isSelected ? 'rgba(139,124,255,0.15)' : 'var(--surface-2)'};border:${isSelected ? '1px solid var(--accent)' : '1px solid var(--border)'};border-radius:var(--radius-md);padding:10px 12px;display:flex;align-items:center;gap:10px;transition:all var(--motion-fast);margin-bottom:6px;" onclick="setPomActiveTask('${t.id}')">
         <div class="bento-task-checkbox" onclick="event.stopPropagation();toggleTodo('${t.id}')" style="cursor:pointer;" title="Đánh dấu hoàn thành">
           ${t.done ? '✓' : ''}
         </div>
-        <div class="bento-task-name" style="flex:1;font-size:13px;font-weight:${isSelected ? '700' : '500'};color:${isSelected ? 'var(--accent-light)' : 'var(--text-primary)'};">
-          ${window.LifeOSData?.escapeHtml(t.text) || t.text}
+        <div class="bento-task-name" style="flex:1;font-size:13px;font-weight:${isSelected ? '650' : '500'};color:${isSelected ? 'var(--accent-hover)' : 'var(--text-primary)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+          ${safeText}
         </div>
-        ${isSelected ? '<span class="badge" style="background:var(--accent);color:#fff;font-size:10px;padding:2px 6px;">Đang chọn</span>' : ''}
+        ${isSelected 
+          ? `<button type="button" class="btn btn-ghost" onclick="event.stopPropagation();setPomActiveTask(null)" style="padding:2px 8px;font-size:11px;color:var(--danger);border-radius:var(--radius-sm);background:rgba(255,113,133,0.12);font-weight:600;">✕ Bỏ chọn</button>` 
+          : `<span style="font-size:11px;color:var(--text-muted);font-weight:500;">Chọn</span>`
+        }
       </div>
     `;
   }).join('');
@@ -213,4 +218,5 @@ function renderPomodoro() {
 
 window.setPomActiveTask = setPomActiveTask;
 window.renderPomodoroTasks = renderPomodoroTasks;
+
 

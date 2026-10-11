@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeOS Design System Style Guide</title>
+  
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Design Foundation CSS -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/themes.css">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@0.468.0"></script>
+  
+  <style>
+    .sg-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--space-8) var(--space-6);
+    }
+    .sg-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-8);
+      padding-bottom: var(--space-6);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      gap: var(--space-4);
+    }
+    .sg-section {
+      margin-bottom: var(--space-10);
+    }
+    .sg-section-title {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      margin-bottom: var(--space-2);
+      color: var(--text-primary);
+    }
+    .sg-section-desc {
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-6);
+    }
+    .sg-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-4);
+    }
+    .sg-swatch {
+      padding: var(--space-4);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+    .sg-swatch-color {
+      height: 48px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .sg-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      align-items: center;
+    }
+    .sg-theme-badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(139, 124, 255, 0.15);
+      color: var(--accent-primary);
+      border: 1px solid rgba(139, 124, 255, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="sg-container">
+    <!-- Header -->
+    <header class="sg-header">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3);">
+          <h1 style="font-size: var(--text-3xl); font-weight: 800; margin: 0; background: var(--aurora-gradient, linear-gradient(135deg, #8B7CFF, #5DD6C0)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            LifeOS Design System
+          </h1>
+          <span class="sg-theme-badge">Midnight Aurora</span>
+        </div>
+        <p style="margin: var(--space-2) 0 0 0; color: var(--text-secondary); font-size: var(--text-sm);">
+          Hệ thống Design Foundation P0 (Tokens, Base Typography, Reusable Components, Light/Dark Modes)
+        </p>
+      </div>
+
+      <!-- Theme Switcher Controls -->
+      <div style="display: flex; align-items: center; gap: var(--space-3);">
+        <label for="sgThemeSelect" style="font-size: var(--text-sm); font-weight: 600; color: var(--text-secondary);">Giao diện:</label>
+        <div class="segmented-control" id="sgThemeSeg">
+          <button class="seg-btn active" data-theme-btn="dark"><i data-lucide="moon" class="ic-14"></i> Tối</button>
+          <button class="seg-btn" data-theme-btn="light"><i data-lucide="sun" class="ic-14"></i> Sáng</button>
+          <button class="seg-btn" data-theme-btn="system"><i data-lucide="monitor" class="ic-14"></i> Hệ thống</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 1. Color Palette Tokens -->
+    <section class="sg-section">
+      <h2 class="sg-section-title">1. Bảng màu & Token chuẩn (Docx Specification)</h2>
+      <p class="sg-section-desc">Màu sắc định danh theo tài liệu đề xuất mục 12: Lavender chủ đạo, Mint điểm nhấn, bề mặt xanh đen sâu kết hợp tương phản WCAG 2.2 AA.</p>
+      
+      <div class="sg-grid">
+        <div class="sg-swatch" style="background: var(--bg-surface-1);">
+          <div class="sg-swatch-color" style="background: var(--accent-primary);"></div>
+          <div><strong>Accent Primary</strong>: <code>--accent-primary</code></div>
+          <div style="font-size: 12px; color: var(--text-tertiary);">Lavender #8B7CFF (Dark) / #6958E8 (Light)</div>
+        </div>
+
+        <div class="sg-swatch" style="background: var(--bg-surface-1);">
+          <div class="sg-swatch-color" style="background: var(--accent-secondary);"></div>
+          <div><strong>Accent Secondary</strong>: <code>--accent-secondary</code></div>
+          <div style="font-size: 12px; color: var(--text-tertiary);">Mint #5DD6C0 (Dark) / #168C7A (Light)</div>
+        </div>
+
+        <div class="sg-swatch" style="background: var(--bg-surface-1);">
+          <div class="sg-swatch-color" style="background: var(--bg-main);"></div>
+          <div><strong>Background</strong>: <code>--bg-main</code></div>
+          <div style="font-size: 12px; color: var(--text-tertiary);">#0B0D14 (Dark) / #F5F6FA (Light)</div>
+        </div>
+
+        <div class="sg-swatch" style="background: var(--bg-surface-1);">
+          <div class="sg-swatch-color" style="background: var(--bg-surface-1);"></div>
+          <div><strong>Surface 1</strong>: <code>--bg-surface-1</code></div>
+          <div style="font-size: 12px; color: var(--text-tertiary);">#151927 (Dark) / #FFFFFF (Light)</div>
+        </div>
+
+        <div class="sg-swatch" style="background: var(--bg-surface-1);">
+          <div class="sg-swatch-color" style="background: var(--bg-surface-2);"></div>
+          <div><strong>Surface 2</strong>: <code>--bg-surface-2</code></div>
+          <div style="font-size: 12px; color: var(--text-tertiary);">#1C2233 (Dark) / #F0F1F8 (Light)</div>
+        </div>
+
+        <div class="sg-swatch" style="background: var(--bg-surface-1);">
+          <div class="sg-swatch-color" style="background: var(--status-success);"></div>
+          <div><strong>Status Success</strong>: <code>--status-success</code></div>
+          <div style="font-size: 12px; color: var(--text-tertiary);">#34D399 (Emerald Green)</div>
+        </div>
+
+        <div class="sg-swatch" style="background: var(--bg-surface-1);">
+          <div class="sg-swatch-color" style="background: var(--status-warning);"></div>
+          <div><strong>Status Warning</strong>: <code>--status-warning</code></div>
+          <div style="font-size: 12px; color: var(--text-tertiary);">#FBBF24 (Amber Warm)</div>
+        </div>
+
+        <div class="sg-swatch" style="background: var(--bg-surface-1);">
+          <div class="sg-swatch-color" style="background: var(--status-danger);"></div>
+          <div><strong>Status Danger</strong>: <code>--status-danger</code></div>
+          <div style="font-size: 12px; color: var(--text-tertiary);">#F87171 (Rose Red)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Typography -->
+    <section class="sg-section">
+      <h2 class="sg-section-title">2. Typography & Hierarchy (Inter)</h2>
+      <p class="sg-section-desc">Phông chữ Inter có fallback <code>system-ui</code>, chiều cao dòng tối ưu cho tiếng Việt có dấu.</p>
+      
+      <div class="card" style="display: flex; flex-direction: column; gap: var(--space-4);">
+        <div>
+          <span style="font-size: 11px; color: var(--text-tertiary); text-transform: uppercase;">Heading 1 (30px / 800)</span>
+          <h1 style="margin: 4px 0 0;">Chào buổi sáng, Nguyễn Nhân 👋</h1>
+        </div>
+        <div>
+          <span style="font-size: 11px; color: var(--text-tertiary); text-transform: uppercase;">Heading 2 (22px / 700)</span>
+          <h2 style="margin: 4px 0 0;">Tiến độ công việc & Dự án trọng tâm</h2>
+        </div>
+        <div>
+          <span style="font-size: 11px; color: var(--text-tertiary); text-transform: uppercase;">Heading 3 (18px / 600)</span>
+          <h3 style="margin: 4px 0 0;">Nhiệm vụ ưu tiên hôm nay</h3>
+        </div>
+        <div>
+          <span style="font-size: 11px; color: var(--text-tertiary); text-transform: uppercase;">Body Text (14px / 400 - 150% Line Height)</span>
+          <p style="margin: 4px 0 0; color: var(--text-secondary);">
+            Hệ điều hành cá nhân hóa giúp bạn quản lý mục tiêu, phân chia nhiệm vụ hàng ngày, duy trì thói quen tích cực và theo dõi tài chính trực quan.
+          </p>
+        </div>
+        <div>
+          <span style="font-size: 11px; color: var(--text-tertiary); text-transform: uppercase;">Metadata / Caption (12px / 500)</span>
+          <p style="margin: 4px 0 0; color: var(--text-tertiary); font-size: var(--text-xs);">
+            Cập nhật lần cuối: 10 phút trước • Đồng bộ an toàn Cloud Firestore
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Buttons -->
+    <section class="sg-section">
+      <h2 class="sg-section-title">3. Buttons & Interactive Controls</h2>
+      <p class="sg-section-desc">Phân cấp nút rõ ràng: Nút chính (Lavender gradient/solid), nút phụ (Surface 2), ghost (viền mờ), danger (cảnh báo nguy hiểm).</p>
+      
+      <div class="card" style="display: flex; flex-direction: column; gap: var(--space-4);">
+        <div class="sg-row">
+          <button class="btn btn-primary"><i data-lucide="plus" class="ic-16"></i> Thêm việc mới</button>
+          <button class="btn btn-secondary"><i data-lucide="filter" class="ic-16"></i> Bộ lọc</button>
+          <button class="btn btn-ghost"><i data-lucide="settings" class="ic-16"></i> Tùy chọn</button>
+          <button class="btn btn-danger"><i data-lucide="trash-2" class="ic-16"></i> Xóa mục</button>
+          <button class="btn btn-icon" title="Làm mới"><i data-lucide="refresh-cw" class="ic-16"></i></button>
+          <button class="btn btn-primary" disabled><i data-lucide="lock" class="ic-16"></i> Vô hiệu hóa</button>
+        </div>
+        
+        <div class="sg-row">
+          <span style="font-size: 13px; color: var(--text-secondary); width: 80px;">Kích cỡ:</span>
+          <button class="btn btn-primary btn-sm"><i data-lucide="plus" class="ic-14"></i> Nhỏ (sm)</button>
+          <button class="btn btn-primary"><i data-lucide="plus" class="ic-16"></i> Tiêu chuẩn (md)</button>
+          <button class="btn btn-primary btn-lg"><i data-lucide="plus" class="ic-18"></i> Lớn (lg)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Form Inputs -->
+    <section class="sg-section">
+      <h2 class="sg-section-title">4. Form & Input Elements</h2>
+      <p class="sg-section-desc">Inputs với trạng thái focus vòng sáng tím nhẹ, ô tìm kiếm kèm phím tắt Ctrl+K, toggle switch.</p>
+      
+      <div class="sg-grid">
+        <div class="card" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <div>
+            <label class="form-label" for="sgInputText">Tiêu đề nhiệm vụ</label>
+            <input type="text" id="sgInputText" class="input-field" placeholder="Ví dụ: Hoàn thiện báo cáo quý...">
+          </div>
+          <div>
+            <label class="form-label">Tìm kiếm toàn cục</label>
+            <div class="search-wrapper">
+              <i data-lucide="search" class="search-icon"></i>
+              <input type="text" class="search-input" placeholder="Tìm tác vụ, ghi chú, dự án...">
+              <span class="search-shortcut">Ctrl K</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <div>
+            <label class="form-label">Độ ưu tiên</label>
+            <select class="select-field">
+              <option>🔴 Ưu tiên cao (P1)</option>
+              <option selected>🟡 Ưu tiên trung bình (P2)</option>
+              <option>🔵 Ưu tiên thấp (P3)</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Cài đặt công tắc</label>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 4px;">
+              <span style="font-size: 13.5px; color: var(--text-secondary);">Tự động đồng bộ thời gian thực</span>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Badges & System Status -->
+    <section class="sg-section">
+      <h2 class="sg-section-title">5. Badges & Trạng thái đồng bộ</h2>
+      <p class="sg-section-desc">Mức độ ưu tiên, trạng thái tiến độ và chỉ báo lưu trữ Firestore offline/online.</p>
+      
+      <div class="card" style="display: flex; flex-direction: column; gap: var(--space-4);">
+        <div class="sg-row">
+          <span style="font-size: 13px; color: var(--text-secondary); width: 120px;">Độ ưu tiên:</span>
+          <span class="badge badge-priority-high"><i data-lucide="alert-circle" class="ic-12"></i> Cao</span>
+          <span class="badge badge-priority-med"><i data-lucide="clock" class="ic-12"></i> Vừa</span>
+          <span class="badge badge-priority-low"><i data-lucide="arrow-down" class="ic-12"></i> Thấp</span>
+        </div>
+
+        <div class="sg-row">
+          <span style="font-size: 13px; color: var(--text-secondary); width: 120px;">Trạng thái dự án:</span>
+          <span class="badge badge-status-inprogress"><i data-lucide="play" class="ic-12"></i> Đang làm</span>
+          <span class="badge badge-status-completed"><i data-lucide="check" class="ic-12"></i> Hoàn thành</span>
+          <span class="badge badge-status-paused"><i data-lucide="pause" class="ic-12"></i> Tạm dừng</span>
+          <span class="badge badge-status-overdue"><i data-lucide="alert-triangle" class="ic-12"></i> Trễ hạn</span>
+        </div>
+
+        <div class="sg-row">
+          <span style="font-size: 13px; color: var(--text-secondary); width: 120px;">Đồng bộ Firestore:</span>
+          <div class="sync-status sync-saved"><span class="sync-dot"></span> Đã lưu an toàn</div>
+          <div class="sync-status sync-saving"><span class="sync-dot"></span> Đang đồng bộ...</div>
+          <div class="sync-status sync-offline"><span class="sync-dot"></span> Ngoại tuyến (Đã cache)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Bento Grid & Cards -->
+    <section class="sg-section">
+      <h2 class="sg-section-title">6. Thẻ Bento Grid & Hiệu ứng kính (Glassmorphism)</h2>
+      <p class="sg-section-desc">Thẻ bo tròn 16–20px, viền kính mờ tinh tế, hiệu ứng nâng nhẹ khi tương tác.</p>
+      
+      <div class="sg-grid">
+        <div class="card card-interactive">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3);">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(139, 124, 255, 0.15); display: flex; align-items: center; justify-content: center; color: var(--accent-primary);">
+              <i data-lucide="check-circle-2" class="ic-20"></i>
+            </div>
+            <span class="badge badge-status-inprogress">Hôm nay</span>
+          </div>
+          <div style="font-size: var(--text-2xl); font-weight: 800; color: var(--text-primary); margin-bottom: 2px;">5 / 8</div>
+          <div style="font-size: var(--text-xs); color: var(--text-secondary);">Nhiệm vụ đã hoàn thành (62%)</div>
+          <div style="height: 6px; background: var(--bg-surface-2); border-radius: 999px; margin-top: var(--space-3); overflow: hidden;">
+            <div style="width: 62%; height: 100%; background: var(--aurora-gradient, linear-gradient(90deg, #8B7CFF, #5DD6C0));"></div>
+          </div>
+        </div>
+
+        <div class="card card-interactive">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3);">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(93, 214, 192, 0.15); display: flex; align-items: center; justify-content: center; color: var(--accent-secondary);">
+              <i data-lucide="wallet" class="ic-20"></i>
+            </div>
+            <span class="badge badge-status-completed">+12%</span>
+          </div>
+          <div style="font-size: var(--text-2xl); font-weight: 800; color: var(--text-primary); margin-bottom: 2px;">₫ 24.500.000</div>
+          <div style="font-size: var(--text-xs); color: var(--text-secondary);">Số dư khả dụng tháng này</div>
+          <div style="display: flex; gap: var(--space-2); margin-top: var(--space-3); font-size: 11.5px; color: var(--text-tertiary);">
+            <span>Thu: +32M</span> • <span>Chi: -7.5M</span>
+          </div>
+        </div>
+
+        <div class="card card-interactive">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3);">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(251, 191, 36, 0.15); display: flex; align-items: center; justify-content: center; color: var(--status-warning);">
+              <i data-lucide="flame" class="ic-20"></i>
+            </div>
+            <span class="badge badge-priority-high">Streak 14d</span>
+          </div>
+          <div style="font-size: var(--text-2xl); font-weight: 800; color: var(--text-primary); margin-bottom: 2px;">4 Thói quen</div>
+          <div style="font-size: var(--text-xs); color: var(--text-secondary);">Đã duy trì chuỗi kỷ lục tuần qua</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Skeletons & Empty States -->
+    <section class="sg-section">
+      <h2 class="sg-section-title">7. Skeleton Loader & Trạng thái rỗng</h2>
+      <p class="sg-section-desc">Phục vụ UX khi tải dữ liệu không đồng bộ và khi người dùng chưa có mục nào.</p>
+      
+      <div class="sg-grid">
+        <!-- Skeleton Card -->
+        <div class="card">
+          <div style="display: flex; gap: var(--space-3); align-items: center; margin-bottom: var(--space-4);">
+            <div class="skeleton skeleton-circle" style="width: 40px; height: 40px;"></div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: var(--space-2);">
+              <div class="skeleton skeleton-text" style="width: 60%; height: 16px;"></div>
+              <div class="skeleton skeleton-text" style="width: 40%; height: 12px;"></div>
+            </div>
+          </div>
+          <div class="skeleton skeleton-text" style="width: 100%; height: 14px; margin-bottom: var(--space-2);"></div>
+          <div class="skeleton skeleton-text" style="width: 85%; height: 14px;"></div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="card" style="padding: 0;">
+          <div class="empty-state">
+            <div class="empty-icon"><i data-lucide="check-check" class="ic-24"></i></div>
+            <div class="empty-title">Không có việc cần làm!</div>
+            <div class="empty-desc">Bạn đã hoàn thành toàn bộ nhiệm vụ của ngày hôm nay. Hãy nghỉ ngơi hoặc lên kế hoạch mới.</div>
+            <button class="btn btn-primary btn-sm"><i data-lucide="plus" class="ic-14"></i> Thêm việc mới</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/components/theme.js"></script>
+  <script>
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+
+    // Segmented theme controls binding
+    const segButtons = document.querySelectorAll('[data-theme-btn]');
+    function updateActiveSeg(currentTheme) {
+      segButtons.forEach(btn => {
+        if (btn.getAttribute('data-theme-btn') === currentTheme) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    if (window.LifeOSTheme) {
+      updateActiveSeg(window.LifeOSTheme.get());
+      window.addEventListener('lifeos:themechange', e => {
+        updateActiveSeg(e.detail.theme);
+      });
+      segButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.getAttribute('data-theme-btn');
+          window.LifeOSTheme.set(target);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

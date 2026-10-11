@@ -666,6 +666,15 @@
   min-height: 140px;
 }
 
+.bento-quote-card.collapsed {
+  min-height: auto;
+  padding: 8px 14px;
+}
+
+.bento-quote-card.collapsed .bento-quote-body {
+  display: none;
+}
+
 .bento-quote-card::before {
   content: '';
   position: absolute;

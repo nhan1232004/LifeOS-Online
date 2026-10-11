@@ -10,9 +10,17 @@ const fmtFull= n => Number(n||0).toLocaleString('vi-VN');
 const fmtDate= d => { if(!d)return''; const dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'}); };
 const fmtDs = d => { if(!d)return''; const dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}); };
 const uid  = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-const EC   = {work:'#7c4dff',personal:'#ff6b9d',health:'#00e676',social:'#00e5ff',finance:'#ffab40',study:'#ce93d8'};
-const SB   = {Backlog:'bk','Cần làm':'bp','Đang làm':'ba','Hoàn thành':'bg'};
-const PRI_C = {high:'var(--red)',mid:'var(--amber)',low:'var(--green)'};
+const EC   = {
+  work: '#8B7CFF', 'Công việc': '#8B7CFF',
+  personal: '#5DD6C0', 'Cá nhân': '#5DD6C0',
+  health: '#34D399', 'Sức khoẻ': '#34D399',
+  social: '#38BDF8', 'Gia đình': '#38BDF8', 'Xã hội': '#38BDF8',
+  finance: '#FBBF24', 'Tài chính': '#FBBF24',
+  study: '#A78BFA', 'Học tập': '#A78BFA',
+  other: '#94A3B8', 'Khác': '#94A3B8'
+};
+const SB   = {Backlog:'bk','Cần làm':'bp','Đang làm':'ba','Hoàn thành':'bg','Tạm dừng':'bp'};
+const PRI_C = {high:'var(--status-danger, #F87171)',mid:'var(--status-warning, #FBBF24)',low:'var(--status-success, #34D399)'};
 
 let lastToastMsg = '';
 let lastToastTime = 0;
@@ -186,14 +194,21 @@ window.requestNotif = function() {
   THEME TOGGLE
 ──────────────────────────────────────────────────────── */
 window.toggleTheme = function() {
+ if (window.LifeOSTheme && typeof window.LifeOSTheme.toggle === 'function') {
+  return window.LifeOSTheme.toggle();
+ }
  const root = document.documentElement;
  const cur = root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
  const nxt = cur === 'light' ? 'dark' : 'light';
  root.setAttribute('data-theme', nxt);
  localStorage.setItem('lifeos_theme', nxt);
  const btn = document.getElementById('themeBtn');
- if(btn) btn.innerHTML = nxt === "light" ? "<i data-lucide='moon' style='width:18px;height:18px'></i>" : "<i data-lucide='sun' style='width:18px;height:18px'></i>"; lucide.createIcons();;
- document.getElementById('meta-theme-color').setAttribute('content', nxt==='light' ? '#f4f5f8' : '#07070f');
+ if(btn) {
+  btn.innerHTML = nxt === "light" ? "<i data-lucide='moon' style='width:18px;height:18px'></i>" : "<i data-lucide='sun' style='width:18px;height:18px'></i>";
+  if (window.lucide) lucide.createIcons();
+ }
+ const metaTheme = document.getElementById('meta-theme-color');
+ if (metaTheme) metaTheme.setAttribute('content', nxt==='light' ? '#F5F6FA' : '#0B0D14');
  if (typeof window.hapticTap === 'function') window.hapticTap();
  if (window.LifeOSMobile?.initNativeSystemBars) window.LifeOSMobile.initNativeSystemBars();
  
@@ -203,7 +218,13 @@ window.toggleTheme = function() {
 window.addEventListener('DOMContentLoaded', () => {
  const t = localStorage.getItem('lifeos_theme') || 'dark';
  const btn = document.getElementById('themeBtn');
- if(btn) btn.innerHTML = t === "light" ? "<i data-lucide='moon' style='width:18px;height:18px'></i>" : "<i data-lucide='sun' style='width:18px;height:18px'></i>"; lucide.createIcons();;
+ if(btn) {
+  btn.innerHTML = t === "light" ? "<i data-lucide='moon' style='width:18px;height:18px'></i>" : "<i data-lucide='sun' style='width:18px;height:18px'></i>";
+  if (window.lucide) lucide.createIcons();
+ }
+});
+window.addEventListener('lifeos:themechange', () => {
+ if (window.renderAll) window.renderAll();
 });
 
 /* ────────────────────────────────────────────────────────
@@ -299,8 +320,14 @@ function nav(pg, el, updateHash = true){
  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
  document.querySelectorAll('.sb-item, .mnav-item').forEach(i => i.classList.remove('active'));
  
- const pageEl = document.getElementById('p-' + pg);
- if (pageEl) pageEl.classList.add('active');
+ if (pg === 'mocktests') {
+  const vPage = document.getElementById('p-vocab');
+  if (vPage) vPage.classList.add('active');
+  if (typeof switchVocabSubView === 'function') switchVocabSubView('mocktests');
+ } else {
+  const pageEl = document.getElementById('p-' + pg);
+  if (pageEl) pageEl.classList.add('active');
+ }
  
  // activate matching sidebar + mobile nav items
  document.querySelectorAll('.sb-item').forEach(i => {
@@ -1948,11 +1975,98 @@ window.renderWeek = renderWeek;
 window.scrollWeekToCurrentTime = scrollWeekToCurrentTime;
 
 /* ────────────────────────────────────────────────────────
-  OVERVIEW
+  OVERVIEW & SAVINGS DATA
 ──────────────────────────────────────────────────────── */
+function computeSavingsCardData() {
+  const td = today();
+  const curMonth = td.substring(0, 7);
+  const allIncomes = window.DB.income || [];
+  const allExpenses = window.DB.expense || [];
+  const getAmt = item => Number(item.amt ?? item.amount ?? 0) || 0;
+
+  const totalAllInc = allIncomes.reduce((sum, i) => sum + getAmt(i), 0);
+  const totalAllExp = allExpenses.reduce((sum, e) => sum + getAmt(e), 0);
+  const allTimeBalance = totalAllInc - totalAllExp;
+
+  const monthIncomes = allIncomes.filter(i => (i.date || '').startsWith(curMonth));
+  const totalMonthInc = monthIncomes.reduce((sum, i) => sum + getAmt(i), 0);
+  const monthExpenses = allExpenses.filter(e => (e.date || '').startsWith(curMonth));
+  const totalMonthExp = monthExpenses.reduce((sum, e) => sum + getAmt(e), 0);
+  const monthSavings = totalMonthInc - totalMonthExp;
+
+  const allGoals = window.DB.goals || [];
+  const totalGoalsSaved = allGoals.reduce((sum, g) => sum + (Number(g.saved) || 0), 0);
+  const totalGoalsTarget = allGoals.reduce((sum, g) => sum + (Number(g.target) || 0), 0);
+  const goalsPct = totalGoalsTarget > 0 ? Math.round((totalGoalsSaved / totalGoalsTarget) * 100) : 0;
+
+  let savCardValue = '0 ₫';
+  let savCardLabel = 'Tiết kiệm tháng này';
+  let savCardPill = '0% Tiết kiệm';
+  let savCardPct = 0;
+  let savCardTargetNav = 'finance';
+
+  if (totalGoalsSaved > 0 && totalAllInc === 0 && totalAllExp === 0) {
+    // User primarily uses Goals to track savings
+    savCardValue = `${fmt(totalGoalsSaved)} ₫`;
+    savCardLabel = 'Đã tiết kiệm mục tiêu';
+    savCardPill = `${goalsPct}% mục tiêu`;
+    savCardPct = goalsPct;
+    savCardTargetNav = 'goals';
+  } else if (totalMonthInc > 0) {
+    // We have income this month
+    const rate = Math.round((monthSavings / totalMonthInc) * 100);
+    savCardValue = `${monthSavings >= 0 ? '+' : ''}${fmt(monthSavings)} ₫`;
+    savCardLabel = 'Tiết kiệm tháng này';
+    savCardPill = rate >= 0 ? `Tiết kiệm ${rate}%` : `Bội chi ${Math.abs(rate)}%`;
+    savCardPct = Math.max(0, rate);
+    savCardTargetNav = 'finance';
+  } else if (allTimeBalance > 0) {
+    // User has cumulative savings from past months
+    savCardValue = `+${fmt(allTimeBalance)} ₫`;
+    savCardLabel = 'Tổng số dư tiết kiệm';
+    savCardPill = totalMonthExp > 0 ? `Chi tháng: ${fmt(totalMonthExp)} ₫` : 'Số dư khả dụng';
+    savCardPct = 100;
+    savCardTargetNav = 'finance';
+  } else if (totalGoalsSaved > 0) {
+    // User has goal savings even if month income is 0
+    savCardValue = `${fmt(totalGoalsSaved)} ₫`;
+    savCardLabel = 'Tiết kiệm mục tiêu';
+    savCardPill = `${goalsPct}% mục tiêu`;
+    savCardPct = goalsPct;
+    savCardTargetNav = 'goals';
+  } else if (totalMonthExp > 0) {
+    // Only expenses recorded this month
+    savCardValue = `-${fmt(totalMonthExp)} ₫`;
+    savCardLabel = 'Chi tiêu tháng này';
+    savCardPill = `${monthExpenses.length} khoản chi`;
+    savCardPct = 0;
+    savCardTargetNav = 'finance';
+  } else {
+    // No data yet
+    savCardValue = '0 ₫';
+    savCardLabel = 'Tiết kiệm tháng này';
+    savCardPill = 'Chưa có giao dịch';
+    savCardPct = 0;
+    savCardTargetNav = 'finance';
+  }
+
+  return {
+    value: savCardValue,
+    label: savCardLabel,
+    pill: savCardPill,
+    pct: savCardPct,
+    targetNav: savCardTargetNav,
+    balance: allTimeBalance,
+    monthSavings,
+    totalGoalsSaved
+  };
+}
+window.computeSavingsCardData = computeSavingsCardData;
+
 function renderOverview(){
  const range = parseInt(document.getElementById('ovFinanceRange')?.value || 14);
  const k=computeFin(), t=today();
+ const sav = computeSavingsCardData();
  const allTodos = window.DB.todos||[];
  const todayTodos = allTodos.filter(x=>!x.date||x.date===t);
  const done = todayTodos.filter(x=>x.done).length;
@@ -1979,17 +2093,17 @@ function renderOverview(){
  if(ovKpi){
   ovKpi.className = 'bento-grid-4';
   ovKpi.innerHTML=`
-   <div class="bento-kpi-card" onclick="nav('finance')">
+   <div class="bento-kpi-card" onclick="nav('${sav.targetNav}')">
     <div class="bento-kpi-top">
      <div class="bento-kpi-icon mint"><i data-lucide="wallet" class="ic-18"></i></div>
-     <span class="bento-kpi-pill mint">${k.savRate}% Tiết kiệm</span>
+     <span class="bento-kpi-pill mint">${sav.pill}</span>
     </div>
     <div class="bento-kpi-mid">
-     <div class="bento-kpi-value">${fmt(k.balance)} ₫</div>
-     <div class="bento-kpi-label">Tổng tài sản ròng</div>
+     <div class="bento-kpi-value">${sav.value}</div>
+     <div class="bento-kpi-label">${sav.label}</div>
     </div>
     <div class="bento-progress-track">
-     <div class="bento-progress-fill" style="width:${Math.min(100, k.savRate || 50)}%;background:linear-gradient(90deg,var(--accent-secondary),#4DD4A2);"></div>
+     <div class="bento-progress-fill" style="width:${Math.min(100, Math.max(0, sav.pct || 50))}%;background:linear-gradient(90deg,var(--accent-secondary),#4DD4A2);"></div>
     </div>
    </div>
    <div class="bento-kpi-card" onclick="nav('todos')">
@@ -2110,8 +2224,10 @@ function renderOverview(){
 function updateBadges(){
  const pending = (window.DB.todos || []).filter(t => !t.done).length;
  const totalProj = (window.DB.projects || []).length;
+ const totalNotes = (window.DB.notes || []).length;
  ['badgeProj'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = totalProj; });
  ['badgeTodo'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = pending; });
+ ['badgeNote'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = totalNotes; });
  // Mobile badges
  const mb1 = document.getElementById('mBadgeProj'); if (mb1) { mb1.textContent = totalProj; mb1.style.display = totalProj > 0 ? 'flex' : 'none'; }
  const mb2 = document.getElementById('mBadgeTodo'); if (mb2) { mb2.textContent = pending; mb2.style.display = pending > 0 ? 'flex' : 'none'; }
@@ -2125,9 +2241,9 @@ const charts={};
 function dc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
 function getCO() {
  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
- const t1 = isLight ? '#4a5568' : '#9090b0';
- const t2 = isLight ? '#718096' : '#50507a';
- const g = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,.04)';
+ const t1 = isLight ? '#202338' : '#F3F4FA';
+ const t2 = isLight ? '#6B7280' : '#9CA3AF';
+ const g = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
  const isMobile = window.innerWidth < 640;
  return {
   responsive: true,
@@ -2160,8 +2276,8 @@ function renderOverviewChart(range=14){
  charts['ovC']=new Chart(ctx,{
   type:'bar',
   data:{labels,datasets:[
-   {label:'Thu nhập (M₫)',data:days.map(d=>(window.DB.income||[]).filter(x=>x.date===d).reduce((a,x)=>a+x.amt,0)/1e6),backgroundColor:'rgba(0,230,118,.5)',borderColor:'rgba(0,230,118,.8)',borderRadius:3,borderWidth:1},
-   {label:'Chi tiêu (M₫)',data:days.map(d=>(window.DB.expense||[]).filter(x=>x.date===d).reduce((a,x)=>a+x.amt,0)/1e6),backgroundColor:'rgba(255,82,82,.5)',borderColor:'rgba(255,82,82,.8)',borderRadius:3,borderWidth:1},
+   {label:'Thu nhập (M₫)',data:days.map(d=>(window.DB.income||[]).filter(x=>x.date===d).reduce((a,x)=>a+x.amt,0)/1e6),backgroundColor:'rgba(93,214,192,.55)',borderColor:'#5DD6C0',borderRadius:4,borderWidth:1},
+   {label:'Chi tiêu (M₫)',data:days.map(d=>(window.DB.expense||[]).filter(x=>x.date===d).reduce((a,x)=>a+x.amt,0)/1e6),backgroundColor:'rgba(248,113,113,.55)',borderColor:'#F87171',borderRadius:4,borderWidth:1},
   ]},
   options: Object.assign({}, opt, { interaction: { mode: 'index', intersect: false } })
  });
@@ -2180,7 +2296,7 @@ function drawSparklines() {
    return inc - exp;
   });
   charts['sp1'] = new Chart(ctxFin, {
-   type: 'line', data: { labels: dArr, datasets: [{ data: bArr, borderColor: '#00e676', borderWidth: 2, tension: 0.4, pointRadius: 0 }] },
+   type: 'line', data: { labels: dArr, datasets: [{ data: bArr, borderColor: '#5DD6C0', borderWidth: 2, tension: 0.4, pointRadius: 0 }] },
    options: { responsive: true, maintainAspectRatio: false, plugins: {legend:{display:false},tooltip:{enabled:false}}, scales: {x:{display:false},y:{display:false}} }
   });
  }
@@ -2190,7 +2306,7 @@ function drawSparklines() {
   dc('sp2');
   const tArr = dArr.map(d=>(window.DB.todos||[]).filter(x=>x.date===d&&x.done).length);
   charts['sp2'] = new Chart(ctxTodo, {
-   type: 'bar', data: { labels: dArr, datasets: [{ data: tArr, backgroundColor: '#7c4dff', borderRadius: 2 }] },
+   type: 'bar', data: { labels: dArr, datasets: [{ data: tArr, backgroundColor: '#8B7CFF', borderRadius: 2 }] },
    options: { responsive: true, maintainAspectRatio: false, plugins: {legend:{display:false},tooltip:{enabled:false}}, scales: {x:{display:false},y:{display:false}} }
   });
  }
@@ -2200,7 +2316,7 @@ function drawSparklines() {
   dc('sp3');
   const pArr = dArr.map(d=>{ try { return (JSON.parse(localStorage.getItem('lifeos_pom_'+d))||{mins:0}).mins; } catch{return 0;} });
   charts['sp3'] = new Chart(ctxPom, {
-   type: 'line', data: { labels: dArr, datasets: [{ data: pArr, borderColor: '#00e5ff', backgroundColor:'rgba(0,229,255,0.1)', fill:true, borderWidth: 2, tension: 0.4, pointRadius: 0 }] },
+   type: 'line', data: { labels: dArr, datasets: [{ data: pArr, borderColor: '#38BDF8', backgroundColor:'rgba(56,189,248,0.12)', fill:true, borderWidth: 2, tension: 0.4, pointRadius: 0 }] },
    options: { responsive: true, maintainAspectRatio: false, plugins: {legend:{display:false},tooltip:{enabled:false}}, scales: {x:{display:false},y:{display:false}} }
   });
  }
@@ -2213,7 +2329,7 @@ function drawSparklines() {
    return t.length ? Math.round(t.reduce((s,m)=>s+m.score,0)/t.length) : 0;
   });
   charts['sp4'] = new Chart(ctxEng, {
-   type: 'line', data: { labels: dArr, datasets: [{ data: mArr, borderColor: '#ffab40', borderWidth: 2, tension: 0.4, pointRadius: 0 }] },
+   type: 'line', data: { labels: dArr, datasets: [{ data: mArr, borderColor: '#FBBF24', borderWidth: 2, tension: 0.4, pointRadius: 0 }] },
    options: { responsive: true, maintainAspectRatio: false, plugins: {legend:{display:false},tooltip:{enabled:false}}, scales: {x:{display:false},y:{display:false}} }
   });
  }
@@ -2479,8 +2595,8 @@ function renderStats(){
    data: {
     labels,
     datasets: [
-     { label: 'Thu nhập', data: incD, borderColor: '#00e676', backgroundColor: 'rgba(0,230,118,.1)', tension: .4, fill: true, pointRadius: 3 },
-     { label: 'Chi tiêu', data: expD, borderColor: '#ff5252', backgroundColor: 'rgba(255,82,82,.1)', tension: .4, fill: true, pointRadius: 3 }
+     { label: 'Thu nhập', data: incD, borderColor: '#5DD6C0', backgroundColor: 'rgba(93,214,192,0.12)', tension: .4, fill: true, pointRadius: 3 },
+     { label: 'Chi tiêu', data: expD, borderColor: '#FF7185', backgroundColor: 'rgba(255,113,133,0.12)', tension: .4, fill: true, pointRadius: 3 }
     ]
    },
    options: optL
@@ -2500,13 +2616,13 @@ function renderStats(){
   });
   const cats = Object.keys(cm);
   const vals = cats.map(c => cm[c]);
-  const cols = ['#7c4dff', '#00e5ff', '#ff6b9d', '#00e676', '#ffab40', '#ff5252', '#ce93d8', '#80cbc4', '#ffd740'];
-  const bdColor = isLight ? '#ffffff' : '#0e0e1c';
+  const cols = ['#8B7CFF', '#5DD6C0', '#F4BE68', '#38BDF8', '#FF7185', '#A78BFA', '#F472B6', '#4DD4A2', '#818CF8'];
+  const bdColor = isLight ? '#FFFFFF' : '#151927';
 
   if (vals.length === 0) {
    charts['stD'] = new Chart(ctxD, {
     type: 'doughnut',
-    data: { labels: ['Chưa có chi tiêu'], datasets: [{ data: [1], backgroundColor: ['var(--surface2)'], borderColor: bdColor, borderWidth: 1 }] },
+    data: { labels: ['Chưa có chi tiêu'], datasets: [{ data: [1], backgroundColor: ['var(--surface-2)'], borderColor: bdColor, borderWidth: 1 }] },
     options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
    });
   } else {
@@ -2541,7 +2657,7 @@ function renderStats(){
     labels: sorted.length ? sorted.map(x => x[0]) : ['Không có chi tiêu'],
     datasets: [{
      data: sorted.length ? sorted.map(x => +(x[1] / 1e6).toFixed(2)) : [0],
-     backgroundColor: ['#7c4dff', '#00e5ff', '#ff6b9d', '#00e676', '#ffab40', '#ff5252', '#ce93d8', '#80cbc4'].map(c => c + 'cc'),
+     backgroundColor: ['#8B7CFF', '#5DD6C0', '#F4BE68', '#38BDF8', '#FF7185', '#A78BFA', '#F472B6', '#4DD4A2'].map(c => c + 'cc'),
      borderRadius: 4
     }]
    },
@@ -2672,76 +2788,8 @@ function renderToday() {
     const habitPct = habits.length ? Math.round((habitsDone / habits.length) * 100) : 0;
 
     // 4. Savings / Finance KPI
-    const curMonth = td.substring(0, 7);
-    const allIncomes = window.DB.income || [];
-    const allExpenses = window.DB.expense || [];
-    const getAmt = item => Number(item.amt ?? item.amount ?? 0) || 0;
+    const sav = computeSavingsCardData();
 
-    const totalAllInc = allIncomes.reduce((sum, i) => sum + getAmt(i), 0);
-    const totalAllExp = allExpenses.reduce((sum, e) => sum + getAmt(e), 0);
-    const allTimeBalance = totalAllInc - totalAllExp;
-
-    const monthIncomes = allIncomes.filter(i => (i.date || '').startsWith(curMonth));
-    const totalMonthInc = monthIncomes.reduce((sum, i) => sum + getAmt(i), 0);
-    const monthExpenses = allExpenses.filter(e => (e.date || '').startsWith(curMonth));
-    const totalMonthExp = monthExpenses.reduce((sum, e) => sum + getAmt(e), 0);
-    const monthSavings = totalMonthInc - totalMonthExp;
-
-    const allGoals = window.DB.goals || [];
-    const totalGoalsSaved = allGoals.reduce((sum, g) => sum + (Number(g.saved) || 0), 0);
-    const totalGoalsTarget = allGoals.reduce((sum, g) => sum + (Number(g.target) || 0), 0);
-    const goalsPct = totalGoalsTarget > 0 ? Math.round((totalGoalsSaved / totalGoalsTarget) * 100) : 0;
-
-    let savCardValue = '0 ₫';
-    let savCardLabel = 'Tiết kiệm tháng này';
-    let savCardPill = '0% Tiết kiệm';
-    let savCardPct = 0;
-    let savCardTargetNav = 'finance';
-
-    if (totalGoalsSaved > 0 && totalAllInc === 0 && totalAllExp === 0) {
-      // User primarily uses Goals to track savings
-      savCardValue = `${fmt(totalGoalsSaved)} ₫`;
-      savCardLabel = 'Đã tiết kiệm mục tiêu';
-      savCardPill = `${goalsPct}% mục tiêu`;
-      savCardPct = goalsPct;
-      savCardTargetNav = 'goals';
-    } else if (totalMonthInc > 0) {
-      // We have income this month
-      const rate = Math.round((monthSavings / totalMonthInc) * 100);
-      savCardValue = `${monthSavings >= 0 ? '+' : ''}${fmt(monthSavings)} ₫`;
-      savCardLabel = 'Tiết kiệm tháng này';
-      savCardPill = rate >= 0 ? `Tiết kiệm ${rate}%` : `Bội chi ${Math.abs(rate)}%`;
-      savCardPct = Math.max(0, rate);
-      savCardTargetNav = 'finance';
-    } else if (allTimeBalance > 0) {
-      // User has cumulative savings from past months
-      savCardValue = `+${fmt(allTimeBalance)} ₫`;
-      savCardLabel = 'Tổng số dư tiết kiệm';
-      savCardPill = totalMonthExp > 0 ? `Chi tháng: ${fmt(totalMonthExp)} ₫` : 'Số dư khả dụng';
-      savCardPct = 100;
-      savCardTargetNav = 'finance';
-    } else if (totalGoalsSaved > 0) {
-      // User has goal savings even if month income is 0
-      savCardValue = `${fmt(totalGoalsSaved)} ₫`;
-      savCardLabel = 'Tiết kiệm mục tiêu';
-      savCardPill = `${goalsPct}% mục tiêu`;
-      savCardPct = goalsPct;
-      savCardTargetNav = 'goals';
-    } else if (totalMonthExp > 0) {
-      // Only expenses recorded this month
-      savCardValue = `-${fmt(totalMonthExp)} ₫`;
-      savCardLabel = 'Chi tiêu tháng này';
-      savCardPill = `${monthExpenses.length} khoản chi`;
-      savCardPct = 0;
-      savCardTargetNav = 'finance';
-    } else {
-      // No data yet
-      savCardValue = '0 ₫';
-      savCardLabel = 'Tiết kiệm tháng này';
-      savCardPill = 'Chưa có giao dịch';
-      savCardPct = 0;
-      savCardTargetNav = 'finance';
-    }
 
     kpiGrid.innerHTML = `
       <div class="bento-kpi-card" onclick="nav('todos')">
@@ -2786,17 +2834,17 @@ function renderToday() {
         </div>
       </div>
 
-      <div class="bento-kpi-card" onclick="nav('${savCardTargetNav}')">
+      <div class="bento-kpi-card" onclick="nav('${sav.targetNav}')">
         <div class="bento-kpi-top">
           <div class="bento-kpi-icon mint"><i data-lucide="wallet" class="ic-18"></i></div>
-          <span class="bento-kpi-pill mint">${savCardPill}</span>
+          <span class="bento-kpi-pill mint">${sav.pill}</span>
         </div>
         <div class="bento-kpi-mid">
-          <div class="bento-kpi-value" style="color:${savCardValue.startsWith('-') ? 'var(--danger)' : 'var(--text-primary)'}">${savCardValue}</div>
-          <div class="bento-kpi-label">${savCardLabel}</div>
+          <div class="bento-kpi-value" style="color:${sav.value.startsWith('-') ? 'var(--danger)' : 'var(--text-primary)'}">${sav.value}</div>
+          <div class="bento-kpi-label">${sav.label}</div>
         </div>
         <div class="bento-progress-track">
-          <div class="bento-progress-fill" style="width:${Math.min(100, Math.max(5, savCardPct))}%;background:linear-gradient(90deg,var(--accent-secondary),#4DD4A2);"></div>
+          <div class="bento-progress-fill" style="width:${Math.min(100, Math.max(5, sav.pct))}%;background:linear-gradient(90deg,var(--accent-secondary),#4DD4A2);"></div>
         </div>
       </div>
     `;
@@ -2937,6 +2985,13 @@ function renderToday() {
   const quoteAuthEl = document.getElementById('todayQuoteAuthor');
   if (quoteTextEl) quoteTextEl.textContent = `"${q.text}"`;
   if (quoteAuthEl) quoteAuthEl.textContent = `— ${q.author}`;
+  const quoteCardEl = document.getElementById('todayQuoteCard');
+  if (quoteCardEl) {
+    const isQuoteCollapsed = localStorage.getItem('lifeos_quote_collapsed') === 'true';
+    quoteCardEl.classList.toggle('collapsed', isQuoteCollapsed);
+    const icon = quoteCardEl.querySelector('.quote-toggle-icon');
+    if (icon) icon.setAttribute('data-lucide', isQuoteCollapsed ? 'maximize-2' : 'minimize-2');
+  }
 
   // 7. Recent Projects
   const projectListEl = document.getElementById('todayProjectList');
@@ -3383,6 +3438,68 @@ try { updateBadges(); } catch(e){}
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     try { updateBadges(); } catch(e){}
+    try {
+      const saved = localStorage.getItem('lifeos_sidebar_collapsed') === 'true';
+      const sb = document.getElementById('sidebar');
+      if (sb && saved) {
+        sb.classList.add('collapsed');
+        const btn = document.getElementById('sbCollapseBtn');
+        if (btn) {
+          btn.innerHTML = '<i data-lucide="panel-left-open" class="ic-16"></i>';
+          btn.setAttribute('title', 'Mở rộng Sidebar');
+          if (window.lucide) window.lucide.createIcons();
+        }
+      }
+    } catch(e) {}
   });
 }
+
+/* ────────────────────────────────────────────────────────
+  SIDEBAR COLLAPSE & QUICK ADD (P1)
+──────────────────────────────────────────────────────── */
+window.toggleSidebarCollapse = function() {
+  const sb = document.getElementById('sidebar');
+  if (!sb) return;
+  const isCollapsed = sb.classList.toggle('collapsed');
+  try {
+    localStorage.setItem('lifeos_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+  } catch(e) {}
+  const btn = document.getElementById('sbCollapseBtn');
+  if (btn) {
+    btn.innerHTML = isCollapsed ? '<i data-lucide="panel-left-open" class="ic-16"></i>' : '<i data-lucide="panel-left-close" class="ic-16"></i>';
+    btn.setAttribute('title', isCollapsed ? 'Mở rộng Sidebar' : 'Thu gọn Sidebar');
+    if (window.lucide) window.lucide.createIcons();
+  }
+};
+
+window.toggleQuickAddDropdown = function(e) {
+  if (e) e.stopPropagation();
+  const d = document.getElementById('quickAddDropdown');
+  if (d) d.classList.toggle('show');
+};
+
+window.closeQuickAddDropdown = function() {
+  const d = document.getElementById('quickAddDropdown');
+  if (d) d.classList.remove('show');
+};
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.quick-add-wrap')) {
+    window.closeQuickAddDropdown();
+  }
+});
+
+window.toggleQuoteCollapse = function() {
+  const c = document.getElementById('todayQuoteCard');
+  if (!c) return;
+  const isCollapsed = c.classList.toggle('collapsed');
+  try {
+    localStorage.setItem('lifeos_quote_collapsed', isCollapsed ? 'true' : 'false');
+  } catch(e) {}
+  const icon = c.querySelector('.quote-toggle-icon');
+  if (icon) {
+    icon.setAttribute('data-lucide', isCollapsed ? 'maximize-2' : 'minimize-2');
+    if (window.lucide) window.lucide.createIcons();
+  }
+};
 

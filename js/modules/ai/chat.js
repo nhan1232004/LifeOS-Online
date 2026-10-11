@@ -328,10 +328,10 @@ function appendMessage(sender, text, isActionChip = false) {
   msgDiv.className = `ai-msg ${sender === 'user' ? 'ai-msg-user' : 'ai-msg-bot'}`;
   
   if (sender === 'user') {
-    msgDiv.style.cssText = 'align-self:flex-end; background:var(--accent); color:#fff; padding:10px 14px; border-radius:14px 14px 2px 14px; max-width:85%; font-size:13.5px; line-height:1.5; word-break:break-word; margin-bottom:8px; box-shadow:0 2px 8px rgba(124,77,255,0.3);';
+    msgDiv.style.cssText = 'align-self:flex-end; background:var(--accent); color:#fff; padding:10px 14px; border-radius:14px 14px 2px 14px; max-width:85%; font-size:13.5px; line-height:1.5; word-break:break-word; margin-bottom:8px; box-shadow:0 2px 10px rgba(139,124,255,0.25);';
     msgDiv.textContent = text;
   } else {
-    msgDiv.style.cssText = 'align-self:flex-start; background:var(--surface); border:1px solid var(--border); color:var(--text-hi); padding:12px 16px; border-radius:14px 14px 14px 2px; max-width:90%; font-size:13.5px; line-height:1.6; word-break:break-word; margin-bottom:8px;';
+    msgDiv.style.cssText = 'align-self:flex-start; background:var(--surface-1); border:1px solid var(--border); color:var(--text-primary); padding:12px 16px; border-radius:14px 14px 14px 2px; max-width:90%; font-size:13.5px; line-height:1.6; word-break:break-word; margin-bottom:8px; box-shadow:var(--shadow-sm);';
     msgDiv.innerHTML = formatMarkdown(text);
   }
 
@@ -344,7 +344,7 @@ function appendActionChip(title) {
   const c = document.getElementById('aiMessages');
   if (!c) return;
   const chip = document.createElement('div');
-  chip.style.cssText = 'display:inline-flex; align-items:center; gap:6px; background:rgba(0,230,118,0.12); border:1px solid rgba(0,230,118,0.3); color:var(--success); padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:600; margin:4px 0 8px;';
+  chip.style.cssText = 'display:inline-flex; align-items:center; gap:6px; background:rgba(77,212,162,0.12); border:1px solid rgba(77,212,162,0.3); color:var(--success); padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:600; margin:4px 0 8px;';
   chip.innerHTML = `<i data-lucide="check" class="ic-14"></i> ${title}`;
   c.appendChild(chip);
   if (window.lucide) window.lucide.createIcons();
@@ -356,12 +356,12 @@ function appendApiKeyPromptCard() {
   if (!c) return;
 
   const card = document.createElement('div');
-  card.style.cssText = 'background:linear-gradient(135deg, rgba(124,77,255,0.12), rgba(0,229,255,0.06)); border:1px solid rgba(124,77,255,0.3); border-radius:12px; padding:14px; margin-top:8px;';
+  card.style.cssText = 'background:var(--accent-soft); border:1px solid rgba(139,124,255,0.3); border-radius:12px; padding:14px; margin-top:8px;';
   card.innerHTML = `
-    <div style="font-weight:700; font-size:13.5px; color:var(--accent-light); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+    <div style="font-weight:700; font-size:13.5px; color:var(--accent-hover); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
       <i data-lucide="key" class="ic-16"></i> Kích hoạt Google Gemini AI
     </div>
-    <div style="font-size:12.5px; color:var(--text-mid); line-height:1.5; margin-bottom:10px;">
+    <div style="font-size:12.5px; color:var(--text-secondary); line-height:1.5; margin-bottom:10px;">
       Để kích hoạt khả năng suy luận ngôn ngữ tự nhiên không giới hạn, bạn chỉ cần nhập <b>Gemini API Key</b> cá nhân (hoàn toàn miễn phí).
     </div>
     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">

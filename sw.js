@@ -1,12 +1,18 @@
-const CACHE = 'lifeos-v15-midnight-aurora';
+const CACHE = 'lifeos-v17-redesign-midnight-aurora';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
+  './css/tokens.css',
+  './css/base.css',
+  './css/layout.css',
+  './css/components.css',
+  './css/themes.css',
   './css/style.css',
   './css/bento.css',
   './css/modules.css',
+  './js/components/theme.js',
   './js/data.js',
   './js/main.js',
   './js/workspace.js',

@@ -2001,25 +2001,25 @@ input[type="checkbox"]:checked {
     ry: 6px;
 }
 .gantt .gantt-doing .bar {
-    fill: rgba(0, 229, 255, 0.2);
-    stroke: #00e5ff;
+    fill: rgba(139, 124, 255, 0.2);
+    stroke: var(--accent-primary, #8B7CFF);
 }
 .gantt .gantt-doing .bar-progress {
-    fill: #00e5ff;
+    fill: var(--accent-primary, #8B7CFF);
 }
 .gantt .gantt-done .bar {
-    fill: rgba(0, 230, 118, 0.2);
-    stroke: #00e676;
+    fill: rgba(93, 214, 192, 0.2);
+    stroke: var(--accent-secondary, #5DD6C0);
 }
 .gantt .gantt-done .bar-progress {
-    fill: #00e676;
+    fill: var(--accent-secondary, #5DD6C0);
 }
 .gantt .gantt-todo .bar {
-    fill: rgba(255, 171, 64, 0.2);
-    stroke: #ffab40;
+    fill: rgba(251, 191, 36, 0.2);
+    stroke: var(--status-warning, #FBBF24);
 }
 .gantt .gantt-todo .bar-progress {
-    fill: #ffab40;
+    fill: var(--status-warning, #FBBF24);
 }
 .gantt .bar-label {
     fill: #ffffff;
