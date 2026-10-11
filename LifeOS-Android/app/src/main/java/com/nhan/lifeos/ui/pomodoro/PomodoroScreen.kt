@@ -1,7 +1,9 @@
 package com.nhan.lifeos.ui.pomodoro
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,10 +15,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
@@ -32,6 +38,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,14 +52,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nhan.lifeos.core.designsystem.LifeOSAmber
 import com.nhan.lifeos.core.designsystem.LifeOSCyan
+import com.nhan.lifeos.core.designsystem.LifeOSGlassBorder
 import com.nhan.lifeos.core.designsystem.LifeOSGreen
+import com.nhan.lifeos.core.designsystem.LifeOSLavender
 import com.nhan.lifeos.core.designsystem.LifeOSPrimary
 import com.nhan.lifeos.core.designsystem.LifeOSRed
 import com.nhan.lifeos.core.designsystem.LifeOSSurfaceCard
+import com.nhan.lifeos.core.designsystem.LifeOSSurfaceHover
 import com.nhan.lifeos.core.designsystem.LifeOSTextHigh
 import com.nhan.lifeos.core.designsystem.LifeOSTextLow
 import com.nhan.lifeos.core.designsystem.LifeOSTextMid
@@ -72,10 +83,12 @@ fun PomodoroScreen(
     )
 
     val activeColor = if (uiState.isWorkMode) LifeOSPrimary else LifeOSCyan
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -116,7 +129,59 @@ fun PomodoroScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Active Focus Task Banner (If selected)
+        if (uiState.activeTaskId != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = LifeOSLavender.copy(alpha = 0.15f)),
+                border = BorderStroke(1.dp, LifeOSLavender)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.CheckCircle,
+                        contentDescription = null,
+                        tint = LifeOSCyan,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Đang tập trung vào công việc:",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = LifeOSTextMid
+                        )
+                        Text(
+                            text = uiState.activeTaskTitle ?: "",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = LifeOSTextHigh,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    TextButton(
+                        onClick = { viewModel.unselectTask() },
+                        modifier = Modifier.padding(start = 6.dp)
+                    ) {
+                        Text(
+                            text = "✕ Bỏ chọn",
+                            color = LifeOSRed,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Mode Preset Tabs
         TabRow(
@@ -149,11 +214,11 @@ fun PomodoroScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Big Circular Countdown Ring
         Box(
-            modifier = Modifier.size(260.dp),
+            modifier = Modifier.size(250.dp),
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -179,7 +244,7 @@ fun PomodoroScreen(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = uiState.formattedTime,
-                    fontSize = 54.sp,
+                    fontSize = 52.sp,
                     fontWeight = FontWeight.Black,
                     color = LifeOSTextHigh
                 )
@@ -197,7 +262,7 @@ fun PomodoroScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Control Buttons
         Row(
@@ -245,7 +310,7 @@ fun PomodoroScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(36.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         // Today's Stats Cards
         Row(
@@ -300,5 +365,122 @@ fun PomodoroScreen(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        // Focus Task Selector Section
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Chọn việc cần tập trung",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = LifeOSTextHigh
+            )
+            if (uiState.activeTaskId != null) {
+                TextButton(onClick = { viewModel.unselectTask() }) {
+                    Text("Bỏ chọn", color = LifeOSRed, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (uiState.pendingTodos.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Không có công việc nào đang chờ. Bạn có thể thêm việc mới!",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LifeOSTextLow
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                uiState.pendingTodos.take(6).forEach { todo ->
+                    val isSelected = uiState.activeTaskId == todo.id
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { viewModel.toggleSelectTask(todo) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) LifeOSLavender.copy(alpha = 0.18f) else LifeOSSurfaceCard
+                        ),
+                        border = if (isSelected) BorderStroke(1.dp, LifeOSLavender) else BorderStroke(1.dp, LifeOSGlassBorder)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isSelected) LifeOSLavender else LifeOSSurfaceHover),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Check,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = todo.text,
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) LifeOSLavender else LifeOSTextHigh,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            if (isSelected) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(LifeOSRed.copy(alpha = 0.15f))
+                                        .clickable { viewModel.unselectTask() }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = "✕ Bỏ chọn",
+                                        color = LifeOSRed,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            } else {
+                                Text(
+                                    text = "Chọn",
+                                    color = LifeOSTextLow,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(40.dp))
     }
 }
+

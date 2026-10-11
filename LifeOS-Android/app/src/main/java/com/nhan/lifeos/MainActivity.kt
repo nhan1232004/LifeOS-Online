@@ -238,7 +238,7 @@ fun LifeOSApp(
     val vocabRepo = remember { VocabRepository(database, cloudSyncRepo) }
     val mockTestRepo = remember { MockTestRepository(database, cloudSyncRepo) }
 
-    val todayViewModel = remember { TodayViewModel(taskTimeRepo) }
+    val todayViewModel = remember { TodayViewModel(taskTimeRepo, financeRepo) }
     val todosViewModel = remember { TodosViewModel(taskTimeRepo) }
     val calendarViewModel = remember { CalendarViewModel(taskTimeRepo) }
     val projectsViewModel = remember { ProjectsViewModel(taskTimeRepo) }
@@ -248,7 +248,7 @@ fun LifeOSApp(
     val notesViewModel = remember { NotesViewModel(personalRepo) }
     val habitsViewModel = remember { HabitsViewModel(personalRepo) }
     val journalViewModel = remember { JournalViewModel(personalRepo) }
-    val pomodoroViewModel = remember { PomodoroViewModel() }
+    val pomodoroViewModel = remember { PomodoroViewModel(taskTimeRepo) }
     val vocabViewModel = remember { VocabViewModel(vocabRepo) }
     val mockTestsViewModel = remember { MockTestsViewModel(mockTestRepo) }
     val aiViewModel = remember { AiViewModel(taskTimeRepo, financeRepo, personalRepo, preferencesRepo) }

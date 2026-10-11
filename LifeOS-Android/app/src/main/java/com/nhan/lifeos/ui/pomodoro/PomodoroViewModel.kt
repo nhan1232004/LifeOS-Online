@@ -2,6 +2,8 @@ package com.nhan.lifeos.ui.pomodoro
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nhan.lifeos.data.local.entity.TodoEntity
+import com.nhan.lifeos.data.repository.TaskTimeRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +17,10 @@ data class PomodoroUiState(
     val isRunning: Boolean = false,
     val isWorkMode: Boolean = true,
     val completedSessions: Int = 0,
-    val totalMinutesFocused: Int = 0
+    val totalMinutesFocused: Int = 0,
+    val activeTaskId: String? = null,
+    val activeTaskTitle: String? = null,
+    val pendingTodos: List<TodoEntity> = emptyList()
 ) {
     val progress: Float
         get() = if (totalSeconds > 0) (1f - (secondsLeft.toFloat() / totalSeconds.toFloat())).coerceIn(0f, 1f) else 0f
@@ -28,12 +33,24 @@ data class PomodoroUiState(
         }
 }
 
-class PomodoroViewModel : ViewModel() {
+class PomodoroViewModel(
+    private val taskTimeRepo: TaskTimeRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PomodoroUiState())
     val uiState: StateFlow<PomodoroUiState> = _uiState.asStateFlow()
 
     private var timerJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            taskTimeRepo.allTodos.collect { todos ->
+                _uiState.value = _uiState.value.copy(
+                    pendingTodos = todos.filter { !it.done }
+                )
+            }
+        }
+    }
 
     fun setTime(minutes: Int, isWork: Boolean = true) {
         timerJob?.cancel()
@@ -44,6 +61,40 @@ class PomodoroViewModel : ViewModel() {
             isRunning = false,
             isWorkMode = isWork
         )
+    }
+
+    /**
+     * Toggles task selection for Pomodoro focus.
+     * If the task is already active, it safely UNSELECTS it (no stacking/overlapping).
+     * If another task is chosen, it switches cleanly.
+     */
+    fun toggleSelectTask(task: TodoEntity) {
+        if (_uiState.value.activeTaskId == task.id) {
+            _uiState.value = _uiState.value.copy(
+                activeTaskId = null,
+                activeTaskTitle = null
+            )
+        } else {
+            _uiState.value = _uiState.value.copy(
+                activeTaskId = task.id,
+                activeTaskTitle = task.text
+            )
+        }
+    }
+
+    fun unselectTask() {
+        _uiState.value = _uiState.value.copy(
+            activeTaskId = null,
+            activeTaskTitle = null
+        )
+    }
+
+    fun completeActiveTask() {
+        val taskId = _uiState.value.activeTaskId ?: return
+        viewModelScope.launch {
+            taskTimeRepo.toggleTodo(taskId, true)
+            unselectTask()
+        }
     }
 
     fun toggleStartPause() {

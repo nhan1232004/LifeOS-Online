@@ -22,6 +22,8 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.FlashOn
+import androidx.compose.material.icons.rounded.TrendingUp
+import androidx.compose.material.icons.rounded.Wallet
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -166,6 +168,86 @@ fun TodayScreen(viewModel: TodayViewModel) {
                             StatItem(label = "Việc hoàn thành", value = "${uiState.completedCount}/${uiState.totalTodoCount}")
                             StatItem(label = "Sự kiện hôm nay", value = "${uiState.events.size}")
                             StatItem(label = "Trạng thái", value = if (uiState.productivityPercentage == 100 && uiState.totalTodoCount > 0) "Hoàn hảo ✨" else "${uiState.productivityPercentage}%")
+                        }
+                    }
+                }
+            }
+
+            // Real Savings & Financial Overview Card (Connected to Room DB Transactions)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Wallet,
+                                    contentDescription = null,
+                                    tint = LifeOSCyan,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Tiết kiệm & Tài chính",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = LifeOSTextHigh
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(LifeOSGreen.copy(alpha = 0.15f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = if (uiState.savingsRate > 0) "Tiết kiệm ${uiState.savingsRate}%" else "Tích lũy",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = LifeOSGreen,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val fmt = java.text.NumberFormat.getNumberInstance(java.util.Locale("vi", "VN"))
+                        val balanceStr = fmt.format(uiState.totalBalance) + " ₫"
+                        val monthIncomeStr = "+" + fmt.format(uiState.monthIncome) + " ₫"
+                        val monthExpenseStr = "-" + fmt.format(uiState.monthExpense) + " ₫"
+                        val netSavingsStr = (if (uiState.netSavingsMonth >= 0) "+" else "") + fmt.format(uiState.netSavingsMonth) + " ₫"
+
+                        Column {
+                            Text(
+                                text = "Tổng số dư tích lũy",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = LifeOSTextMid
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = balanceStr,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (uiState.totalBalance >= 0) LifeOSCyan else LifeOSRed
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            StatItem(label = "Thu tháng này", value = monthIncomeStr)
+                            StatItem(label = "Chi tháng này", value = monthExpenseStr)
+                            StatItem(label = "Dư trong tháng", value = netSavingsStr)
                         }
                     }
                 }

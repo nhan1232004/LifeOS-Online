@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Color
 val LifeOSPrimary = Color(0xFF8B5CF6)         // Electric Purple (#8B5CF6)
 val LifeOSPrimaryVariant = Color(0xFF7C3AED)  // Deep Purple
 val LifeOSCyan = Color(0xFF22D3EE)            // Electric Cyan (#22D3EE)
+val LifeOSLavender = Color(0xFF8B7CFF)       // Calm Lavender (#8B7CFF)
 val LifeOSGreen = Color(0xFF10B981)           // Success Emerald (#10B981)
 val LifeOSRed = Color(0xFFEF4444)             // Coral Red (#EF4444)
 val LifeOSAmber = Color(0xFFF59E0B)           // Amber / Warning (#F59E0B)
@@ -24,6 +25,9 @@ val LifeOSTextLow = Color(0xFF64748B)         // Slate 500
 
 val LifeOSAuroraGradient = Brush.horizontalGradient(
     colors = listOf(LifeOSPrimary, LifeOSCyan)
+)
+val LifeOSLavenderGradient = Brush.horizontalGradient(
+    colors = listOf(LifeOSLavender, LifeOSCyan)
 )
 val LifeOSCardGradient = Brush.verticalGradient(
     colors = listOf(Color(0xFF1E294B), Color(0xFF151C38))
