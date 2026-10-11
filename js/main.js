@@ -3447,6 +3447,7 @@ if (typeof document !== 'undefined') {
         if (btn) {
           btn.innerHTML = '<i data-lucide="panel-left-open" class="ic-16"></i>';
           btn.setAttribute('title', 'Mở rộng Sidebar');
+          btn.setAttribute('data-tooltip', 'Mở rộng Sidebar');
           if (window.lucide) window.lucide.createIcons();
         }
       }
@@ -3467,7 +3468,9 @@ window.toggleSidebarCollapse = function() {
   const btn = document.getElementById('sbCollapseBtn');
   if (btn) {
     btn.innerHTML = isCollapsed ? '<i data-lucide="panel-left-open" class="ic-16"></i>' : '<i data-lucide="panel-left-close" class="ic-16"></i>';
-    btn.setAttribute('title', isCollapsed ? 'Mở rộng Sidebar' : 'Thu gọn Sidebar');
+    const text = isCollapsed ? 'Mở rộng Sidebar' : 'Thu gọn Sidebar';
+    btn.setAttribute('title', text);
+    btn.setAttribute('data-tooltip', text);
     if (window.lucide) window.lucide.createIcons();
   }
 };

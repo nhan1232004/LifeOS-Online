@@ -727,7 +727,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
     <div class="sb-logo-ico" id="currentWsIcon" style="background:var(--accent-primary,#8B7CFF);color:#fff;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:700">P</div>
     <span class="sb-logo-txt gradient-text" id="currentWsName" style="font-size:15px; font-weight:800">Personal</span>
    </div>
-   <button class="sb-collapse-btn" id="sbCollapseBtn" onclick="toggleSidebarCollapse()" title="Thu gọn Sidebar">
+   <button class="sb-collapse-btn" id="sbCollapseBtn" onclick="toggleSidebarCollapse()" title="Thu gọn Sidebar" data-tooltip="Thu gọn Sidebar">
     <i data-lucide="panel-left-close" class="ic-16"></i>
    </button>
   </div>
@@ -805,6 +805,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
   <!-- TOPBAR -->
    <div class="topbar">
     <button class="topbar-menu-btn" onclick="toggleMobileSidebar()" aria-label="Menu"><i data-lucide="menu" class="ic-20"></i></button>
+     <button class="topbar-sb-toggle-btn hide-mobile" id="topbarSbToggleBtn" onclick="toggleSidebarCollapse()" title="Mở rộng Sidebar" data-tooltip="Mở rộng Sidebar" style="display:none;align-items:center;justify-content:center;width:34px;height:34px;border-radius:var(--radius-md);background:var(--surface-1);border:1px solid var(--border);color:var(--text-secondary);cursor:pointer;margin-right:10px;"><i data-lucide="panel-left-open" class="ic-16"></i></button>
     
     <div class="topbar-info">
      <div class="topbar-title gradient-text" id="topTitle">Hôm nay</div>

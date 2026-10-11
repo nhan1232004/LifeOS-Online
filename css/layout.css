@@ -291,8 +291,12 @@
 }
 
 .sidebar.collapsed .sb-logo {
-  padding: 14px 8px;
-  justify-content: center;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  padding: 14px 6px 12px !important;
 }
 
 .sidebar.collapsed .sb-logo-txt,
@@ -301,10 +305,65 @@
 .sidebar.collapsed .sb-badge,
 .sidebar.collapsed .u-name,
 .sidebar.collapsed .u-email,
-.sidebar.collapsed .sb-logout,
-.sidebar.collapsed .sb-collapse-btn {
+.sidebar.collapsed .sb-logout {
   display: none !important;
 }
+
+.sidebar.collapsed .sb-collapse-btn {
+  display: flex !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--bg-surface-2, rgba(255, 255, 255, 0.06)) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  transition: all var(--motion-fast) ease !important;
+}
+
+.sidebar.collapsed .sb-collapse-btn:hover {
+  background: rgba(139, 124, 255, 0.22) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  transform: scale(1.08) !important;
+  box-shadow: 0 0 12px rgba(139, 124, 255, 0.3) !important;
+}
+
+.sidebar.collapsed .sb-collapse-btn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-surface-2, #1C2233);
+  color: var(--text-primary, #F3F4FA);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: var(--radius-md, 8px);
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.sidebar.collapsed .sb-collapse-btn[data-tooltip]:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar.collapsed ~ .main .topbar-sb-toggle-btn {
+  display: inline-flex !important;
+}
+
 
 .sidebar.collapsed .sb-item {
   justify-content: center;
