@@ -235,19 +235,28 @@
 }
 
 /* ==========================================================================
-   3. CARDS & PANELS
+   3. CARDS & PANELS (Apple Liquid Glass)
    ========================================================================== */
 .card {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
+  background: var(--apple-glass-bg);
+  border: 0.5px solid var(--border);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   position: relative;
-  transition: border-color var(--motion-fast), box-shadow var(--motion-fast), transform var(--motion-fast);
+  backdrop-filter: var(--apple-glass-blur);
+  -webkit-backdrop-filter: var(--apple-glass-blur);
+  box-shadow: var(--apple-glass-specular), var(--apple-glass-shadow);
+  transition: all var(--motion-normal);
+}
+
+.card:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: var(--apple-glass-hover-specular), var(--apple-glass-hover-shadow);
+  transform: translateY(-2px);
 }
 
 .card-surface-2 {
-  background: var(--surface-2);
+  background: var(--apple-glass-bg-elevated);
 }
 
 .card-interactive {
@@ -255,8 +264,8 @@
 }
 
 .card-interactive:hover {
-  border-color: var(--card-border-glow);
-  box-shadow: var(--shadow-md);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: var(--apple-glass-hover-specular), var(--apple-glass-hover-shadow);
   transform: translateY(-2px);
 }
 
@@ -332,17 +341,19 @@
 }
 
 .modal-box {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
+  background: var(--apple-glass-bg-elevated);
+  border: 0.5px solid var(--border);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
+  backdrop-filter: var(--apple-glass-blur);
+  -webkit-backdrop-filter: var(--apple-glass-blur);
+  box-shadow: var(--apple-glass-specular), 0 24px 64px -12px rgba(0, 0, 0, 0.65);
   width: 100%;
   max-width: 520px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transform: scale(0.95);
+  transform: scale(0.96);
   transition: transform var(--motion-normal);
 }
 
@@ -355,7 +366,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-5) var(--space-6);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0.5px solid var(--border);
 }
 
 .modal-body {
@@ -370,22 +381,24 @@
   justify-content: flex-end;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-6);
-  border-top: 1px solid var(--border);
-  background: var(--surface-2);
+  border-top: 0.5px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 /* ==========================================================================
-   6. DROPDOWN MENUS
+   6. DROPDOWN MENUS (Apple Liquid Glass)
    ========================================================================== */
 .dropdown-menu {
   position: absolute;
   top: 100%;
   right: 0;
   margin-top: var(--space-2);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--apple-glass-bg-elevated);
+  border: 0.5px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  backdrop-filter: var(--apple-glass-blur);
+  -webkit-backdrop-filter: var(--apple-glass-blur);
+  box-shadow: var(--apple-glass-specular), 0 16px 36px -6px rgba(0, 0, 0, 0.5);
   padding: 6px;
   min-width: 180px;
   z-index: 100;

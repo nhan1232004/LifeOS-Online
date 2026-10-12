@@ -646,12 +646,14 @@
 }
 
 .jar-card {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
+  background: var(--apple-glass-bg);
+  border: 0.5px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 16px 18px;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--motion-fast) ease;
+  backdrop-filter: var(--apple-glass-blur);
+  -webkit-backdrop-filter: var(--apple-glass-blur);
+  box-shadow: var(--apple-glass-specular), var(--apple-glass-shadow);
+  transition: all var(--motion-normal);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -659,14 +661,13 @@
 
 .jar-card:hover {
   transform: translateY(-2px);
-  border-color: var(--jar-color, var(--accent));
-  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: var(--apple-glass-hover-specular), var(--apple-glass-hover-shadow);
 }
 
 .jar-card.active-filter {
   border-color: var(--jar-color, var(--accent)) !important;
-  background: linear-gradient(135deg, var(--surface-1), rgba(139, 92, 246, 0.08)) !important;
-  box-shadow: 0 0 0 2px var(--jar-color, var(--accent)) !important;
+  box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 0.35), 0 0 0 2px var(--jar-color, var(--accent)), var(--apple-glass-hover-shadow) !important;
 }
 
 .jar-card-top {

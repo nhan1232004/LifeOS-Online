@@ -33,9 +33,19 @@
   --bg-base: #000000;           /* Pure OLED black on mobile, deep desktop base */
   --bg-mac-window: #1C1C1E;     /* macOS Window body background */
   --bg-sidebar: rgba(28, 28, 30, 0.78); /* Translucent Source List Sidebar */
-  --surface-1: #1C1C1E;         /* Secondary System Background (Cards, Grouped List) */
-  --surface-2: #2C2C2E;         /* Tertiary System Background (Sub-cards, Inputs) */
-  --surface-hover: #3A3A3C;     /* Quaternary System Background (Hover & Active state) */
+
+  /* Apple Liquid Glass & Specular Vibrancy (macOS Sequoia & iOS 18) */
+  --apple-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(255, 255, 255, 0.005) 100%), rgba(26, 26, 30, 0.76);
+  --apple-glass-bg-elevated: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(255, 255, 255, 0.01) 100%), rgba(34, 34, 38, 0.84);
+  --apple-glass-specular: inset 0 1px 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 0 0.5px rgba(255, 255, 255, 0.10);
+  --apple-glass-hover-specular: inset 0 1px 2px 0 rgba(255, 255, 255, 0.38), inset 0 0 0 0.5px rgba(255, 255, 255, 0.18);
+  --apple-glass-blur: blur(32px) saturate(210%) brightness(104%);
+  --apple-glass-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.45);
+  --apple-glass-hover-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.55);
+
+  --surface-1: var(--apple-glass-bg); /* Secondary System Background (Cards, Grouped List) */
+  --surface-2: var(--apple-glass-bg-elevated); /* Tertiary System Background (Sub-cards, Inputs) */
+  --surface-hover: rgba(255, 255, 255, 0.08); /* Quaternary System Background */
 
   /* Hairline Separators & Borders */
   --border: rgba(255, 255, 255, 0.12);
@@ -47,7 +57,7 @@
   --material-thin: rgba(28, 28, 30, 0.70);
   --material-regular: rgba(28, 28, 30, 0.82);
   --material-thick: rgba(34, 34, 38, 0.92);
-  --material-blur: blur(28px) saturate(190%);
+  --material-blur: var(--apple-glass-blur);
 
   /* Apple Text Hierarchy (Dark Mode Labels) */
   --text-primary: #FFFFFF;
@@ -167,9 +177,19 @@
   --bg-base: #F2F2F7;           /* System Grouped Background iOS */
   --bg-mac-window: #F6F6F6;     /* macOS Window Background */
   --bg-sidebar: rgba(246, 246, 246, 0.85);
-  --surface-1: #FFFFFF;         /* Inset Grouped Card Background */
-  --surface-2: #E5E5EA;         /* Tertiary Background */
-  --surface-hover: #D1D1D6;     /* Quaternary Background */
+
+  /* Apple Liquid Glass for Light Mode */
+  --apple-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.90) 0%, rgba(255, 255, 255, 0.75) 100%);
+  --apple-glass-bg-elevated: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.88) 100%);
+  --apple-glass-specular: inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), inset 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  --apple-glass-hover-specular: inset 0 1px 2px 0 rgba(255, 255, 255, 1), inset 0 0 0 0.5px rgba(0, 0, 0, 0.1);
+  --apple-glass-blur: blur(30px) saturate(190%) brightness(102%);
+  --apple-glass-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.08);
+  --apple-glass-hover-shadow: 0 14px 32px -8px rgba(0, 0, 0, 0.12);
+
+  --surface-1: var(--apple-glass-bg);         /* Inset Grouped Card Background */
+  --surface-2: var(--apple-glass-bg-elevated); /* Tertiary Background */
+  --surface-hover: rgba(0, 0, 0, 0.04);       /* Quaternary Background */
 
   --border: rgba(60, 60, 67, 0.14);
   --border-focus: var(--accent);
@@ -179,6 +199,7 @@
   --material-thin: rgba(255, 255, 255, 0.75);
   --material-regular: rgba(255, 255, 255, 0.88);
   --material-thick: rgba(255, 255, 255, 0.95);
+  --material-blur: var(--apple-glass-blur);
 
   --text-primary: #000000;
   --text-secondary: rgba(60, 60, 67, 0.60);
@@ -194,7 +215,7 @@
   --shadow-accent: 0 4px 16px rgba(0, 122, 255, 0.22);
   --card-border-glow: rgba(0, 122, 255, 0.22);
 
-  --glass: var(--material-regular);
+  --glass: var(--apple-glass-bg);
   --glass-border: var(--border);
   --aurora-gradient: linear-gradient(135deg, var(--accent) 0%, #30B0C7 100%);
 }

@@ -18,7 +18,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Welcome Header (Midnight Aurora Glass) ── */
+/* ── Welcome Header (Apple Liquid Glass) ── */
 .bento-header {
   display: flex;
   justify-content: space-between;
@@ -26,12 +26,12 @@
   flex-wrap: wrap;
   gap: 14px;
   padding: 16px 20px;
-  background: linear-gradient(135deg, rgba(23, 31, 59, 0.88), rgba(13, 19, 41, 0.82));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--border);
+  background: var(--apple-glass-bg);
+  backdrop-filter: var(--apple-glass-blur);
+  -webkit-backdrop-filter: var(--apple-glass-blur);
+  border: 0.5px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(139, 92, 246, 0.15);
+  box-shadow: var(--apple-glass-specular), var(--apple-glass-shadow);
   margin-bottom: 2px;
 }
 
@@ -101,26 +101,26 @@
 }
 
 .bento-kpi-card {
-  background: var(--surface-1);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--border);
+  background: var(--apple-glass-bg);
+  backdrop-filter: var(--apple-glass-blur);
+  -webkit-backdrop-filter: var(--apple-glass-blur);
+  border: 0.5px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   position: relative;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: var(--shadow-sm);
+  transition: all var(--motion-normal);
+  box-shadow: var(--apple-glass-specular), var(--apple-glass-shadow);
   cursor: pointer;
   overflow: hidden;
 }
 
 .bento-kpi-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(139, 92, 246, 0.4);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 16px rgba(139, 92, 246, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: var(--apple-glass-hover-specular), var(--apple-glass-hover-shadow);
 }
 
 .bento-kpi-top {
@@ -197,24 +197,24 @@
   gap: 16px;
 }
 
-/* ── Bento Card Standard (Glassmorphism) ── */
+/* ── Bento Card Standard (Apple Liquid Glass) ── */
 .bento-card {
-  background: var(--surface-1);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--border);
+  background: var(--apple-glass-bg);
+  backdrop-filter: var(--apple-glass-blur);
+  -webkit-backdrop-filter: var(--apple-glass-blur);
+  border: 0.5px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 18px 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--apple-glass-specular), var(--apple-glass-shadow);
+  transition: all var(--motion-normal);
 }
 
 .bento-card:hover {
-  border-color: rgba(139, 92, 246, 0.35);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: var(--apple-glass-hover-specular), var(--apple-glass-hover-shadow);
 }
 
 .bento-card-hdr {

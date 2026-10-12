@@ -83,6 +83,7 @@ import com.nhan.lifeos.core.designsystem.LifeOSGreen
 import com.nhan.lifeos.core.designsystem.LifeOSPrimary
 import com.nhan.lifeos.core.designsystem.LifeOSRed
 import com.nhan.lifeos.core.designsystem.LifeOSSurfaceCard
+import com.nhan.lifeos.core.designsystem.LifeOSSurfaceHover
 import com.nhan.lifeos.core.designsystem.LifeOSTextHigh
 import com.nhan.lifeos.core.designsystem.LifeOSTextLow
 import com.nhan.lifeos.core.designsystem.LifeOSTextMid
@@ -327,7 +328,7 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
                                 Card(
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF141424))
+                                    colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceHover)
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(12.dp),
@@ -368,7 +369,7 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
                                 Card(
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF141424))
+                                    colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceHover)
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(12.dp),
@@ -492,7 +493,7 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
                                         .clickable { viewModel.setJarFilter(jarName) },
                                     shape = RoundedCornerShape(14.dp),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = if (isSelected) color.copy(alpha = 0.15f) else Color(0xFF141424)
+                                        containerColor = if (isSelected) color.copy(alpha = 0.15f) else LifeOSSurfaceHover
                                     ),
                                     border = androidx.compose.foundation.BorderStroke(
                                         width = if (isSelected) 1.5.dp else 1.dp,
@@ -750,7 +751,7 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
             var exportPeriodOnly by remember { mutableStateOf(true) }
             AlertDialog(
                 onDismissRequest = { showExportDialog = false },
-                containerColor = Color(0xFF141424),
+                containerColor = LifeOSSurfaceCard,
                 shape = RoundedCornerShape(20.dp),
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -890,7 +891,7 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
             var endDateInput by remember { mutableStateOf(uiState.endDate) }
             AlertDialog(
                 onDismissRequest = { showCustomDateDialog = false },
-                containerColor = Color(0xFF141424),
+                containerColor = LifeOSSurfaceCard,
                 shape = RoundedCornerShape(20.dp),
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1293,7 +1294,7 @@ fun AddTransactionDialog(
                 Text("Hủy", color = LifeOSTextMid)
             }
         },
-        containerColor = Color(0xFF141424),
+        containerColor = LifeOSSurfaceCard,
         shape = RoundedCornerShape(20.dp)
     )
 }
@@ -1512,7 +1513,7 @@ fun EditTransactionDialog(
                 }
             }
         },
-        containerColor = Color(0xFF141424),
+        containerColor = LifeOSSurfaceCard,
         shape = RoundedCornerShape(20.dp)
     )
 }
