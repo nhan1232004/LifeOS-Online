@@ -52,7 +52,7 @@ window.importAllData = function(event) {
             const parsed = JSON.parse(e.target.result);
             if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) throw new Error('File không hợp lệ');
 
-            const collections = ['events', 'todos', 'projects', 'proj_tasks', 'income', 'expense', 'notes', 'habits', 'goals', 'journal', 'vocab', 'mocktests'];
+            const collections = ['events', 'todos', 'projects', 'proj_tasks', 'income', 'expense', 'notes', 'habits', 'goals', 'journal', 'vocab', 'mocktests', 'jars'];
             const pending = collections.filter(col => Array.isArray(parsed[col]));
             const restoredCount = pending.length;
 

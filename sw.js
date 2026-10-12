@@ -1,4 +1,4 @@
-const CACHE = 'lifeos-v17-redesign-midnight-aurora';
+const CACHE = 'lifeos-v18-expense-jars';
 const APP_SHELL = [
   './',
   './index.html',
@@ -28,6 +28,7 @@ const APP_SHELL = [
   './js/modules/todos.js',
   './js/modules/vocab.js',
   './js/modules/mobile.js',
+  './js/modules/jars.js',
   './js/modules/ai/chat.js',
   './js/modules/ai/context.js',
   './js/modules/ai/tools.js'

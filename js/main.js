@@ -1422,23 +1422,27 @@ async function addProjTaskComment() {
 async function addIncome(){
  const amt=parseFloat(document.getElementById('incAmt').value);
  if(!amt||amt<=0){toast('Nhập số tiền hợp lệ!','error');return;}
+ const jar = document.getElementById('incJar')?.value || '';
  const list=[...(window.DB.income||[])];
- list.unshift({id:uid(),src:document.getElementById('incSrc').value,amt,date:document.getElementById('incDate').value||today(),note:document.getElementById('incNote').value,updatedAt:Date.now()});
+ list.unshift({id:uid(),src:document.getElementById('incSrc').value,amt,date:document.getElementById('incDate').value||today(),jar,note:document.getElementById('incNote').value,updatedAt:Date.now()});
  window.DB.income=list;
  await persist('income',list);
  document.getElementById('incAmt').value=''; document.getElementById('incNote').value='';
  if(window.renderAll) window.renderAll();
+ if(window.LifeOSJars) window.LifeOSJars.renderJarsGrid();
  toast('Đã thêm thu nhập!','success');
 }
 async function addExpense(){
  const amt=parseFloat(document.getElementById('expAmt').value);
  if(!amt||amt<=0){toast('Nhập số tiền hợp lệ!','error');return;}
+ const jar = document.getElementById('expJar')?.value || '';
  const list=[...(window.DB.expense||[])];
- list.unshift({id:uid(),cat:document.getElementById('expCat').value,amt,date:document.getElementById('expDate').value||today(),pay:document.getElementById('expPay').value,note:document.getElementById('expNote').value,updatedAt:Date.now()});
+ list.unshift({id:uid(),cat:document.getElementById('expCat').value,amt,date:document.getElementById('expDate').value||today(),pay:document.getElementById('expPay').value,jar,note:document.getElementById('expNote').value,updatedAt:Date.now()});
  window.DB.expense=list;
  await persist('expense',list);
  document.getElementById('expAmt').value=''; document.getElementById('expNote').value='';
  if(window.renderAll) window.renderAll();
+ if(window.LifeOSJars) window.LifeOSJars.renderJarsGrid();
  toast('Đã thêm chi tiêu!','success');
 }
 async function delIncome(id){
@@ -1446,6 +1450,7 @@ async function delIncome(id){
  window.DB.income=list;
  await persist('income',list);
  if(window.renderAll) window.renderAll();
+ if(window.LifeOSJars) window.LifeOSJars.renderJarsGrid();
  toast('Đã xóa thu nhập!','success');
 }
 async function delExpense(id){
@@ -1453,6 +1458,7 @@ async function delExpense(id){
  window.DB.expense=list;
  await persist('expense',list);
  if(window.renderAll) window.renderAll();
+ if(window.LifeOSJars) window.LifeOSJars.renderJarsGrid();
  toast('Đã xóa chi tiêu!','success');
 }
 
@@ -1628,6 +1634,7 @@ window.setFinPeriod = function(period, btn) {
  if (monthEl) monthEl.style.display = 'none';
  renderFinKpi();
  renderFinTables();
+ if (window.LifeOSJars) window.LifeOSJars.renderJarsGrid();
 };
 
 window.onFinSubRangeChange = function() {
@@ -1643,11 +1650,13 @@ window.onFinSubRangeChange = function() {
  }
  renderFinKpi();
  renderFinTables();
+ if (window.LifeOSJars) window.LifeOSJars.renderJarsGrid();
 };
 
 window.onFinMonthChange = function() {
  renderFinKpi();
  renderFinTables();
+ if (window.LifeOSJars) window.LifeOSJars.renderJarsGrid();
 };
 
 function getFinMonth() {
@@ -1744,11 +1753,17 @@ function renderFinTables(){
  const it=document.getElementById('incTb'); const et=document.getElementById('expTb');
  if(!it||!et)return;
  
- const incomes = (window.DB.income||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).sort((a,b)=>b.date.localeCompare(a.date));
- const expenses = (window.DB.expense||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).sort((a,b)=>b.date.localeCompare(a.date));
+ const activeJar = window.LifeOSJars?.getActiveJarFilter ? window.LifeOSJars.getActiveJarFilter() : null;
+ const matchJarFilter = (x) => {
+   if (!activeJar) return true;
+   return String(x.jar || '').trim().toLowerCase() === String(activeJar).trim().toLowerCase();
+ };
  
- it.innerHTML=incomes.slice(0,30).map(x=>`<tr><td style="font-weight:600;color:var(--text-primary)">${x.src}</td><td><span class="amount-income">+${fmt(x.amt)} ₫</span></td><td style="color:var(--text-muted);font-size:12px">${fmtDate(x.date)}</td><td style="color:var(--text-secondary);font-size:12px">${x.note||'—'}</td><td><button class="btn btn-sm btn-subtle" style="padding:4px 6px;color:var(--danger)" onclick="delIncome('${x.id}')" title="Xóa"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">Chưa có dữ liệu thu nhập</div></td></tr>';
- et.innerHTML=expenses.slice(0,30).map(x=>`<tr><td style="font-weight:600;color:var(--text-primary)">${x.cat}</td><td><span class="amount-expense">−${fmt(x.amt)} ₫</span></td><td style="color:var(--text-muted);font-size:12px">${fmtDate(x.date)}</td><td style="color:var(--text-secondary);font-size:12px"><span class="badge" style="background:var(--surface-2);color:var(--text-secondary);font-size:11px">${x.pay}</span></td><td><button class="btn btn-sm btn-subtle" style="padding:4px 6px;color:var(--danger)" onclick="delExpense('${x.id}')" title="Xóa"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">Chưa có dữ liệu chi tiêu</div></td></tr>';
+ const incomes = (window.DB.income||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).filter(matchJarFilter).sort((a,b)=>b.date.localeCompare(a.date));
+ const expenses = (window.DB.expense||[]).filter(x => (!start || x.date >= start) && (!end || x.date <= end)).filter(matchJarFilter).sort((a,b)=>b.date.localeCompare(a.date));
+ 
+ it.innerHTML=incomes.slice(0,30).map(x=>`<tr><td style="font-weight:600;color:var(--text-primary)">${x.src}</td><td>${x.jar ? `<span class="jar-badge">${x.jar}</span>` : '<span style="color:var(--text-muted);font-size:11px;">—</span>'}</td><td><span class="amount-income">+${fmt(x.amt)} ₫</span></td><td style="color:var(--text-muted);font-size:12px">${fmtDate(x.date)}</td><td style="color:var(--text-secondary);font-size:12px">${x.note||'—'}</td><td><button class="btn btn-sm btn-subtle" style="padding:4px 6px;color:var(--danger)" onclick="delIncome('${x.id}')" title="Xóa"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button></td></tr>`).join('')||`<tr><td colspan="6"><div class="empty">${activeJar ? `Không có khoản thu nào trong Hũ "${activeJar}"` : 'Chưa có dữ liệu thu nhập'}</div></td></tr>`;
+ et.innerHTML=expenses.slice(0,30).map(x=>`<tr><td style="font-weight:600;color:var(--text-primary)">${x.cat}</td><td>${x.jar ? `<span class="jar-badge">${x.jar}</span>` : '<span style="color:var(--text-muted);font-size:11px;">—</span>'}</td><td><span class="amount-expense">−${fmt(x.amt)} ₫</span></td><td style="color:var(--text-muted);font-size:12px">${fmtDate(x.date)}</td><td style="color:var(--text-secondary);font-size:12px"><span class="badge" style="background:var(--surface-2);color:var(--text-secondary);font-size:11px">${x.pay}</span></td><td><button class="btn btn-sm btn-subtle" style="padding:4px 6px;color:var(--danger)" onclick="delExpense('${x.id}')" title="Xóa"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button></td></tr>`).join('')||`<tr><td colspan="6"><div class="empty">${activeJar ? `Không có khoản chi nào từ Hũ "${activeJar}"` : 'Chưa có dữ liệu chi tiêu'}</div></td></tr>`;
  
  // Default date inputs
  const incDateEl = document.getElementById('incDate');
@@ -3082,7 +3097,7 @@ window.renderAll = function(){
  try { if(typeof updateBadges==='function') updateBadges(); } catch(e) { console.warn('[LifeOS] renderAll: updateBadges error:', e.message); }
  const active=document.querySelector('.page.active'); if(!active)return;
  const pg=active.id.replace('p-','');
- const map={today:renderToday,overview:renderOverview,calendar:renderCal,schedule:renderWeek,projects:()=>{renderProjSelector();renderKanbanBoard();},todos:renderTodos,finance:()=>{renderFinKpi();renderFinTables();},stats:renderStats,notes:renderNotes,habits:renderHabits,goals:renderGoals,journal:renderJournal,pomodoro:renderPomodoro,vocab:renderVocab,mocktests:typeof renderMockTests==='function'?renderMockTests:null};
+ const map={today:renderToday,overview:renderOverview,calendar:renderCal,schedule:renderWeek,projects:()=>{renderProjSelector();renderKanbanBoard();},todos:renderTodos,finance:()=>{renderFinKpi();renderFinTables();if(window.LifeOSJars){window.LifeOSJars.renderJarsGrid();window.LifeOSJars.populateJarSelects();}},stats:renderStats,notes:renderNotes,habits:renderHabits,goals:renderGoals,journal:renderJournal,pomodoro:renderPomodoro,vocab:renderVocab,mocktests:typeof renderMockTests==='function'?renderMockTests:null};
  try { if(map[pg]) map[pg](); } catch(e) { console.warn('[LifeOS] renderAll: error rendering "' + pg + '":', e.message); }
  try { if(window.lucide) window.lucide.createIcons(); } catch(e) {}
 };
@@ -3417,12 +3432,13 @@ window.saveQuickExpense = async function() {
   const amt = parseFloat(document.getElementById('qfExpAmt')?.value);
   if (!amt || amt <= 0) { toast('Nhập số tiền hợp lệ!', 'error'); return; }
   const cat = document.getElementById('qfExpCat')?.value || 'Khác';
+  const jar = document.getElementById('qfExpJar')?.value || '';
   const date = document.getElementById('qfExpDate')?.value || today();
   const pay = document.getElementById('qfExpPay')?.value || 'Tiền mặt';
   const note = document.getElementById('qfExpNote')?.value || '';
   
   const list = [...(window.DB.expense || [])];
-  list.unshift({ id: uid(), cat, amt, date, pay, note });
+  list.unshift({ id: uid(), cat, amt, date, pay, note, jar, updatedAt: Date.now() });
   await window.persist('expense', list);
   
   document.getElementById('qfExpAmt').value = '';
@@ -3430,17 +3446,19 @@ window.saveQuickExpense = async function() {
   closeModal('mQuickFin');
   toast('Đã ghi nhận khoản chi ' + fmt(amt) + ' ₫!', 'success');
   if (window.renderAll) window.renderAll();
+  if (window.LifeOSJars) window.LifeOSJars.renderJarsGrid();
 };
 
 window.saveQuickIncome = async function() {
   const amt = parseFloat(document.getElementById('qfIncAmt')?.value);
   if (!amt || amt <= 0) { toast('Nhập số tiền hợp lệ!', 'error'); return; }
   const src = document.getElementById('qfIncSrc')?.value || 'Khác';
+  const jar = document.getElementById('qfIncJar')?.value || '';
   const date = document.getElementById('qfIncDate')?.value || today();
   const note = document.getElementById('qfIncNote')?.value || '';
   
   const list = [...(window.DB.income || [])];
-  list.unshift({ id: uid(), src, amt, date, note });
+  list.unshift({ id: uid(), src, amt, date, note, jar, updatedAt: Date.now() });
   await window.persist('income', list);
   
   document.getElementById('qfIncAmt').value = '';
@@ -3448,6 +3466,7 @@ window.saveQuickIncome = async function() {
   closeModal('mQuickFin');
   toast('Đã ghi nhận khoản thu ' + fmt(amt) + ' ₫!', 'success');
   if (window.renderAll) window.renderAll();
+  if (window.LifeOSJars) window.LifeOSJars.renderJarsGrid();
 };
 
 try { updateBadges(); } catch(e){}

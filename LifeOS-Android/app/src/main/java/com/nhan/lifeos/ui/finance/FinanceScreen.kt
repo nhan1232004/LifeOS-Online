@@ -410,6 +410,173 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
                 }
             }
 
+            // ─── Hũ Chi Tiêu (Budget Jars) Section ───
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = LifeOSSurfaceCard)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "🫙",
+                                    fontSize = 18.sp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "Hũ Chi Tiêu & Ngân Sách",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = LifeOSTextHigh
+                                    )
+                                    Text(
+                                        text = "Quản lý hạn mức và phân bổ dòng tiền",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = LifeOSTextMid
+                                    )
+                                }
+                            }
+                            if (uiState.selectedJarFilter != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(LifeOSPrimary.copy(alpha = 0.2f))
+                                        .clickable { viewModel.setJarFilter(null) }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = "Bỏ lọc: ${uiState.selectedJarFilter} ✕",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = LifeOSPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        val jarDefs = listOf(
+                            Triple("Ăn uống", "🍜", LifeOSGreen),
+                            Triple("Xăng xe", "⛽", LifeOSCyan),
+                            Triple("Học tập", "🎓", LifeOSPrimary),
+                            Triple("Tiết kiệm", "💰", LifeOSAmber),
+                            Triple("Du lịch", "✈️", Color(0xFF3B82F6)),
+                            Triple("Đám tiệc", "🎁", Color(0xFFEC4899)),
+                            Triple("Sức khỏe", "🏥", Color(0xFF14B8A6)),
+                            Triple("Phát sinh", "⚡", Color(0xFFF97316))
+                        )
+
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(jarDefs) { (jarName, emoji, color) ->
+                                val bal = uiState.jarBalances[jarName] ?: 0L
+                                val inc = uiState.jarIncomes[jarName] ?: 0L
+                                val exp = uiState.jarExpenses[jarName] ?: 0L
+                                val isSelected = uiState.selectedJarFilter == jarName
+                                val isOver = bal < 0
+
+                                Card(
+                                    modifier = Modifier
+                                        .width(150.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .clickable { viewModel.setJarFilter(jarName) },
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isSelected) color.copy(alpha = 0.15f) else Color(0xFF141424)
+                                    ),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        width = if (isSelected) 1.5.dp else 1.dp,
+                                        color = if (isSelected) color else LifeOSGlassBorder
+                                    )
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(32.dp)
+                                                    .clip(CircleShape)
+                                                    .background(color.copy(alpha = 0.2f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(text = emoji, fontSize = 16.sp)
+                                            }
+                                            if (isOver) {
+                                                Text(
+                                                    text = "Bội chi",
+                                                    fontSize = 10.sp,
+                                                    color = LifeOSRed,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            } else if (bal > 0) {
+                                                Text(
+                                                    text = "Còn dư",
+                                                    fontSize = 10.sp,
+                                                    color = LifeOSGreen,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        Text(
+                                            text = jarName,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = LifeOSTextHigh
+                                        )
+
+                                        Spacer(modifier = Modifier.height(2.dp))
+
+                                        Text(
+                                            text = formatVndShort(bal),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Black,
+                                            color = if (bal >= 0) LifeOSTextHigh else LifeOSRed,
+                                            fontSize = 15.sp
+                                        )
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "+${formatVndShort(inc)}",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = LifeOSGreen,
+                                                fontSize = 10.sp
+                                            )
+                                            Text(
+                                                text = "-${formatVndShort(exp)}",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = LifeOSRed,
+                                                fontSize = 10.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Category Expense Breakdown (Bar Visualization)
             if (uiState.categoryExpenses.isNotEmpty()) {
                 item {
@@ -555,8 +722,8 @@ fun FinanceScreen(viewModel: FinanceViewModel) {
         if (showAddDialog) {
             AddTransactionDialog(
                 onDismiss = { showAddDialog = false },
-                onAdd = { type, cat, amount, date, method, note ->
-                    viewModel.addTransaction(type, cat, amount, date, method, note)
+                onAdd = { type, cat, amount, date, method, note, jar ->
+                    viewModel.addTransaction(type, cat, amount, date, method, note, jar)
                     showAddDialog = false
                 }
             )
@@ -848,6 +1015,22 @@ fun TransactionItemCard(
                             color = LifeOSTextLow
                         )
                     }
+                    if (transaction.jar.isNotBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(LifeOSPrimary.copy(alpha = 0.2f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "🫙 ${transaction.jar}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = LifeOSPrimary,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
 
                 if (transaction.note.isNotBlank()) {
@@ -887,12 +1070,13 @@ fun TransactionItemCard(
 @Composable
 fun AddTransactionDialog(
     onDismiss: () -> Unit,
-    onAdd: (type: String, category: String, amount: Long, date: String, method: String, note: String) -> Unit
+    onAdd: (type: String, category: String, amount: Long, date: String, method: String, note: String, jar: String) -> Unit
 ) {
     var selectedTypeIndex by remember { mutableIntStateOf(0) } // 0: Chi tiêu, 1: Thu nhập
     var amountText by remember { mutableStateOf("") }
     var categoryText by remember { mutableStateOf("Ăn uống") }
     var methodText by remember { mutableStateOf("Chuyển khoản") }
+    var selectedJar by remember { mutableStateOf("Ăn uống") }
     var noteText by remember { mutableStateOf("") }
 
     val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -901,6 +1085,26 @@ fun AddTransactionDialog(
     val expenseCategories = listOf("Ăn uống", "Nhà ở & Tiện ích", "Mua sắm", "Di chuyển", "Giải trí", "Y tế", "Giáo dục", "Khác")
     val incomeSources = listOf("Lương chính", "Thưởng", "Freelance", "Đầu tư", "Kinh doanh", "Khác")
     val paymentMethods = listOf("Chuyển khoản", "Tiền mặt", "Ví điện tử", "Thẻ tín dụng")
+    val budgetJars = listOf("Chung", "Ăn uống", "Xăng xe", "Học tập", "Tiết kiệm", "Du lịch", "Đám tiệc", "Sức khỏe", "Phát sinh")
+
+    fun suggestJar(cat: String, isExpense: Boolean): String {
+        return if (isExpense) {
+            when {
+                cat.contains("Ăn") -> "Ăn uống"
+                cat.contains("Di chuyển") || cat.contains("Đi lại") -> "Xăng xe"
+                cat.contains("Giáo dục") || cat.contains("Học") -> "Học tập"
+                cat.contains("Y tế") || cat.contains("Sức") -> "Sức khỏe"
+                cat.contains("Giải trí") -> "Du lịch"
+                cat.contains("Mua sắm") || cat.contains("Nhà ở") -> "Phát sinh"
+                else -> "Chung"
+            }
+        } else {
+            when {
+                cat.contains("Tiết kiệm") || cat.contains("Đầu tư") -> "Tiết kiệm"
+                else -> "Chung"
+            }
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -925,6 +1129,7 @@ fun AddTransactionDialog(
                         onClick = {
                             selectedTypeIndex = 0
                             categoryText = expenseCategories.first()
+                            selectedJar = suggestJar(expenseCategories.first(), true)
                         },
                         text = { Text("Chi tiêu (-)", color = if (selectedTypeIndex == 0) LifeOSRed else LifeOSTextMid, fontWeight = FontWeight.Bold) }
                     )
@@ -933,6 +1138,7 @@ fun AddTransactionDialog(
                         onClick = {
                             selectedTypeIndex = 1
                             categoryText = incomeSources.first()
+                            selectedJar = suggestJar(incomeSources.first(), false)
                         },
                         text = { Text("Thu nhập (+)", color = if (selectedTypeIndex == 1) LifeOSGreen else LifeOSTextMid, fontWeight = FontWeight.Bold) }
                     )
@@ -969,7 +1175,13 @@ fun AddTransactionDialog(
                                     if (categoryText == cat) LifeOSPrimary.copy(alpha = 0.3f)
                                     else LifeOSSurfaceCard
                                 )
-                                .clickable { categoryText = cat }
+                                .clickable {
+                                    categoryText = cat
+                                    val suggested = suggestJar(cat, selectedTypeIndex == 0)
+                                    if (suggested != "Chung") {
+                                        selectedJar = suggested
+                                    }
+                                }
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
                             Text(
@@ -977,6 +1189,35 @@ fun AddTransactionDialog(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (categoryText == cat) LifeOSPrimary else LifeOSTextMid,
                                 fontWeight = if (categoryText == cat) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+
+                // Hũ Chi Tiêu Chips
+                Text(
+                    text = if (selectedTypeIndex == 0) "Trừ từ hũ chi tiêu:" else "Phân bổ vào hũ:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LifeOSTextMid
+                )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(budgetJars) { jar ->
+                        val isSelected = selectedJar == jar
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    if (isSelected) LifeOSPrimary.copy(alpha = 0.3f)
+                                    else LifeOSSurfaceCard
+                                )
+                                .clickable { selectedJar = jar }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = if (jar == "Chung") "Chung" else "🫙 $jar",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isSelected) LifeOSPrimary else LifeOSTextMid,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
                         }
                     }
@@ -1036,7 +1277,8 @@ fun AddTransactionDialog(
                     val amt = amountText.toLongOrNull() ?: 0L
                     if (amt > 0) {
                         val type = if (selectedTypeIndex == 0) "expense" else "income"
-                        onAdd(type, categoryText, amt, dateText, methodText, noteText)
+                        val jarToSave = if (selectedJar == "Chung") "" else selectedJar
+                        onAdd(type, categoryText, amt, dateText, methodText, noteText, jarToSave)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -1067,12 +1309,14 @@ fun EditTransactionDialog(
     var amountText by remember { mutableStateOf(transaction.amount.toString()) }
     var categoryText by remember { mutableStateOf(transaction.categoryOrSource) }
     var methodText by remember { mutableStateOf(transaction.paymentMethod.ifBlank { "Chuyển khoản" }) }
+    var selectedJar by remember { mutableStateOf(transaction.jar.ifBlank { "Chung" }) }
     var noteText by remember { mutableStateOf(transaction.note) }
     var dateText by remember { mutableStateOf(transaction.date) }
 
     val expenseCategories = listOf("Ăn uống", "Nhà ở & Tiện ích", "Mua sắm", "Di chuyển", "Giải trí", "Y tế", "Giáo dục", "Khác")
     val incomeSources = listOf("Lương chính", "Thưởng", "Freelance", "Đầu tư", "Kinh doanh", "Khác")
     val paymentMethods = listOf("Chuyển khoản", "Tiền mặt", "Ví điện tử", "Thẻ tín dụng")
+    val budgetJars = listOf("Chung", "Ăn uống", "Xăng xe", "Học tập", "Tiết kiệm", "Du lịch", "Đám tiệc", "Sức khỏe", "Phát sinh")
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1154,6 +1398,35 @@ fun EditTransactionDialog(
                     }
                 }
 
+                // Hũ Chi Tiêu Chips
+                Text(
+                    text = if (selectedTypeIndex == 0) "Trừ từ hũ chi tiêu:" else "Phân bổ vào hũ:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LifeOSTextMid
+                )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(budgetJars) { jar ->
+                        val isSelected = selectedJar == jar
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    if (isSelected) LifeOSPrimary.copy(alpha = 0.3f)
+                                    else LifeOSSurfaceCard
+                                )
+                                .clickable { selectedJar = jar }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = if (jar == "Chung") "Chung" else "🫙 $jar",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isSelected) LifeOSPrimary else LifeOSTextMid,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+
                 // Payment Method Chips
                 Text(
                     text = "Hình thức thanh toán:",
@@ -1208,6 +1481,7 @@ fun EditTransactionDialog(
                     val amt = amountText.toLongOrNull() ?: 0L
                     if (amt > 0) {
                         val type = if (selectedTypeIndex == 0) "expense" else "income"
+                        val jarToSave = if (selectedJar == "Chung") "" else selectedJar
                         onSave(
                             transaction.copy(
                                 type = type,
@@ -1215,7 +1489,8 @@ fun EditTransactionDialog(
                                 amount = amt,
                                 date = dateText,
                                 paymentMethod = methodText,
-                                note = noteText
+                                note = noteText,
+                                jar = jarToSave
                             )
                         )
                     }

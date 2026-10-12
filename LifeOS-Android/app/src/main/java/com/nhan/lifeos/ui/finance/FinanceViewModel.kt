@@ -48,6 +48,10 @@ data class FinanceUiState(
     val savingsRate: Double = 0.0,
     val categoryExpenses: Map<String, Long> = emptyMap(),
     val sourceIncomes: Map<String, Long> = emptyMap(),
+    val jarBalances: Map<String, Long> = emptyMap(),
+    val jarIncomes: Map<String, Long> = emptyMap(),
+    val jarExpenses: Map<String, Long> = emptyMap(),
+    val selectedJarFilter: String? = null,
     val incomeCount: Int = 0,
     val expenseCount: Int = 0,
     val isLoading: Boolean = false
@@ -137,13 +141,21 @@ class FinanceViewModel(private val repository: FinanceRepository) : ViewModel() 
         )
     }
 
+    fun setJarFilter(jar: String?) {
+        _uiState.value = _uiState.value.copy(
+            selectedJarFilter = if (_uiState.value.selectedJarFilter == jar) null else jar
+        )
+        calculateAndEmit()
+    }
+
     fun addTransaction(
         type: String,
         categoryOrSource: String,
         amount: Long,
         date: String,
         paymentMethod: String,
-        note: String
+        note: String,
+        jar: String = ""
     ) {
         viewModelScope.launch {
             repository.addTransaction(
@@ -152,7 +164,8 @@ class FinanceViewModel(private val repository: FinanceRepository) : ViewModel() 
                 amount = amount,
                 date = date,
                 paymentMethod = paymentMethod,
-                note = note
+                note = note,
+                jar = jar
             )
         }
     }
@@ -345,12 +358,55 @@ class FinanceViewModel(private val repository: FinanceRepository) : ViewModel() 
             sourceIncomeMap[src] = (sourceIncomeMap[src] ?: 0L) + tx.amount
         }
 
+        // Jar calculations (Running total across all transactions)
+        val defaultJars = listOf(
+            "Ăn uống", "Xăng xe", "Học tập", "Tiết kiệm",
+            "Du lịch", "Đám tiệc", "Sức khỏe", "Phát sinh"
+        )
+        val jarIncomes = mutableMapOf<String, Long>()
+        val jarExpenses = mutableMapOf<String, Long>()
+        val jarBalances = mutableMapOf<String, Long>()
+
+        defaultJars.forEach { j ->
+            jarIncomes[j] = 0L
+            jarExpenses[j] = 0L
+            jarBalances[j] = 0L
+        }
+
+        allTransactions.forEach { tx ->
+            val j = tx.jar.trim()
+            if (j.isNotBlank()) {
+                if (tx.type == "income") {
+                    jarIncomes[j] = (jarIncomes[j] ?: 0L) + tx.amount
+                } else {
+                    jarExpenses[j] = (jarExpenses[j] ?: 0L) + tx.amount
+                }
+            }
+        }
+
+        val allJarKeys = (defaultJars + jarIncomes.keys + jarExpenses.keys).distinct()
+        allJarKeys.forEach { j ->
+            val inc = jarIncomes[j] ?: 0L
+            val exp = jarExpenses[j] ?: 0L
+            jarBalances[j] = inc - exp
+        }
+
         // Apply display type filter (ALL / EXPENSE / INCOME)
-        val filteredForDisplay = when (_uiState.value.currentFilter) {
+        var filteredForDisplay = when (_uiState.value.currentFilter) {
             TransactionFilter.ALL -> inPeriodTxs
             TransactionFilter.EXPENSE -> expenseTxs
             TransactionFilter.INCOME -> incomeTxs
-        }.sortedByDescending { it.date }
+        }
+
+        // Apply jar filter if active
+        val activeJar = _uiState.value.selectedJarFilter
+        if (!activeJar.isNullOrBlank()) {
+            filteredForDisplay = filteredForDisplay.filter {
+                it.jar.trim().equals(activeJar, ignoreCase = true)
+            }
+        }
+
+        filteredForDisplay = filteredForDisplay.sortedByDescending { it.date }
 
         _uiState.value = _uiState.value.copy(
             transactions = filteredForDisplay,
@@ -361,6 +417,9 @@ class FinanceViewModel(private val repository: FinanceRepository) : ViewModel() 
             savingsRate = (rate * 10).toLong() / 10.0,
             categoryExpenses = categoryExpenseMap.toList().sortedByDescending { it.second }.toMap(),
             sourceIncomes = sourceIncomeMap.toList().sortedByDescending { it.second }.toMap(),
+            jarBalances = jarBalances,
+            jarIncomes = jarIncomes,
+            jarExpenses = jarExpenses,
             incomeCount = incomeTxs.size,
             expenseCount = expenseTxs.size,
             isLoading = false

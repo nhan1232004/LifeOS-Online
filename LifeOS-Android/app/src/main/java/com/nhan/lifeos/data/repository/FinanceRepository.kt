@@ -28,7 +28,8 @@ class FinanceRepository(
         amount: Long,
         date: String,
         paymentMethod: String = "Tiền mặt",
-        note: String = ""
+        note: String = "",
+        jar: String = ""
     ) = withContext(Dispatchers.IO) {
         val tx = TransactionEntity(
             id = UUID.randomUUID().toString(),
@@ -38,6 +39,7 @@ class FinanceRepository(
             date = date,
             paymentMethod = paymentMethod,
             note = note,
+            jar = jar,
             updatedAt = System.currentTimeMillis()
         )
         transactionDao.insertTransaction(tx)
@@ -111,11 +113,12 @@ class FinanceRepository(
     // ─── CSV Export ───────────────────────────────────────────────────────────
     fun generateTransactionsCsv(transactions: List<TransactionEntity>): String {
         val sb = StringBuilder()
-        sb.append("ID,Loại,Danh mục/Nguồn,Số tiền (VNĐ),Ngày,Hình thức,Ghi chú\n")
+        sb.append("ID,Loại,Danh mục/Nguồn,Hũ chi tiêu,Số tiền (VNĐ),Ngày,Hình thức,Ghi chú\n")
         transactions.forEach { tx ->
             val typeStr = if (tx.type == "income") "Thu nhập" else "Chi tiêu"
             val safeNote = tx.note.replace(",", " - ").replace("\n", " ")
-            sb.append("\"${tx.id}\",\"$typeStr\",\"${tx.categoryOrSource}\",${tx.amount},\"${tx.date}\",\"${tx.paymentMethod}\",\"$safeNote\"\n")
+            val jarStr = tx.jar.ifBlank { "Chung" }
+            sb.append("\"${tx.id}\",\"$typeStr\",\"${tx.categoryOrSource}\",\"$jarStr\",${tx.amount},\"${tx.date}\",\"${tx.paymentMethod}\",\"$safeNote\"\n")
         }
         return sb.toString()
     }

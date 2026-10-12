@@ -1,6 +1,6 @@
 /* Shared data, formatting, and escaping utilities. Loaded before feature modules. */
 (function () {
-  const COLLECTIONS = ['events', 'todos', 'projects', 'proj_tasks', 'income', 'expense', 'notes', 'habits', 'goals', 'journal', 'vocab', 'mocktests'];
+  const COLLECTIONS = ['events', 'todos', 'projects', 'proj_tasks', 'income', 'expense', 'notes', 'habits', 'goals', 'journal', 'vocab', 'mocktests', 'jars'];
   const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 
   function localDate(value = new Date()) {

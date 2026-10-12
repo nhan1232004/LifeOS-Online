@@ -528,6 +528,7 @@ class CloudSyncRepository(
                 put("src", tx.categoryOrSource)
                 put("amt", tx.amount)
                 put("date", tx.date)
+                put("jar", tx.jar)
                 put("note", tx.note)
                 put("updatedAt", tx.updatedAt)
             }
@@ -541,6 +542,7 @@ class CloudSyncRepository(
                 put("amt", tx.amount)
                 put("date", tx.date)
                 put("pay", tx.paymentMethod)
+                put("jar", tx.jar)
                 put("note", tx.note)
                 put("updatedAt", tx.updatedAt)
             }
@@ -569,6 +571,7 @@ class CloudSyncRepository(
         date = json.optString("date"),
         paymentMethod = json.optString("pay", if (type == "income") "" else "Tiền mặt"),
         note = json.optString("note", ""),
+        jar = json.optString("jar", ""),
         updatedAt = json.optLong("updatedAt", System.currentTimeMillis()),
         isSynced = true
     )

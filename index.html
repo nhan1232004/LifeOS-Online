@@ -439,7 +439,7 @@ function listenSharedData() {
  }
 }
 
-window.DB = {events:[],todos:[],projects:[],proj_tasks:[],income:[],expense:[],notes:[],habits:[],goals:[],journal:[],vocab:[],mocktests:[]};
+window.DB = {events:[],todos:[],projects:[],proj_tasks:[],income:[],expense:[],notes:[],habits:[],goals:[],journal:[],vocab:[],mocktests:[],jars:[]};
 window.fbListen = fbListen; window.fbSaveAll = fbSaveAll; window.getDoc = getDoc; window.getDocs = getDocs; window.updateDoc = updateDoc; window.where = where; window.db = db; window.setDoc = setDoc; window.deleteDoc = deleteDoc; window.doc = doc; window.collection = collection; window.query = query; window.orderBy = orderBy; window.limit = limit; window.addDoc = addDoc; window.serverTimestamp = serverTimestamp; window.onSnapshot = onSnapshot; window.arrayUnion = arrayUnion;
 window.sendProjectInvite = async (projectId, email) => {
  if (window.DEMO_MODE || !functions) return;
@@ -448,10 +448,10 @@ window.sendProjectInvite = async (projectId, email) => {
 
 window.wipeWorkspaceData = async function() {
  if (!confirm('⚠️ CẢNH BÁO: Bạn chắc chắn muốn xóa toàn bộ dữ liệu trong không gian làm việc này? Hành động này KHÔNG THỂ HOÀN TÁC!')) return;
- const cols = ['events','todos','projects','proj_tasks','income','expense','notes','habits','goals','journal','vocab','mocktests'];
+ const cols = ['events','todos','projects','proj_tasks','income','expense','notes','habits','goals','journal','vocab','mocktests','jars'];
  cols.forEach(col => { window.DB[col] = []; });
  if (window.DEMO_MODE) {
-  demoSave({events:[],todos:[],projects:[],proj_tasks:[],income:[],expense:[],notes:[],habits:[],goals:[],journal:[],vocab:[],mocktests:[]});
+  demoSave({events:[],todos:[],projects:[],proj_tasks:[],income:[],expense:[],notes:[],habits:[],goals:[],journal:[],vocab:[],mocktests:[],jars:[]});
  } else {
   for (const col of cols) {
    try { await fbSaveAll(col, []); } catch(e) { console.warn('[LifeOS] Error clearing collection ' + col, e); }
@@ -472,14 +472,14 @@ async function showApp(user) {
  if (window.DEMO_MODE) {
   // In demo mode, load from localStorage directly - no Firestore
   const d = demoLoad();
-  ['events','todos','income','expense','notes','habits','goals','journal','vocab'].forEach(col => {
+  ['events','todos','income','expense','notes','habits','goals','journal','vocab','jars'].forEach(col => {
    window.DB[col] = d[col] || [];
   });
   window.DB.projects = d.projects || [];
   window.DB.proj_tasks = d.proj_tasks || [];
   setTimeout(() => { if(window.renderAll) window.renderAll(); }, 50);
  } else {
-  ['events','todos','income','expense','notes','habits','goals','journal','vocab'].forEach(col => {
+  ['events','todos','income','expense','notes','habits','goals','journal','vocab','jars'].forEach(col => {
    fbListen(col, items => { window.DB[col]=items; window.renderAll&&window.renderAll(); });
   });
   fbListen('projects', items => {
@@ -1315,6 +1315,23 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
      </div>
     </div>
     <div class="kpi-grid" id="finKpi"></div>
+    <!-- ▸ HŨ CHI TIÊU & NGÂN SÁCH -->
+    <div class="fin-jars-section" style="margin-bottom:22px;">
+     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+       <span style="font-size:18px;">🫙</span>
+       <div>
+        <h3 style="font-size:15px; font-weight:700; color:var(--text-primary); margin:0;">Hũ Chi Tiêu &amp; Ngân Sách</h3>
+        <p style="font-size:12px; color:var(--text-muted); margin:0;">Phân bổ thu nhập và quản lý dòng tiền theo từng mục đích thiết yếu</p>
+       </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+       <button class="btn btn-sm btn-subtle" onclick="openAllocateIncomeModal()" title="Phân bổ thu nhập vào các hũ" style="border:1px solid var(--border); font-size:12px;"><i data-lucide="split" class="ic-14" style="color:var(--accent);"></i> <span>Phân bổ thu nhập</span></button>
+       <button class="btn btn-sm btn-subtle" onclick="openAddJarModal()" title="Thêm hũ mới" style="border:1px solid var(--border); font-size:12px;"><i data-lucide="plus" class="ic-14"></i> <span>Thêm hũ</span></button>
+      </div>
+     </div>
+     <div class="fin-jars-grid" id="finJarsGrid"></div>
+    </div>
     <div class="fin-forms">
      <div class="fin-card">
       <div class="fin-head">
@@ -1323,6 +1340,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
       <div class="form-row">
        <div class="fg"><label>Nguồn thu</label><select id="incSrc"><option>Lương</option><option>Freelance</option><option>Đầu tư</option><option>Kinh doanh</option><option>Thưởng</option><option>Khác</option></select></div>
        <div class="fg"><label>Số tiền (₫)</label><input type="number" id="incAmt" placeholder="0" inputmode="numeric"></div>
+       <div class="fg"><label>Phân bổ vào Hũ</label><select id="incJar"></select></div>
        <div class="fg"><label>Ngày</label><input type="date" id="incDate"></div>
        <div class="fg"><label>Ghi chú</label><input id="incNote" placeholder="Tùy chọn"></div>
       </div>
@@ -1333,7 +1351,8 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
        <span class="fin-badge-expense"><i data-lucide="arrow-up-right" class="ic-14"></i> Ghi nhận Chi tiêu</span>
       </div>
       <div class="form-row">
-       <div class="fg"><label>Danh mục</label><select id="expCat"><option>Ăn uống</option><option>Đi lại</option><option>Giải trí</option><option>Mua sắm</option><option>Học tập</option><option>Sức khoẻ</option><option>Nhà ở</option><option>Điện thoại</option><option>Điện nước</option><option>Quần áo</option><option>Quà tặng</option><option>Khác</option></select></div>
+       <div class="fg"><label>Danh mục</label><select id="expCat" onchange="onExpCatChange()"><option>Ăn uống</option><option>Đi lại</option><option>Giải trí</option><option>Mua sắm</option><option>Học tập</option><option>Sức khoẻ</option><option>Nhà ở</option><option>Điện thoại</option><option>Điện nước</option><option>Quần áo</option><option>Quà tặng</option><option>Khác</option></select></div>
+       <div class="fg"><label>Trừ từ Hũ chi tiêu</label><select id="expJar"></select></div>
        <div class="fg"><label>Số tiền (₫)</label><input type="number" id="expAmt" placeholder="0" inputmode="numeric"></div>
        <div class="fg"><label>Ngày</label><input type="date" id="expDate"></div>
        <div class="fg"><label>Thanh toán</label><select id="expPay"><option>Tiền mặt</option><option>Thẻ ngân hàng</option><option>Chuyển khoản</option><option>Ví điện tử</option></select></div>
@@ -1348,7 +1367,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
        <div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="arrow-down-left" style="width:16px;height:16px;color:var(--success)"></i> Thu nhập gần đây</div>
       </div>
       <div style="overflow-x:auto">
-       <table class="modern-tbl"><thead><tr><th>Nguồn</th><th>Số tiền</th><th>Ngày</th><th>Ghi chú</th><th></th></tr></thead><tbody id="incTb"></tbody></table>
+       <table class="modern-tbl"><thead><tr><th>Nguồn</th><th>Hũ chi tiêu</th><th>Số tiền</th><th>Ngày</th><th>Ghi chú</th><th></th></tr></thead><tbody id="incTb"></tbody></table>
       </div>
      </div>
      <div class="fin-table-card">
@@ -1356,7 +1375,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
        <div class="ct" style="display:flex;align-items:center;gap:6px"><i data-lucide="arrow-up-right" style="width:16px;height:16px;color:var(--danger)"></i> Chi tiêu gần đây</div>
       </div>
       <div style="overflow-x:auto">
-       <table class="modern-tbl"><thead><tr><th>Danh mục</th><th>Số tiền</th><th>Ngày</th><th>Hình thức</th><th></th></tr></thead><tbody id="expTb"></tbody></table>
+       <table class="modern-tbl"><thead><tr><th>Danh mục</th><th>Hũ chi tiêu</th><th>Số tiền</th><th>Ngày</th><th>Hình thức</th><th></th></tr></thead><tbody id="expTb"></tbody></table>
       </div>
      </div>
     </div>
@@ -2346,6 +2365,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
 <script src="js/modules/mocktests.js?v=20261009_v3"></script>
 <script src="js/modules/cmd.js?v=20261009_v3"></script>
 <script src="js/modules/mobile.js?v=20261009_v3"></script>
+<script src="js/modules/jars.js?v=20261012_v1"></script>
 
 <!-- COMMAND PALETTE (Ctrl+K) -->
 <div class="overlay" id="mCmd" style="align-items:flex-start; padding-top:10vh;">
@@ -2879,7 +2899,8 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
    
    <!-- Quick Expense Form -->
    <div id="qfExpForm">
-    <div class="fg"><label>Danh mục</label><select id="qfExpCat" class="inp"><option>Ăn uống</option><option>Đi lại</option><option>Giải trí</option><option>Mua sắm</option><option>Học tập</option><option>Sức khoẻ</option><option>Nhà ở</option><option>Điện thoại</option><option>Điện nước</option><option>Quần áo</option><option>Quà tặng</option><option>Khác</option></select></div>
+    <div class="fg"><label>Danh mục</label><select id="qfExpCat" class="inp" onchange="onQfExpCatChange()"><option>Ăn uống</option><option>Đi lại</option><option>Giải trí</option><option>Mua sắm</option><option>Học tập</option><option>Sức khoẻ</option><option>Nhà ở</option><option>Điện thoại</option><option>Điện nước</option><option>Quần áo</option><option>Quà tặng</option><option>Khác</option></select></div>
+    <div class="fg"><label>Trừ từ Hũ chi tiêu</label><select id="qfExpJar" class="inp"></select></div>
     <div class="fg"><label>Số tiền (₫)</label><input type="number" id="qfExpAmt" class="inp" placeholder="0" inputmode="numeric"></div>
     <div class="fg"><label>Ngày</label><input type="date" id="qfExpDate" class="inp"></div>
     <div class="fg"><label>Thanh toán</label><select id="qfExpPay" class="inp"><option>Tiền mặt</option><option>Thẻ ngân hàng</option><option>Chuyển khoản</option><option>Ví điện tử</option></select></div>
@@ -2890,6 +2911,7 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
    <!-- Quick Income Form -->
    <div id="qfIncForm" style="display:none;">
     <div class="fg"><label>Nguồn thu</label><select id="qfIncSrc" class="inp"><option>Lương</option><option>Freelance</option><option>Đầu tư</option><option>Kinh doanh</option><option>Thưởng</option><option>Khác</option></select></div>
+    <div class="fg"><label>Phân bổ vào Hũ</label><select id="qfIncJar" class="inp"></select></div>
     <div class="fg"><label>Số tiền (₫)</label><input type="number" id="qfIncAmt" class="inp" placeholder="0" inputmode="numeric"></div>
     <div class="fg"><label>Ngày</label><input type="date" id="qfIncDate" class="inp"></div>
     <div class="fg"><label>Ghi chú</label><input id="qfIncNote" class="inp" placeholder="Tùy chọn"></div>
@@ -2956,6 +2978,50 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
     <button class="btn btn-outline btn-sm" onclick="closeExportFinanceModal()">Hủy</button>
     <button class="btn btn-g btn-sm" onclick="triggerFinanceExportFromModal()"><i data-lucide="file-spreadsheet" class="ic-14"></i> Tải file Excel (.xls)</button>
    </div>
+  </div>
+ </div>
+</div>
+
+<!-- ADD JAR MODAL -->
+<div class="overlay" id="mAddJar" onclick="if(event.target===this)closeAddJarModal()">
+ <div class="modal" style="max-width:440px;">
+  <div class="mh">
+   <h3 style="display:flex;align-items:center;gap:8px;"><i data-lucide="plus-circle" class="ic-18" style="color:var(--accent);"></i> Thêm Hũ Chi Tiêu Mới</h3>
+   <button class="mclose" onclick="closeAddJarModal()">✕</button>
+  </div>
+  <div class="mb-body" style="padding:16px 20px 24px;">
+   <div class="fg"><label>Tên hũ</label><input id="newJarName" class="inp" placeholder="VD: Mua sắm, Đầu tư cá nhân..."></div>
+   <div class="fg"><label>Mô tả / Mục đích</label><input id="newJarDesc" class="inp" placeholder="VD: Dành cho mua sắm quần áo, thiết bị"></div>
+   <div class="form-row">
+    <div class="fg"><label>Icon / Emoji</label><input id="newJarEmoji" class="inp" value="🫙" style="text-align:center;"></div>
+    <div class="fg"><label>Màu sắc</label><input type="color" id="newJarColor" class="inp" value="#8B5CF6" style="height:38px; padding:2px 4px; cursor:pointer;"></div>
+   </div>
+   <button class="btn btn-p btn-full" style="margin-top:14px; min-height:42px;" onclick="saveNewJar()"><i data-lucide="check" class="ic-16"></i> Tạo Hũ Chi Tiêu</button>
+  </div>
+ </div>
+</div>
+
+<!-- ALLOCATE INCOME MODAL -->
+<div class="overlay" id="mAllocJars" onclick="if(event.target===this)closeAllocateIncomeModal()">
+ <div class="modal" style="max-width:520px;">
+  <div class="mh">
+   <h3 style="display:flex;align-items:center;gap:8px;"><i data-lucide="split" class="ic-18" style="color:var(--accent);"></i> Phân Bổ Thu Nhập Vào Các Hũ</h3>
+   <button class="mclose" onclick="closeAllocateIncomeModal()">✕</button>
+  </div>
+  <div class="mb-body" style="padding:16px 20px 24px;">
+   <p style="font-size:12.5px; color:var(--text2); margin-bottom:14px;">
+    Tự động chia nguồn thu nhập thành các khoản tiền nhỏ nạp vào các hũ thiết yếu theo tỷ lệ % mong muốn:
+   </p>
+   <div class="form-row">
+    <div class="fg" style="flex:2;"><label>Tổng số tiền thu nhập (₫)</label><input type="number" id="allocTotalAmt" class="inp" placeholder="0" oninput="recalcAllocAmounts()"></div>
+    <div class="fg" style="flex:1;"><label>Ngày</label><input type="date" id="allocDate" class="inp"></div>
+   </div>
+   <div class="fg"><label>Ghi chú phân bổ</label><input id="allocNote" class="inp" placeholder="VD: Phân bổ lương tháng này"></div>
+   
+   <label style="font-size:12px; font-weight:700; color:var(--text-primary); margin:12px 0 6px; display:block;">Tỷ lệ phân bổ từng hũ:</label>
+   <div id="allocJarsList" style="max-height:260px; overflow-y:auto; padding-right:4px;"></div>
+
+   <button class="btn btn-g btn-full" style="margin-top:16px; min-height:42px;" onclick="executeIncomeAllocation()"><i data-lucide="check-check" class="ic-16"></i> Xác nhận phân bổ vào các hũ</button>
   </div>
  </div>
 </div>

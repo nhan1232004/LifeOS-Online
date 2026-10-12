@@ -49,7 +49,7 @@ import com.nhan.lifeos.data.local.entity.VocabEntity
         MockTestEntity::class,
         DeletedItemEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -72,13 +72,22 @@ abstract class LifeOSDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: LifeOSDatabase? = null
 
+        private val MIGRATION_10_11 = object : androidx.room.migration.Migration(10, 11) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN jar TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         fun getDatabase(context: Context): LifeOSDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     LifeOSDatabase::class.java,
                     "lifeos_database"
-                ).fallbackToDestructiveMigration().build()
+                )
+                    .addMigrations(MIGRATION_10_11)
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

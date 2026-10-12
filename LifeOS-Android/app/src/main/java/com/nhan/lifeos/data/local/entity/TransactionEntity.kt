@@ -13,6 +13,7 @@ data class TransactionEntity(
     val date: String,               // "YYYY-MM-DD"
     val paymentMethod: String = "", // "Tiền mặt", "Thẻ ngân hàng", "Ví điện tử"
     val note: String = "",
+    val jar: String = "",           // "Ăn uống", "Xăng xe", "Học tập", "Tiết kiệm", "Du lịch", "Đám tiệc", "Sức khỏe", "Phát sinh"
     val updatedAt: Long = System.currentTimeMillis(),
     val isSynced: Boolean = false
 )

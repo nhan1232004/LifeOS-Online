@@ -293,13 +293,14 @@ object FinanceExcelExporter {
 <!-- PHẦN 4: CHI TIẾT TOÀN BỘ GIAO DỊCH -->
 <table>
  <tr>
-  <td colspan="7" class="sec-hdr">4. NHẬT KÝ CHI TIẾT TOÀN BỘ GIAO DỊCH (${allSortedTxs.size} GIAO DỊCH)</td>
+  <td colspan="8" class="sec-hdr">4. NHẬT KÝ CHI TIẾT TOÀN BỘ GIAO DỊCH (${allSortedTxs.size} GIAO DỊCH)</td>
  </tr>
  <tr>
   <th style="width:45px;" class="tbl-hdr">STT</th>
   <th style="width:95px;" class="tbl-hdr">Ngày GD</th>
   <th style="width:90px;" class="tbl-hdr">Phân loại</th>
   <th style="width:150px;" class="tbl-hdr">Danh mục / Nguồn</th>
+  <th style="width:110px;" class="tbl-hdr">Hũ chi tiêu</th>
   <th style="width:120px;" class="tbl-hdr">Phương thức</th>
   <th style="width:140px;" class="tbl-hdr">Số tiền (₫)</th>
   <th class="tbl-hdr">Ghi chú / Chi tiết</th>
@@ -307,7 +308,7 @@ object FinanceExcelExporter {
 """.trimIndent()).append("\n")
 
             if (allSortedTxs.isEmpty()) {
-                sb.append("<tr><td colspan=\"7\" class=\"text-c\" style=\"padding:16px;color:#64748b;\">Không có giao dịch nào trong khoảng thời gian đã chọn</td></tr>\n")
+                sb.append("<tr><td colspan=\"8\" class=\"text-c\" style=\"padding:16px;color:#64748b;\">Không có giao dịch nào trong khoảng thời gian đã chọn</td></tr>\n")
             } else {
                 allSortedTxs.forEachIndexed { idx, tx ->
                     val isInc = tx.type == "income"
@@ -321,6 +322,7 @@ object FinanceExcelExporter {
   <td class="text-c">${escapeXml(formatVnDate(tx.date))}</td>
   <td class="$tagClass">$typeLabel</td>
   <td class="text-l"><b>${escapeXml(tx.categoryOrSource.ifBlank { "Khác" })}</b></td>
+  <td class="text-c" style="color:#6366f1;font-weight:bold;">${escapeXml(if (tx.jar.isNotBlank()) "🫙 " + tx.jar else "—")}</td>
   <td class="text-c" style="color:#475569;">${escapeXml(tx.paymentMethod.ifBlank { "Tiền mặt" })}</td>
   <td class="$currClass">$sign${moneyFmt.format(tx.amount)} ₫</td>
   <td class="text-l" style="color:#475569;">${escapeXml(tx.note.ifBlank { "—" })}</td>
@@ -329,7 +331,7 @@ object FinanceExcelExporter {
                 }
                 sb.append("""
  <tr class="row-total">
-  <td colspan="5" class="text-c">TỔNG KẾT: TỔNG THU (+${moneyFmt.format(totalInc)} ₫) — TỔNG CHI (−${moneyFmt.format(totalExp)} ₫)</td>
+  <td colspan="6" class="text-c">TỔNG KẾT: TỔNG THU (+${moneyFmt.format(totalInc)} ₫) — TỔNG CHI (−${moneyFmt.format(totalExp)} ₫)</td>
   <td class="${if (netBal >= 0) "curr-bal" else "curr-exp"}">${if (netBal >= 0) "+" else ""}${moneyFmt.format(netBal)} ₫</td>
   <td class="text-l"><b>Số dư ròng tiết kiệm được (${formattedRate}%)</b></td>
  </tr>
@@ -342,7 +344,7 @@ object FinanceExcelExporter {
 <br>
 <table style="border:none;">
  <tr>
-  <td colspan="7" style="border:none; text-align:right; font-style:italic; color:#64748b; font-size:8.5pt;">
+  <td colspan="8" style="border:none; text-align:right; font-style:italic; color:#64748b; font-size:8.5pt;">
    Báo cáo được trích xuất tự động từ Ứng dụng Quản trị Cá nhân LifeOS (Android) • Định dạng Microsoft Excel (.xls)
   </td>
  </tr>
