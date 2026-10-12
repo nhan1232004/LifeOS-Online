@@ -1237,7 +1237,7 @@ function inviteMemberModal() {
 }
 async function sendInvite() {
  const email = document.getElementById('inviteEmail').value.trim();
- if(!email) { toast('Vui lòng nhập email!','error'); return; }
+ if(!email || !email.includes('@')) { toast('Vui lòng nhập email hợp lệ!','error'); return; }
  
  if (window.DEMO_MODE) {
   toast(`Đã gửi lời mời tới ${email}! (Tính năng Demo)`, 'info');
@@ -1247,12 +1247,28 @@ async function sendInvite() {
 
  const p = (window.DB.projects || []).find(x => x.id === currentProjId);
  if(p) {
-  try {
-   await window.sendProjectInvite(p.id, email);
-   toast(`Đã thêm ${email} vào dự án!`, 'success');
-  } catch(e) {
-   toast('Lỗi khi mời thành viên: ' + e.message, 'error');
+  const emailLower = email.toLowerCase();
+  const currentMembers = Array.isArray(p.members) ? [...p.members] : [];
+  if (!currentMembers.includes(emailLower)) {
+    currentMembers.push(emailLower);
+    p.members = currentMembers;
+    await persist('projects', window.DB.projects);
+    if (!window.DEMO_MODE && window.db && window.updateDoc && window.doc) {
+      try {
+        await window.updateDoc(window.doc(window.db, 'shared_projects', p.id), {
+          members: window.arrayUnion ? window.arrayUnion(emailLower) : currentMembers
+        });
+      } catch(e) {
+        console.warn('[LifeOS] Direct updateDoc for members note:', e.message);
+      }
+    }
   }
+  try {
+    if (window.sendProjectInvite) await window.sendProjectInvite(p.id, emailLower);
+  } catch(e) {
+    console.warn('[LifeOS] Cloud function invite note:', e.message);
+  }
+  toast(`Đã thêm ${emailLower} vào dự án!`, 'success');
  }
  closeModal('mProjInvite');
 }

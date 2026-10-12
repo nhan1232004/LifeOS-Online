@@ -85,7 +85,7 @@ async function delTodo(id){
 }
 function setTodoFilter(f,el){
  todoFilter=f;
- document.querySelectorAll('#todoFtabs .ftab').forEach(t=>t.classList.remove('active'));
+ document.querySelectorAll('#todoFtabs .seg-btn, #todoFtabs .ftab').forEach(t=>t.classList.remove('active'));
  if(el)el.classList.add('active');
  renderTodos();
 }
@@ -93,9 +93,9 @@ function setTodoFilter(f,el){
 function switchTodoView(view) {
  currentTodoView = view;
  localStorage.setItem('todoView', view);
- document.querySelectorAll('#todoViewTabs .btn').forEach(b => b.classList.remove('active'));
- if(view === 'list') document.getElementById('btnTodoViewList').classList.add('active');
- else if(view === 'kanban') document.getElementById('btnTodoViewKanban').classList.add('active');
+ document.querySelectorAll('#todoViewTabs .seg-btn, #todoViewTabs .btn').forEach(b => b.classList.remove('active'));
+ if(view === 'list') document.getElementById('btnTodoViewList')?.classList.add('active');
+ else if(view === 'kanban') document.getElementById('btnTodoViewKanban')?.classList.add('active');
  renderTodos();
 }
 

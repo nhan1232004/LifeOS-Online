@@ -326,8 +326,9 @@ class CloudSyncRepository(
         val remoteRes = syncService.getCollectionItems("projects", uid, token, refresh, onRefreshed)
         val remoteItems = remoteRes.getOrDefault(emptyList()).toMutableList()
 
-        // Also fetch any shared projects where this user is in memberUids
-        val sharedRes = syncService.getSharedProjectsForUser(uid, token, refresh, onRefreshed)
+        // Also fetch any shared projects where this user is in memberUids or members by email
+        val userEmail = preferencesRepository.userSessionFlow.first().userEmail
+        val sharedRes = syncService.getSharedProjectsForUser(uid, userEmail, token, refresh, onRefreshed)
         val sharedItems = sharedRes.getOrDefault(emptyList())
         remoteItems.addAll(sharedItems)
 
@@ -373,6 +374,17 @@ class CloudSyncRepository(
         }
 
         val pushList = localMap.values.map { p ->
+            val remoteProj = remoteMap[p.id]
+            val existingOwner = remoteProj?.optString("ownerUid")?.ifBlank { null } ?: uid
+            val memberUidsSet = mutableSetOf<String>()
+            remoteProj?.optJSONArray("memberUids")?.let { arr ->
+                for (idx in 0 until arr.length()) {
+                    val mUid = arr.optString(idx)
+                    if (mUid.isNotBlank()) memberUidsSet.add(mUid)
+                }
+            }
+            memberUidsSet.add(uid)
+
             val projJson = JSONObject().apply {
                 put("id", p.id)
                 put("name", p.name)
@@ -383,9 +395,9 @@ class CloudSyncRepository(
                 put("due", p.due)
                 put("desc", p.desc)
                 put("tags", JSONArray(p.tags))
-                put("members", JSONArray(p.members))
-                put("memberUids", JSONArray().put(uid))
-                put("ownerUid", uid)
+                put("members", JSONArray(p.members.map { it.trim().lowercase() }))
+                put("memberUids", JSONArray(memberUidsSet.toList()))
+                put("ownerUid", existingOwner)
                 put("updatedAt", p.updatedAt)
             }
             // Also sync to shared_projects root collection for multi-user collaboration

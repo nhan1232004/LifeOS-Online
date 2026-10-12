@@ -53,7 +53,7 @@ import {
  sendPasswordResetEmail,
  updateProfile
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, collection, query, where, deleteDoc, orderBy, limit, addDoc, serverTimestamp }
+import { getFirestore, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, collection, query, where, deleteDoc, orderBy, limit, addDoc, serverTimestamp, arrayUnion }
  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
@@ -355,7 +355,9 @@ function fbListen(col, cb) {
  });
 }
 let unsubProjects = null;
+let unsubProjectsEmail = null;
 let unsubTasks = null;
+let unsubTasksEmail = null;
 
 function listenSharedData() {
  if (window.DEMO_MODE) {
@@ -369,24 +371,57 @@ function listenSharedData() {
   console.warn('[LifeOS] listenSharedData: no currentUser, skipping shared data listeners');
   return;
  }
- if (unsubProjects) unsubProjects();
- if (unsubTasks) unsubTasks();
+ if (unsubProjects) { unsubProjects(); unsubProjects = null; }
+ if (unsubProjectsEmail) { unsubProjectsEmail(); unsubProjectsEmail = null; }
+ if (unsubTasks) { unsubTasks(); unsubTasks = null; }
+ if (unsubTasksEmail) { unsubTasksEmail(); unsubTasksEmail = null; }
+
+ const mergeAndSaveProjects = (projs) => {
+   const map = new Map();
+   (window.DB.projects || []).forEach(p => map.set(p.id, p));
+   projs.forEach(p => {
+     map.set(p.id, p);
+     // Auto-register member UID if invited by email
+     if (currentUser.email && Array.isArray(p.members)) {
+       const userEmailLower = currentUser.email.toLowerCase();
+       const hasEmail = p.members.some(m => String(m).trim().toLowerCase() === userEmailLower);
+       const uids = Array.isArray(p.memberUids) ? p.memberUids : [];
+       if (hasEmail && !uids.includes(currentUser.uid)) {
+         updateDoc(doc(db, 'shared_projects', p.id), {
+           memberUids: arrayUnion(currentUser.uid)
+         }).catch(e => console.warn('[LifeOS] Auto-register member UID note:', e.message));
+       }
+     }
+   });
+   window.DB.projects = Array.from(map.values());
+   if(window.renderAll) window.renderAll();
+   if(typeof window.updateBadges === 'function') window.updateBadges();
+ };
 
  try {
+  // 1. Query projects by member UID
   const qProj = query(collection(db, 'shared_projects'), where('memberUids', 'array-contains', currentUser.uid));
   unsubProjects = onSnapshot(qProj, snap => {
    const projs = [];
    snap.forEach(d => projs.push({id: d.id, ...d.data()}));
-   const map = new Map();
-   (window.DB.projects || []).forEach(p => map.set(p.id, p));
-   projs.forEach(p => map.set(p.id, p));
-   window.DB.projects = Array.from(map.values());
-   if(window.renderAll) window.renderAll();
-   if(typeof window.updateBadges === 'function') window.updateBadges();
+   mergeAndSaveProjects(projs);
   }, err => {
-   console.warn("[LifeOS] Firestore shared_projects:", err.code || err.message);
+   console.warn("[LifeOS] Firestore shared_projects (UID):", err.code || err.message);
   });
 
+  // 2. Query projects by member email (crucial for invited members)
+  if (currentUser.email) {
+    const qProjEmail = query(collection(db, 'shared_projects'), where('members', 'array-contains', currentUser.email.toLowerCase()));
+    unsubProjectsEmail = onSnapshot(qProjEmail, snap => {
+     const projs = [];
+     snap.forEach(d => projs.push({id: d.id, ...d.data()}));
+     mergeAndSaveProjects(projs);
+    }, err => {
+     console.warn("[LifeOS] Firestore shared_projects (Email):", err.code || err.message);
+    });
+  }
+
+  // 3. Shared tasks by member UID
   const qTask = query(collection(db, 'shared_tasks'), where('memberUids', 'array-contains', currentUser.uid));
   unsubTasks = onSnapshot(qTask, snap => {
    const tasks = [];
@@ -405,7 +440,7 @@ function listenSharedData() {
 }
 
 window.DB = {events:[],todos:[],projects:[],proj_tasks:[],income:[],expense:[],notes:[],habits:[],goals:[],journal:[],vocab:[],mocktests:[]};
-window.fbListen = fbListen; window.fbSaveAll = fbSaveAll; window.getDoc = getDoc; window.getDocs = getDocs; window.updateDoc = updateDoc; window.where = where; window.db = db; window.setDoc = setDoc; window.deleteDoc = deleteDoc; window.doc = doc; window.collection = collection; window.query = query; window.orderBy = orderBy; window.limit = limit; window.addDoc = addDoc; window.serverTimestamp = serverTimestamp; window.onSnapshot = onSnapshot;
+window.fbListen = fbListen; window.fbSaveAll = fbSaveAll; window.getDoc = getDoc; window.getDocs = getDocs; window.updateDoc = updateDoc; window.where = where; window.db = db; window.setDoc = setDoc; window.deleteDoc = deleteDoc; window.doc = doc; window.collection = collection; window.query = query; window.orderBy = orderBy; window.limit = limit; window.addDoc = addDoc; window.serverTimestamp = serverTimestamp; window.onSnapshot = onSnapshot; window.arrayUnion = arrayUnion;
 window.sendProjectInvite = async (projectId, email) => {
  if (window.DEMO_MODE || !functions) return;
  return httpsCallable(functions, 'inviteProjectMember')({ projectId, email: String(email).trim().toLowerCase() });

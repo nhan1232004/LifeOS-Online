@@ -110,14 +110,47 @@ class FirestoreSyncService(
 
     suspend fun getSharedProjectsForUser(
         uid: String,
+        email: String = "",
         idToken: String,
         refreshToken: String = "",
         onTokenRefreshed: (suspend (newToken: String, newRefresh: String) -> Unit)? = null
     ): Result<List<JSONObject>> = withContext(Dispatchers.IO) {
         val urlStr = "$BASE_FIRESTORE_URL:runQuery"
         var activeToken = idToken
+        val projectsMap = mutableMapOf<String, JSONObject>()
 
-        val queryPayload = JSONObject().apply {
+        suspend fun executeQuery(payloadJson: JSONObject) {
+            var response = sendPost(urlStr, payloadJson.toString(), activeToken)
+            if (response.code == 401 && refreshToken.isNotBlank()) {
+                val refreshRes = authService.refreshIdToken(refreshToken)
+                if (refreshRes.success && refreshRes.idToken.isNotBlank()) {
+                    activeToken = refreshRes.idToken
+                    onTokenRefreshed?.invoke(refreshRes.idToken, refreshRes.refreshToken)
+                    response = sendPost(urlStr, payloadJson.toString(), activeToken)
+                }
+            }
+
+            if (response.code in 200..299) {
+                try {
+                    val arr = JSONArray(response.body)
+                    for (i in 0 until arr.length()) {
+                        val item = arr.optJSONObject(i) ?: continue
+                        val doc = item.optJSONObject("document") ?: continue
+                        val docName = doc.optString("name")
+                        val docId = docName.substringAfterLast("/")
+                        val fields = doc.optJSONObject("fields") ?: continue
+                        val projJson = firestoreFieldsToJson(fields)
+                        if (!projJson.has("id") || projJson.optString("id").isBlank()) {
+                            projJson.put("id", docId)
+                        }
+                        projectsMap[projJson.optString("id")] = projJson
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+
+        // 1. Query by UID in memberUids
+        val queryByUid = JSONObject().apply {
             put("structuredQuery", JSONObject().apply {
                 put("from", JSONArray().put(JSONObject().apply { put("collectionId", "shared_projects") }))
                 put("where", JSONObject().apply {
@@ -129,40 +162,26 @@ class FirestoreSyncService(
                 })
             })
         }
+        executeQuery(queryByUid)
 
-        var response = sendPost(urlStr, queryPayload.toString(), activeToken)
-        if (response.code == 401 && refreshToken.isNotBlank()) {
-            val refreshRes = authService.refreshIdToken(refreshToken)
-            if (refreshRes.success && refreshRes.idToken.isNotBlank()) {
-                activeToken = refreshRes.idToken
-                onTokenRefreshed?.invoke(refreshRes.idToken, refreshRes.refreshToken)
-                response = sendPost(urlStr, queryPayload.toString(), activeToken)
+        // 2. Query by Email in members (for invited members)
+        if (email.isNotBlank()) {
+            val queryByEmail = JSONObject().apply {
+                put("structuredQuery", JSONObject().apply {
+                    put("from", JSONArray().put(JSONObject().apply { put("collectionId", "shared_projects") }))
+                    put("where", JSONObject().apply {
+                        put("fieldFilter", JSONObject().apply {
+                            put("field", JSONObject().apply { put("fieldPath", "members") })
+                            put("op", "ARRAY_CONTAINS")
+                            put("value", JSONObject().apply { put("stringValue", email.trim().lowercase()) })
+                        })
+                    })
+                })
             }
+            executeQuery(queryByEmail)
         }
 
-        if (response.code in 200..299) {
-            try {
-                val arr = JSONArray(response.body)
-                val resultList = mutableListOf<JSONObject>()
-                for (i in 0 until arr.length()) {
-                    val item = arr.optJSONObject(i) ?: continue
-                    val doc = item.optJSONObject("document") ?: continue
-                    val docName = doc.optString("name")
-                    val docId = docName.substringAfterLast("/")
-                    val fields = doc.optJSONObject("fields") ?: continue
-                    val projJson = firestoreFieldsToJson(fields)
-                    if (!projJson.has("id") || projJson.optString("id").isBlank()) {
-                        projJson.put("id", docId)
-                    }
-                    resultList.add(projJson)
-                }
-                Result.success(resultList)
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        } else {
-            Result.failure(Exception("Query shared_projects failed with ${response.code}: ${response.body}"))
-        }
+        Result.success(projectsMap.values.toList())
     }
 
     suspend fun saveSharedProject(
@@ -226,9 +245,19 @@ class FirestoreSyncService(
 
                         val text = fields.optJSONObject("text")?.optString("stringValue") ?: ""
                         val sender = fields.optJSONObject("sender")?.optString("stringValue") ?: ""
-                        val timestampVal = fields.optJSONObject("timestamp")?.optString("integerValue")
-                            ?: fields.optJSONObject("timestamp")?.optString("timestampValue")
-                        val time = timestampVal?.toLongOrNull() ?: System.currentTimeMillis()
+                        val timestampObj = fields.optJSONObject("timestamp")
+                        val time = when {
+                            timestampObj?.has("integerValue") == true -> timestampObj.optString("integerValue").toLongOrNull() ?: System.currentTimeMillis()
+                            timestampObj?.has("timestampValue") == true -> {
+                                val str = timestampObj.optString("timestampValue")
+                                try {
+                                    java.time.Instant.parse(str).toEpochMilli()
+                                } catch (_: Exception) {
+                                    System.currentTimeMillis()
+                                }
+                            }
+                            else -> System.currentTimeMillis()
+                        }
 
                         messages.add(
                             ProjectMessageEntity(
@@ -269,7 +298,9 @@ class FirestoreSyncService(
                 put("text", JSONObject().apply { put("stringValue", msg.text) })
                 put("sender", JSONObject().apply { put("stringValue", msg.senderEmail) })
                 put("userId", JSONObject().apply { put("stringValue", uid) })
-                put("timestamp", JSONObject().apply { put("integerValue", msg.timestamp.toString()) })
+                put("timestamp", JSONObject().apply { 
+                    put("timestampValue", java.time.Instant.ofEpochMilli(msg.timestamp).toString()) 
+                })
             })
         }
 
