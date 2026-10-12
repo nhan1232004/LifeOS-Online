@@ -757,7 +757,12 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
 
  <!-- SIDEBAR -->
  <aside class="sidebar" id="sidebar">
-  <div class="sb-logo" style="display:flex; align-items:center; justify-content:space-between; padding:14px 14px 12px;">
+  <div class="mac-window-controls" style="padding:14px 16px 4px; display:flex; align-items:center; gap:8px;">
+   <span class="traffic-light close" title="Tải lại trang" onclick="location.reload()"></span>
+   <span class="traffic-light minimize" title="Thu gọn / Mở rộng Sidebar" onclick="toggleSidebarCollapse()"></span>
+   <span class="traffic-light maximize" title="Toàn màn hình" onclick="if(document.fullscreenElement){document.exitFullscreen()}else{document.documentElement.requestFullscreen()}"></span>
+  </div>
+  <div class="sb-logo" style="display:flex; align-items:center; justify-content:space-between; padding:8px 14px 12px;">
    <div onclick="openWorkspaceSwitcher()" style="cursor:pointer; display:flex; align-items:center; gap:10px; flex:1; min-width:0" title="Chuyển Workspace">
     <div class="sb-logo-ico" id="currentWsIcon" style="background:var(--accent-primary,#8B7CFF);color:#fff;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:700">P</div>
     <span class="sb-logo-txt gradient-text" id="currentWsName" style="font-size:15px; font-weight:800">Personal</span>

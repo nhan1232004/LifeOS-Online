@@ -608,3 +608,113 @@
   margin-bottom: var(--space-4);
   line-height: 1.5;
 }
+
+/* ==========================================================================
+   Apple HIG Components (macOS & iOS 18)
+   ========================================================================== */
+
+/* 1. Apple Segmented Controls */
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--surface-2);
+  padding: 3px;
+  border-radius: 9px;
+  border: 0.5px solid var(--border);
+  position: relative;
+  user-select: none;
+  gap: 2px;
+}
+
+.segmented-control-btn {
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all var(--motion-fast);
+  white-space: nowrap;
+}
+
+.segmented-control-btn:hover {
+  color: var(--text-primary);
+}
+
+.segmented-control-btn.active {
+  background-color: var(--surface-1);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+/* 2. Apple Inset Grouped Cards & Lists */
+.inset-group {
+  background-color: var(--surface-1);
+  border-radius: var(--radius-lg);
+  border: 0.5px solid var(--border);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-4);
+}
+
+.inset-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 16px 6px;
+}
+
+.inset-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  position: relative;
+  transition: background-color var(--motion-fast);
+}
+
+.inset-row + .inset-row {
+  border-top: 0.5px solid var(--border);
+}
+
+.inset-row:hover {
+  background-color: var(--surface-hover);
+}
+
+/* 3. Apple Bottom Sheet (Mobile Viewports) */
+@media (max-width: 768px) {
+  .modal-backdrop {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .modal-box {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 88vh !important;
+    transform: translateY(100%) !important;
+    transition: transform var(--motion-normal) !important;
+  }
+
+  .modal-backdrop.open .modal-box {
+    transform: translateY(0) !important;
+  }
+
+  .modal-box::before {
+    content: '';
+    display: block;
+    width: 38px;
+    height: 5px;
+    background-color: var(--border);
+    border-radius: 2.5px;
+    margin: 8px auto 4px;
+    flex-shrink: 0;
+  }
+}
+

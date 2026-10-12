@@ -1,38 +1,83 @@
 /**
- * LifeOS Online - Design Tokens
- * Modern Dark SaaS • Soft Glass • Lavender & Mint Palette
- * Source: Ke_hoach_Redesign_LifeOS_Online.docx (Mục 3 & Mục 12)
+ * LifeOS Online - Apple Design System Tokens
+ * macOS Sequoia / Sonoma & iOS 18 Human Interface Guidelines (HIG)
  */
 
 :root {
   color-scheme: dark;
 
-  /* Color Palette - Dark Theme (Default) */
-  --bg-base: #0B0D14;
-  --bg-sidebar: #0F121C;
-  --surface-1: #151927;
-  --surface-2: #1C2233;
-  --surface-hover: #222A3D;
+  /* ==========================================================================
+     1. APPLE SYSTEM COLORS (Dynamic Palette - Dark Mode)
+     ========================================================================== */
+  --apple-blue: #0A84FF;
+  --apple-indigo: #5E5CE6;
+  --apple-purple: #BF5AF2;
+  --apple-pink: #FF375F;
+  --apple-red: #FF453A;
+  --apple-orange: #FF9F0A;
+  --apple-yellow: #FFD60A;
+  --apple-green: #30D158;
+  --apple-mint: #63E6E2;
+  --apple-teal: #40C8E0;
+  --apple-cyan: #64D2FF;
 
-  --accent: #8B7CFF;
-  --accent-hover: #A397FF;
-  --accent-soft: #282341;
-  --accent-secondary: #5DD6C0;
+  /* Primary Accent: Apple System Blue */
+  --accent: #0A84FF;
+  --accent-hover: #409CFF;
+  --accent-soft: rgba(10, 132, 255, 0.16);
+  --accent-secondary: #63E6E2;
 
-  --text-primary: #F3F4FA;
-  --text-secondary: #A0A7BA;
-  --text-muted: #858DA4;
+  /* ==========================================================================
+     2. APPLE SURFACES & MATERIALS (OLED Dark & Translucent Vibrancy)
+     ========================================================================== */
+  --bg-base: #000000;           /* Pure OLED black on mobile, deep desktop base */
+  --bg-mac-window: #1C1C1E;     /* macOS Window body background */
+  --bg-sidebar: rgba(28, 28, 30, 0.78); /* Translucent Source List Sidebar */
+  --surface-1: #1C1C1E;         /* Secondary System Background (Cards, Grouped List) */
+  --surface-2: #2C2C2E;         /* Tertiary System Background (Sub-cards, Inputs) */
+  --surface-hover: #3A3A3C;     /* Quaternary System Background (Hover & Active state) */
 
-  --success: #4DD4A2;
-  --warning: #F4BE68;
-  --danger: #FF7185;
+  /* Hairline Separators & Borders */
+  --border: rgba(255, 255, 255, 0.12);
+  --border-focus: var(--accent);
+  --border-hairline: 0.5px solid rgba(255, 255, 255, 0.14);
 
-  --border: #282E40;
-  --border-focus: #A397FF;
+  /* Apple Vibrancy & Translucent Materials */
+  --material-ultra-thin: rgba(28, 28, 30, 0.55);
+  --material-thin: rgba(28, 28, 30, 0.70);
+  --material-regular: rgba(28, 28, 30, 0.82);
+  --material-thick: rgba(34, 34, 38, 0.92);
+  --material-blur: blur(28px) saturate(190%);
 
-  /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace;
+  /* Apple Text Hierarchy (Dark Mode Labels) */
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(235, 235, 245, 0.65);
+  --text-muted: rgba(235, 235, 245, 0.38);
+
+  /* Functional Status Colors */
+  --success: var(--apple-green);
+  --warning: var(--apple-orange);
+  --danger: var(--apple-red);
+
+  /* ==========================================================================
+     3. APPLE TYPOGRAPHY (SF Pro Hierarchy)
+     ========================================================================== */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Helvetica Neue", Inter, system-ui, sans-serif;
+  --font-mono: "SF Mono", Menlo, Monaco, Consolas, "JetBrains Mono", monospace;
+
+  --text-large-title: 34px;
+  --text-title-1: 28px;
+  --text-title-2: 22px;
+  --text-title-3: 20px;
+  --text-headline: 17px;
+  --text-body: 16px;
+  --text-callout: 15px;
+  --text-subheadline: 14px;
+  --text-footnote: 13px;
+  --text-caption-1: 12px;
+  --text-caption-2: 11px;
+
+  /* Legacy aliases for typography scale */
   --text-xs: 11px;
   --text-sm: 12px;
   --text-base: 14px;
@@ -40,9 +85,19 @@
   --text-lg: 18px;
   --text-xl: 22px;
   --text-2xl: 28px;
-  --text-3xl: 32px;
+  --text-3xl: 34px;
 
-  /* Spacing Scale (Multiple of 4px) */
+  /* ==========================================================================
+     4. APPLE SQUIRCLE RADII & SHADOWS
+     ========================================================================== */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-full: 9999px;
+
+  /* Spacing Scale (4px increments) */
   --space-0: 0px;
   --space-1: 4px;
   --space-2: 8px;
@@ -54,25 +109,18 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* Border Radii */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-full: 9999px;
+  /* Apple Soft Ambient Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-accent: 0 4px 16px rgba(10, 132, 255, 0.3);
+  --card-border-glow: rgba(10, 132, 255, 0.25);
 
-  /* Shadows & Glassmorphism */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 4px 12px -1px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 10px 24px -3px rgba(0, 0, 0, 0.45);
-  --shadow-accent: 0 4px 20px rgba(139, 124, 255, 0.25);
-  --card-border-glow: rgba(139, 124, 255, 0.2);
-
-  /* Transitions & Motion */
-  --motion-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --motion-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --motion-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* Apple Spring & Ease Motion */
+  --motion-fast: 180ms cubic-bezier(0.25, 1, 0.5, 1);
+  --motion-normal: 260ms cubic-bezier(0.25, 1, 0.5, 1);
+  --motion-slow: 380ms cubic-bezier(0.32, 0.72, 0, 1);
+  --motion-spring: 450ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
   /* Backward-compatibility aliases for legacy classes */
   --bg: var(--bg-base);
@@ -84,48 +132,69 @@
   --text2: var(--text-secondary);
   --text3: var(--text-muted);
   --accent-light: var(--accent-hover);
-  --cyan: var(--accent-secondary);
-  --glass: rgba(21, 25, 39, 0.85);
+  --cyan: var(--apple-cyan);
+  --glass: var(--material-regular);
   --glass-border: var(--border);
-  --aurora-gradient: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+  --aurora-gradient: linear-gradient(135deg, var(--accent) 0%, var(--apple-cyan) 100%);
   --sidebar-w: 250px;
   --sidebar-collapsed-w: 72px;
-  --topbar-h: 64px;
+  --topbar-h: 60px;
 }
 
-/* Light Theme Tokens */
+/* ==========================================================================
+   5. LIGHT THEME TOKENS (Apple macOS & iOS Light)
+   ========================================================================== */
 [data-theme="light"] {
   color-scheme: light;
 
-  --bg-base: #F5F6FA;
-  --bg-sidebar: #FFFFFF;
-  --surface-1: #FFFFFF;
-  --surface-2: #F0F1F8;
-  --surface-hover: #E9EAF4;
+  --apple-blue: #007AFF;
+  --apple-indigo: #5856D6;
+  --apple-purple: #AF52DE;
+  --apple-pink: #FF2D55;
+  --apple-red: #FF3B30;
+  --apple-orange: #FF9500;
+  --apple-yellow: #FFCC00;
+  --apple-green: #34C759;
+  --apple-mint: #00C7BE;
+  --apple-teal: #30B0C7;
+  --apple-cyan: #32ADE6;
 
-  --accent: #6958E8;
-  --accent-hover: #5846D2;
-  --accent-soft: #EEEBFF;
-  --accent-secondary: #168C7A;
+  --accent: #007AFF;
+  --accent-hover: #0062CC;
+  --accent-soft: rgba(0, 122, 255, 0.12);
+  --accent-secondary: #00C7BE;
 
-  --text-primary: #202338;
-  --text-secondary: #687087;
-  --text-muted: #7A8297;
+  --bg-base: #F2F2F7;           /* System Grouped Background iOS */
+  --bg-mac-window: #F6F6F6;     /* macOS Window Background */
+  --bg-sidebar: rgba(246, 246, 246, 0.85);
+  --surface-1: #FFFFFF;         /* Inset Grouped Card Background */
+  --surface-2: #E5E5EA;         /* Tertiary Background */
+  --surface-hover: #D1D1D6;     /* Quaternary Background */
 
-  --success: #168C6A;
-  --warning: #F59E0B;
-  --danger: #EF4444;
+  --border: rgba(60, 60, 67, 0.14);
+  --border-focus: var(--accent);
+  --border-hairline: 0.5px solid rgba(60, 60, 67, 0.12);
 
-  --border: #E4E7F0;
-  --border-focus: #6958E8;
+  --material-ultra-thin: rgba(255, 255, 255, 0.60);
+  --material-thin: rgba(255, 255, 255, 0.75);
+  --material-regular: rgba(255, 255, 255, 0.88);
+  --material-thick: rgba(255, 255, 255, 0.95);
 
-  --shadow-sm: 0 1px 3px 0 rgba(16, 24, 40, 0.06);
-  --shadow-md: 0 4px 14px -2px rgba(16, 24, 40, 0.08);
-  --shadow-lg: 0 12px 28px -4px rgba(16, 24, 40, 0.12);
-  --shadow-accent: 0 4px 20px rgba(105, 88, 232, 0.2);
-  --card-border-glow: rgba(105, 88, 232, 0.2);
+  --text-primary: #000000;
+  --text-secondary: rgba(60, 60, 67, 0.60);
+  --text-muted: rgba(60, 60, 67, 0.38);
 
-  --glass: rgba(255, 255, 255, 0.88);
+  --success: #34C759;
+  --warning: #FF9500;
+  --danger: #FF3B30;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.11);
+  --shadow-accent: 0 4px 16px rgba(0, 122, 255, 0.22);
+  --card-border-glow: rgba(0, 122, 255, 0.22);
+
+  --glass: var(--material-regular);
   --glass-border: var(--border);
-  --aurora-gradient: linear-gradient(135deg, var(--accent) 0%, #168C7A 100%);
+  --aurora-gradient: linear-gradient(135deg, var(--accent) 0%, #30B0C7 100%);
 }

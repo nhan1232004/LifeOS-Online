@@ -13,14 +13,16 @@
 }
 
 /* ==========================================================================
-   1. SIDEBAR (Mục 5.1)
+   1. SIDEBAR (macOS Source List Style)
    ========================================================================== */
 .sidebar {
   width: var(--sidebar-w);
   min-width: var(--sidebar-w);
   height: 100vh;
   background-color: var(--bg-sidebar);
-  border-right: 1px solid var(--border);
+  border-right: 0.5px solid var(--border);
+  backdrop-filter: var(--material-blur);
+  -webkit-backdrop-filter: var(--material-blur);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -28,6 +30,51 @@
   z-index: 50;
   transition: width var(--motion-normal), min-width var(--motion-normal);
   user-select: none;
+}
+
+/* macOS Window Controls (Traffic Lights) */
+.mac-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+  transition: transform var(--motion-fast), opacity var(--motion-fast);
+}
+
+.traffic-light:hover {
+  transform: scale(1.12);
+  opacity: 0.88;
+}
+
+.traffic-light.close {
+  background-color: #FF5F56;
+  border: 0.5px solid #E0443E;
+  box-shadow: 0 0 3px rgba(255, 95, 86, 0.4);
+}
+
+.traffic-light.minimize {
+  background-color: #FFBD2E;
+  border: 0.5px solid #DEA123;
+  box-shadow: 0 0 3px rgba(255, 189, 46, 0.4);
+}
+
+.traffic-light.maximize {
+  background-color: #27C93F;
+  border: 0.5px solid #1AAB29;
+  box-shadow: 0 0 3px rgba(39, 201, 63, 0.4);
+}
+
+.sidebar.collapsed .mac-window-controls {
+  flex-direction: column;
+  padding: 12px 0 6px !important;
+  justify-content: center;
 }
 
 /* Collapsed Sidebar Mode */
@@ -42,7 +89,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-5);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0.5px solid var(--border);
 }
 
 .sidebar.collapsed .sidebar-header {
@@ -218,8 +265,8 @@
 /* Topbar Header */
 .topbar {
   height: var(--topbar-h);
-  background-color: var(--bg-base);
-  border-bottom: 1px solid var(--border);
+  background-color: var(--material-thick);
+  border-bottom: 0.5px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -227,8 +274,8 @@
   position: sticky;
   top: 0;
   z-index: 40;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: var(--material-blur);
+  -webkit-backdrop-filter: var(--material-blur);
 }
 
 .topbar-left {
@@ -419,50 +466,66 @@
   visibility: visible;
 }
 
-/* Active Menu Item Styling */
+/* Active Menu Item Styling - macOS Source List Active Pill */
 .sb-item {
   position: relative;
-  transition: background var(--motion-fast), color var(--motion-fast);
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  margin: 1px 8px !important;
+  font-size: 13.5px !important;
+  transition: all var(--motion-fast);
+}
+
+.sb-item:hover:not(.active) {
+  background: var(--surface-hover) !important;
+  color: var(--text-primary) !important;
 }
 
 .sb-item.active {
-  background: rgba(139, 124, 255, 0.14) !important;
-  color: var(--accent-primary, #8B7CFF) !important;
-  font-weight: 600;
+  background: var(--accent) !important;
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 4px rgba(10, 132, 255, 0.35);
+}
+
+.sb-item.active i,
+.sb-item.active svg,
+.sb-item.active [data-lucide] {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+.sb-item.active .sb-badge {
+  background: rgba(255, 255, 255, 0.28) !important;
+  color: #FFFFFF !important;
 }
 
 .sb-item.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background-color: var(--accent-primary, #8B7CFF);
+  display: none !important;
 }
 
-/* Topbar Global Search Trigger */
+/* Topbar Global Search Trigger - Apple Spotlight Style */
 .topbar-search-trigger {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 6px 14px;
-  background: var(--bg-surface-1, #151927);
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
-  border-radius: var(--radius-md, 10px);
-  color: var(--text-tertiary);
+  background: var(--surface-2);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: border-color var(--motion-fast), background var(--motion-fast);
+  transition: border-color var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
   min-width: 220px;
   max-width: 320px;
   flex: 1;
 }
 
 .topbar-search-trigger:hover {
-  background: var(--bg-surface-2, #1C2233);
-  border-color: rgba(139, 124, 255, 0.4);
-  color: var(--text-secondary);
+  background: var(--surface-hover);
+  border-color: var(--accent);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .topbar-search-trigger .search-placeholder {
