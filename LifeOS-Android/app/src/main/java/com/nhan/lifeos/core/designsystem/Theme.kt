@@ -6,12 +6,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = LifeOSPrimary,
+private fun createDarkColorScheme(primaryColor: Color = LifeOSPrimary) = darkColorScheme(
+    primary = primaryColor,
     onPrimary = LifeOSTextHigh,
     primaryContainer = LifeOSSurfaceCard,
     onPrimaryContainer = LifeOSTextHigh,
@@ -29,9 +30,11 @@ private val DarkColorScheme = darkColorScheme(
 @Composable
 fun LifeOSTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    accentPreset: AccentPreset = AccentPreset.APPLE_BLUE,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = DarkColorScheme
+    val colorScheme = createDarkColorScheme(accentPreset.primary)
+
     val view = LocalView.current
 
     if (!view.isInEditMode) {

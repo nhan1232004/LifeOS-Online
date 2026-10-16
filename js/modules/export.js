@@ -10,6 +10,10 @@ window.openSettings = function() {
             modal.classList.add('open');
         }
     }
+    if (window.LifeOSTheme?.updateAccentSwatchesUI) {
+        window.LifeOSTheme.updateAccentSwatchesUI(window.LifeOSTheme.getAccent(), window.LifeOSTheme.getAccentHue());
+    }
+    if (window.lucide) window.lucide.createIcons();
 };
 
 window.closeSettings = function() {

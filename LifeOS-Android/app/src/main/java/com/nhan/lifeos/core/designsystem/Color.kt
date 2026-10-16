@@ -54,3 +54,13 @@ val LifeOSLavenderGradient = Brush.horizontalGradient(
 val LifeOSCardGradient = Brush.verticalGradient(
     colors = listOf(AppleSecondarySystemBackground, AppleSecondarySystemBackground)
 )
+
+// Dynamic Accent Presets matching Web Token System
+enum class AccentPreset(val displayName: String, val primary: Color, val borderAccent: Color) {
+    APPLE_BLUE("Apple Blue", AppleBlue, Color(0x400A84FF)),
+    LINEAR_VIOLET("Linear Violet", Color(0xFF8B7CFF), Color(0x408B7CFF)),
+    EMERALD_MINT("Emerald Forest", Color(0xFF10B981), Color(0x4010B981)),
+    SUNSET_AMBER("Sunset Amber", Color(0xFFFF9F0A), Color(0x40FF9F0A)),
+    NEON_ROSE("Neon Rose", Color(0xFFFF375F), Color(0x40FF375F)),
+    TITANIUM_STEALTH("Titanium Stealth", Color(0xFF98989D), Color(0x4098989D))
+}

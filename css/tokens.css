@@ -21,11 +21,18 @@
   --apple-teal: #40C8E0;
   --apple-cyan: #64D2FF;
 
-  /* Primary Accent: Apple System Blue */
+  /* Primary Dynamic Accent: Apple System Blue (Default) */
+  --accent-hue: 215;
+  --accent-chroma: 0.22;
   --accent: #0A84FF;
   --accent-hover: #409CFF;
+  --accent-active: #0066D6;
   --accent-soft: rgba(10, 132, 255, 0.16);
+  --accent-glow: rgba(10, 132, 255, 0.35);
+  --accent-border: rgba(10, 132, 255, 0.40);
+  --accent-rim: rgba(10, 132, 255, 0.60);
   --accent-secondary: #63E6E2;
+  --ambient-glow: radial-gradient(circle at 50% -15%, var(--accent-soft) 0%, transparent 60%);
 
   /* ==========================================================================
      2. APPLE SURFACES & MATERIALS (OLED Dark & Translucent Vibrancy)
@@ -171,8 +178,13 @@
 
   --accent: #007AFF;
   --accent-hover: #0062CC;
+  --accent-active: #004FB0;
   --accent-soft: rgba(0, 122, 255, 0.12);
+  --accent-glow: rgba(0, 122, 255, 0.25);
+  --accent-border: rgba(0, 122, 255, 0.35);
+  --accent-rim: rgba(0, 122, 255, 0.45);
   --accent-secondary: #00C7BE;
+  --ambient-glow: radial-gradient(circle at 50% -15%, var(--accent-soft) 0%, transparent 60%);
 
   --bg-base: #F2F2F7;           /* System Grouped Background iOS */
   --bg-mac-window: #F6F6F6;     /* macOS Window Background */
@@ -218,4 +230,141 @@
   --glass: var(--apple-glass-bg);
   --glass-border: var(--border);
   --aurora-gradient: linear-gradient(135deg, var(--accent) 0%, #30B0C7 100%);
+}
+
+/* ==========================================================================
+   6. DYNAMIC ACCENT PRESETS (Dark & Light Mode Support)
+   Presets: apple-blue, linear-violet, emerald-mint, sunset-amber, neon-rose, titanium-stealth
+   ========================================================================== */
+
+/* 1. Apple Blue (Default) */
+[data-accent="apple-blue"] {
+  --accent-hue: 215;
+  --accent: #0A84FF;
+  --accent-hover: #409CFF;
+  --accent-active: #0066D6;
+  --accent-soft: rgba(10, 132, 255, 0.16);
+  --accent-glow: rgba(10, 132, 255, 0.35);
+  --accent-border: rgba(10, 132, 255, 0.40);
+  --accent-rim: rgba(10, 132, 255, 0.60);
+  --accent-secondary: #63E6E2;
+}
+[data-theme="light"][data-accent="apple-blue"] {
+  --accent: #007AFF;
+  --accent-hover: #0062CC;
+  --accent-active: #004FB0;
+  --accent-soft: rgba(0, 122, 255, 0.12);
+  --accent-glow: rgba(0, 122, 255, 0.25);
+  --accent-border: rgba(0, 122, 255, 0.35);
+  --accent-secondary: #00C7BE;
+}
+
+/* 2. Linear Lavender / Cyber Violet */
+[data-accent="linear-violet"] {
+  --accent-hue: 264;
+  --accent: #8B7CFF;
+  --accent-hover: #A599FF;
+  --accent-active: #7260FF;
+  --accent-soft: rgba(139, 124, 255, 0.18);
+  --accent-glow: rgba(139, 124, 255, 0.38);
+  --accent-border: rgba(139, 124, 255, 0.45);
+  --accent-rim: rgba(139, 124, 255, 0.65);
+  --accent-secondary: #BF5AF2;
+}
+[data-theme="light"][data-accent="linear-violet"] {
+  --accent: #6C5CE7;
+  --accent-hover: #5644DE;
+  --accent-active: #4735CE;
+  --accent-soft: rgba(108, 92, 231, 0.12);
+  --accent-glow: rgba(108, 92, 231, 0.28);
+  --accent-border: rgba(108, 92, 231, 0.35);
+  --accent-secondary: #AF52DE;
+}
+
+/* 3. Emerald Forest / Mint Glass */
+[data-accent="emerald-mint"] {
+  --accent-hue: 155;
+  --accent: #10B981;
+  --accent-hover: #34D399;
+  --accent-active: #059669;
+  --accent-soft: rgba(16, 185, 129, 0.18);
+  --accent-glow: rgba(16, 185, 129, 0.38);
+  --accent-border: rgba(16, 185, 129, 0.45);
+  --accent-rim: rgba(16, 185, 129, 0.65);
+  --accent-secondary: #63E6E2;
+}
+[data-theme="light"][data-accent="emerald-mint"] {
+  --accent: #059669;
+  --accent-hover: #047857;
+  --accent-active: #065F46;
+  --accent-soft: rgba(5, 150, 105, 0.12);
+  --accent-glow: rgba(5, 150, 105, 0.25);
+  --accent-border: rgba(5, 150, 105, 0.35);
+  --accent-secondary: #00C7BE;
+}
+
+/* 4. Sunset Amber / Solar Orange */
+[data-accent="sunset-amber"] {
+  --accent-hue: 35;
+  --accent: #FF9F0A;
+  --accent-hover: #FFB340;
+  --accent-active: #E08500;
+  --accent-soft: rgba(255, 159, 10, 0.18);
+  --accent-glow: rgba(255, 159, 10, 0.38);
+  --accent-border: rgba(255, 159, 10, 0.45);
+  --accent-rim: rgba(255, 159, 10, 0.65);
+  --accent-secondary: #FFD60A;
+}
+[data-theme="light"][data-accent="sunset-amber"] {
+  --accent: #D97706;
+  --accent-hover: #B45309;
+  --accent-active: #92400E;
+  --accent-soft: rgba(217, 119, 6, 0.12);
+  --accent-glow: rgba(217, 119, 6, 0.25);
+  --accent-border: rgba(217, 119, 6, 0.35);
+  --accent-secondary: #FF9500;
+}
+
+/* 5. Neon Rose / Sakura Glass */
+[data-accent="neon-rose"] {
+  --accent-hue: 345;
+  --accent: #FF375F;
+  --accent-hover: #FF6685;
+  --accent-active: #D92045;
+  --accent-soft: rgba(255, 55, 95, 0.18);
+  --accent-glow: rgba(255, 55, 95, 0.38);
+  --accent-border: rgba(255, 55, 95, 0.45);
+  --accent-rim: rgba(255, 55, 95, 0.65);
+  --accent-secondary: #FF64D2;
+}
+[data-theme="light"][data-accent="neon-rose"] {
+  --accent: #E11D48;
+  --accent-hover: #BE123C;
+  --accent-active: #9F1239;
+  --accent-soft: rgba(225, 29, 72, 0.12);
+  --accent-glow: rgba(225, 29, 72, 0.25);
+  --accent-border: rgba(225, 29, 72, 0.35);
+  --accent-secondary: #FF2D55;
+}
+
+/* 6. Titanium Stealth / Monochrome */
+[data-accent="titanium-stealth"] {
+  --accent-hue: 240;
+  --accent: #98989D;
+  --accent-hover: #B0B0B5;
+  --accent-active: #7C7C82;
+  --accent-soft: rgba(152, 152, 157, 0.18);
+  --accent-glow: rgba(152, 152, 157, 0.30);
+  --accent-border: rgba(152, 152, 157, 0.40);
+  --accent-rim: rgba(152, 152, 157, 0.55);
+  --accent-secondary: #D1D1D6;
+}
+[data-theme="light"][data-accent="titanium-stealth"] {
+  --accent: #48484A;
+  --accent-hover: #3A3A3C;
+  --accent-active: #2C2C2E;
+  --accent-soft: rgba(72, 72, 74, 0.12);
+  --accent-glow: rgba(72, 72, 74, 0.22);
+  --accent-border: rgba(72, 72, 74, 0.35);
+  --accent-secondary: #636366;
 }

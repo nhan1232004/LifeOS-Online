@@ -15,6 +15,22 @@
   document.documentElement.setAttribute('data-theme', effective);
   var metaTheme = document.getElementById('meta-theme-color');
   if (metaTheme) metaTheme.setAttribute('content', effective === 'light' ? '#F5F6FA' : '#0B0D14');
+
+  var savedAccent = localStorage.getItem('lifeos_accent') || 'apple-blue';
+  document.documentElement.setAttribute('data-accent', savedAccent);
+  if (savedAccent === 'custom') {
+    var customHue = localStorage.getItem('lifeos_accent_hue');
+    if (customHue) {
+      document.documentElement.style.setProperty('--accent-hue', customHue);
+      document.documentElement.style.setProperty('--accent', 'hsl(' + customHue + ', 95%, 60%)');
+      document.documentElement.style.setProperty('--accent-hover', 'hsl(' + customHue + ', 95%, 68%)');
+      document.documentElement.style.setProperty('--accent-active', 'hsl(' + customHue + ', 95%, 50%)');
+      document.documentElement.style.setProperty('--accent-soft', 'hsla(' + customHue + ', 95%, 60%, 0.18)');
+      document.documentElement.style.setProperty('--accent-glow', 'hsla(' + customHue + ', 95%, 60%, 0.38)');
+      document.documentElement.style.setProperty('--accent-border', 'hsla(' + customHue + ', 95%, 60%, 0.45)');
+      document.documentElement.style.setProperty('--accent-rim', 'hsla(' + customHue + ', 95%, 60%, 0.65)');
+    }
+  }
  })();
 </script>
 <link rel="manifest" href="manifest.json">
@@ -883,6 +899,24 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
      </div>
      <button class="topbar-btn" onclick="toggleAiChat()" title="Trợ lý AI"><i data-lucide="sparkles" class="ic-18" style="color:var(--accent-cyan)"></i></button>
      <button class="topbar-btn" onclick="toggleTheme()" id="themeBtn" title="Chuyển Sáng/Tối"><i data-lucide="sun" class="ic-18"></i></button>
+     <div class="accent-palette-wrap" style="position:relative;">
+      <button class="topbar-btn" id="accentPaletteBtn" onclick="toggleAccentPaletteMenu(event)" title="Đổi màu sắc chủ đạo" aria-label="Đổi màu sắc chủ đạo"><i data-lucide="palette" class="ic-18" style="color:var(--accent)"></i></button>
+      <div class="accent-palette-popover" id="accentPalettePopover" style="display:none;">
+       <div class="accent-popover-header">Màu chủ đạo (Accent)</div>
+       <div class="accent-popover-grid">
+        <button type="button" class="accent-swatch-dot" data-accent-swatch="apple-blue" onclick="LifeOSTheme.setAccent('apple-blue'); toggleAccentPaletteMenu();" style="--swatch-c:#0A84FF;" title="Apple Blue"><span class="swatch-check">✓</span></button>
+        <button type="button" class="accent-swatch-dot" data-accent-swatch="linear-violet" onclick="LifeOSTheme.setAccent('linear-violet'); toggleAccentPaletteMenu();" style="--swatch-c:#8B7CFF;" title="Linear Violet"><span class="swatch-check">✓</span></button>
+        <button type="button" class="accent-swatch-dot" data-accent-swatch="emerald-mint" onclick="LifeOSTheme.setAccent('emerald-mint'); toggleAccentPaletteMenu();" style="--swatch-c:#10B981;" title="Emerald Forest"><span class="swatch-check">✓</span></button>
+        <button type="button" class="accent-swatch-dot" data-accent-swatch="sunset-amber" onclick="LifeOSTheme.setAccent('sunset-amber'); toggleAccentPaletteMenu();" style="--swatch-c:#FF9F0A;" title="Sunset Amber"><span class="swatch-check">✓</span></button>
+        <button type="button" class="accent-swatch-dot" data-accent-swatch="neon-rose" onclick="LifeOSTheme.setAccent('neon-rose'); toggleAccentPaletteMenu();" style="--swatch-c:#FF375F;" title="Neon Rose"><span class="swatch-check">✓</span></button>
+        <button type="button" class="accent-swatch-dot" data-accent-swatch="titanium-stealth" onclick="LifeOSTheme.setAccent('titanium-stealth'); toggleAccentPaletteMenu();" style="--swatch-c:#98989D;" title="Titanium Stealth"><span class="swatch-check">✓</span></button>
+       </div>
+       <div class="accent-popover-footer" onclick="openSettings(); toggleAccentPaletteMenu();">
+        <span>Tùy chỉnh màu...</span>
+        <i data-lucide="chevron-right" style="width:14px;height:14px;"></i>
+       </div>
+      </div>
+     </div>
      <button class="topbar-btn" onclick="openSettings()" title="Cài đặt & Dữ liệu"><i data-lucide="settings" class="ic-18"></i></button>
     </div>
    </div>
@@ -2838,12 +2872,61 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
  <div class="modal" style="max-width:480px">
   <div class="mh"><h3 style="display:flex;align-items:center;gap:8px"><i data-lucide="settings" style="width:18px;height:18px;color:var(--primary)"></i> Cài đặt &amp; Dữ liệu</h3><button class="mclose" onclick="closeSettings()">✕</button></div>
   <div class="mb-body" style="display:flex;flex-direction:column;gap:14px">
-   <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
+   <div style="padding:16px;background:var(--surface);border-radius:12px;border:1px solid var(--border)">
     <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
-     <div style="display:flex;align-items:center;gap:6px"><i data-lucide="palette" style="width:14px;height:14px;color:var(--accent-secondary)"></i> Chủ đề giao diện</div>
-     <span class="badge" style="background:var(--aurora-gradient);color:#fff;font-weight:700;">Midnight Aurora</span>
+     <div style="display:flex;align-items:center;gap:6px"><i data-lucide="palette" style="width:16px;height:16px;color:var(--accent)"></i> Màu sắc chủ đạo (Accent Color)</div>
+     <span class="badge" id="settingsCurrentAccentBadge" style="background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border);font-weight:700;">Liquid Glass</span>
     </div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:0">Dark SaaS hiện đại kết hợp hiệu ứng kính Glassmorphism (Xanh đen #0B1024, Tím #8B5CF6, Cyan #22D3EE).</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Phong cách kính lỏng trong suốt (Liquid Glass) với bảng màu động chuyển đổi tức thì.</p>
+    
+    <div class="accent-studio-grid">
+     <div class="accent-studio-card" data-accent-swatch="apple-blue" onclick="LifeOSTheme.setAccent('apple-blue')">
+      <div class="accent-studio-dot" style="--swatch-c:#0A84FF;"></div>
+      <div class="accent-studio-name">Apple Blue</div>
+     </div>
+     <div class="accent-studio-card" data-accent-swatch="linear-violet" onclick="LifeOSTheme.setAccent('linear-violet')">
+      <div class="accent-studio-dot" style="--swatch-c:#8B7CFF;"></div>
+      <div class="accent-studio-name">Linear Violet</div>
+     </div>
+     <div class="accent-studio-card" data-accent-swatch="emerald-mint" onclick="LifeOSTheme.setAccent('emerald-mint')">
+      <div class="accent-studio-dot" style="--swatch-c:#10B981;"></div>
+      <div class="accent-studio-name">Emerald Mint</div>
+     </div>
+     <div class="accent-studio-card" data-accent-swatch="sunset-amber" onclick="LifeOSTheme.setAccent('sunset-amber')">
+      <div class="accent-studio-dot" style="--swatch-c:#FF9F0A;"></div>
+      <div class="accent-studio-name">Sunset Amber</div>
+     </div>
+     <div class="accent-studio-card" data-accent-swatch="neon-rose" onclick="LifeOSTheme.setAccent('neon-rose')">
+      <div class="accent-studio-dot" style="--swatch-c:#FF375F;"></div>
+      <div class="accent-studio-name">Neon Rose</div>
+     </div>
+     <div class="accent-studio-card" data-accent-swatch="titanium-stealth" onclick="LifeOSTheme.setAccent('titanium-stealth')">
+      <div class="accent-studio-dot" style="--swatch-c:#98989D;"></div>
+      <div class="accent-studio-name">Titanium Stealth</div>
+     </div>
+    </div>
+
+    <!-- Hue Slider -->
+    <div style="margin-top:14px;">
+     <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:600;color:var(--text-secondary);">
+      <span>Tùy chỉnh góc màu tự do (Custom Hue)</span>
+      <span id="accentHueVal" style="color:var(--accent);">215°</span>
+     </div>
+     <div class="accent-hue-slider-track">
+      <input type="range" min="0" max="360" value="215" class="accent-hue-slider" id="accentHueSlider" oninput="LifeOSTheme.setAccent('custom', this.value)">
+     </div>
+    </div>
+
+    <!-- Live Preview -->
+    <div class="accent-live-preview">
+     <div style="display:flex;align-items:center;gap:8px;">
+      <button class="btn btn-p btn-sm" type="button" style="pointer-events:none;">Mẫu nút</button>
+      <span class="badge" style="background:var(--accent-soft);color:var(--accent);border:0.5px solid var(--accent-border);">Badge</span>
+     </div>
+     <div style="flex:1;max-width:140px;height:6px;background:var(--surface-hover);border-radius:3px;overflow:hidden;">
+      <div style="width:75%;height:100%;background:var(--accent);border-radius:3px;transition:all .2s ease;"></div>
+     </div>
+    </div>
    </div>
    <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
     <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
