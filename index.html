@@ -2969,6 +2969,61 @@ document.addEventListener('DOMContentLoaded', updatePlatformBadge);
   </div>
  </div>
 </div>
+
+<!-- RESTORE CONFIRM MODAL -->
+<div class="overlay" id="mRestoreConfirm" onclick="if(event.target===this)closeRestoreConfirmModal()">
+ <div class="modal modal-box" style="max-width:500px;">
+  <div class="mh modal-header">
+   <h3 style="display:flex;align-items:center;gap:8px;"><i data-lucide="shield-alert" class="ic-20" style="color:var(--accent);"></i> Xác nhận khôi phục dữ liệu</h3>
+   <button class="mclose" onclick="closeRestoreConfirmModal()">✕</button>
+  </div>
+  <div class="mb-body modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:14px;">
+   <div style="background:var(--surface-2);padding:12px 14px;border-radius:var(--radius-md);border:0.5px solid var(--border);">
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">Tệp sao lưu được chọn:</div>
+    <div style="font-size:13.5px;font-weight:700;color:var(--text-primary);display:flex;justify-content:space-between;align-items:center;">
+     <span id="restoreFileName" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;">backup.json</span>
+     <span class="badge" id="restoreTotalCount" style="background:var(--accent-soft);color:var(--accent);font-weight:700;">0 mục</span>
+    </div>
+   </div>
+
+   <div>
+    <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Chi tiết dữ liệu bên trong tệp:</div>
+    <div id="restoreSummaryGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:160px;overflow-y:auto;padding-right:4px;">
+     <!-- Populated dynamically -->
+    </div>
+   </div>
+
+   <div style="background:var(--surface-2);padding:14px;border-radius:var(--radius-md);border:0.5px solid var(--border);">
+    <div style="font-size:12.5px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">Phương thức khôi phục:</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+     <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:12px;">
+      <input type="radio" name="restoreMode" value="merge" checked style="margin-top:2px;accent-color:var(--accent);">
+      <div>
+       <b style="color:var(--text-primary);">Gộp dữ liệu (Merge) — Khuyến nghị</b>
+       <div style="color:var(--text-muted);font-size:11px;">Giữ lại dữ liệu hiện có trên máy và bổ sung thêm các mục mới từ bản sao lưu.</div>
+      </div>
+     </label>
+     <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:12px;">
+      <input type="radio" name="restoreMode" value="overwrite" style="margin-top:2px;accent-color:var(--accent);">
+      <div>
+       <b style="color:var(--danger);">Ghi đè hoàn toàn (Overwrite)</b>
+       <div style="color:var(--text-muted);font-size:11px;">Thay thế toàn bộ dữ liệu hiện tại bằng nội dung từ tệp sao lưu.</div>
+      </div>
+     </label>
+    </div>
+   </div>
+
+   <div style="background:rgba(255,159,10,0.1);border:1px solid rgba(255,159,10,0.25);border-radius:var(--radius-sm);padding:8px 12px;font-size:11.5px;color:var(--warning);display:flex;align-items:center;gap:6px;">
+    <i data-lucide="alert-triangle" class="ic-14" style="flex-shrink:0;"></i>
+    <span>Dữ liệu sau khi khôi phục sẽ tự động được lưu và đồng bộ lên tài khoản của bạn.</span>
+   </div>
+  </div>
+  <div class="mf modal-footer" style="padding:12px 20px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
+   <button type="button" class="btn btn-outline btn-sm" onclick="closeRestoreConfirmModal()">Hủy bỏ</button>
+   <button type="button" class="btn btn-p btn-sm" onclick="executeRestore()"><i data-lucide="check" class="ic-14"></i> Xác nhận khôi phục</button>
+  </div>
+ </div>
+</div>
 <script type="module" src="js/modules/ai/chat.js?v=20261009_v3"></script>
 <script src="js/modules/export.js?v=20261009_v3"></script>
 

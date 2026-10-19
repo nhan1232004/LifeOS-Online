@@ -31,6 +31,38 @@
     return result;
   }
 
-  window.LifeOSData = { COLLECTIONS, localDate, escapeHtml, escapeAttr, csvCell, normalize };
+  function validateBackup(data) {
+    if (!isObject(data)) return { valid: false, error: 'Dữ liệu không phải là đối tượng JSON hợp lệ.' };
+    const counts = {};
+    let totalItems = 0;
+    COLLECTIONS.forEach(col => {
+      if (Array.isArray(data[col])) {
+        const validItems = data[col].filter(item => isObject(item) && item.id != null && String(item.id).trim() !== '');
+        counts[col] = validItems.length;
+        totalItems += validItems.length;
+      } else {
+        counts[col] = 0;
+      }
+    });
+    if (totalItems === 0) {
+      return { valid: false, error: 'File sao lưu không chứa dữ liệu của bất kỳ danh mục nào thuộc LifeOS.' };
+    }
+    return { valid: true, counts, totalItems };
+  }
+
+  function mergeBackup(currentDb = {}, backupDb = {}) {
+    const nextDb = { ...currentDb };
+    COLLECTIONS.forEach(col => {
+      const existing = Array.isArray(currentDb[col]) ? currentDb[col].filter(isObject) : [];
+      const incoming = Array.isArray(backupDb[col]) ? backupDb[col].filter(isObject) : [];
+      const existingIds = new Set(existing.map(x => String(x.id)));
+      const newItems = incoming.filter(x => !existingIds.has(String(x.id)));
+      nextDb[col] = [...existing, ...newItems];
+    });
+    return nextDb;
+  }
+
+  window.LifeOSData = { COLLECTIONS, localDate, escapeHtml, escapeAttr, csvCell, normalize, validateBackup, mergeBackup };
   window.toLocalDateStr = window.toLocalDateStr || localDate;
 })();
+

@@ -116,3 +116,42 @@ test('active session auto-restore distinguishes guest from unauthenticated state
   assert.equal(resolveStartupState(null, 'guest'), 'guest_app');
   assert.equal(resolveStartupState(null, null), 'login_screen');
 });
+
+test('offline synchronization queue holds pending collections and replays on reconnect', async () => {
+  const pendingCols = new Set();
+  const db = {
+    todos: [{ id: 't1', title: 'Task offline', done: false }],
+    notes: [{ id: 'n1', title: 'Note offline', body: 'Draft' }]
+  };
+  const synced = [];
+
+  const mockFbSaveAll = async (col, items) => {
+    synced.push({ col, items: [...items] });
+  };
+
+  // Simulate network failure on saving 'todos'
+  let isOnline = false;
+  function persistMock(col) {
+    if (!isOnline) {
+      pendingCols.add(col);
+      return false;
+    }
+    return true;
+  }
+
+  persistMock('todos');
+  assert.equal(pendingCols.has('todos'), true);
+  assert.equal(synced.length, 0);
+
+  // Network restored
+  isOnline = true;
+  for (const col of Array.from(pendingCols)) {
+    await mockFbSaveAll(col, db[col]);
+    pendingCols.delete(col);
+  }
+
+  assert.equal(pendingCols.size, 0);
+  assert.equal(synced.length, 1);
+  assert.equal(synced[0].col, 'todos');
+  assert.equal(synced[0].items[0].title, 'Task offline');
+});

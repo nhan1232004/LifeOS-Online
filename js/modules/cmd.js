@@ -23,17 +23,34 @@ document.addEventListener('keydown', (e) => {
   // Shortcuts
   if (e.key === 'Escape') {
     document.querySelectorAll('.overlay').forEach(o => o.style.display = 'none');
+    if (typeof window.closeQuickAddDropdown === 'function') window.closeQuickAddDropdown();
   }
   
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
     e.preventDefault();
     // Default create based on active page
     const p = document.querySelector('.page.active')?.id;
-    if(p === 'p-calendar' || p === 'p-schedule' || p === 'p-today') openEv();
-    else if(p === 'p-todos') openTodoModal();
+    if(p === 'p-calendar' || p === 'p-schedule') openEv();
+    else if(p === 'p-today' || p === 'p-todos') openTodoModal();
     else if(p === 'p-projects') openProjModal();
     else if(p === 'p-notes') openNote();
     else if(p === 'p-vocab') openVocab();
+    else openTodoModal();
+  }
+
+  // Quick Add shortcut: 'q' when not inside an input/contenteditable
+  if (e.key.toLowerCase() === 'q' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    const tag = (document.activeElement?.tagName || '').toLowerCase();
+    const isEditing = tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable;
+    const hasModal = Array.from(document.querySelectorAll('.overlay')).some(o => o.style.display === 'flex' || o.style.display === 'block');
+    if (!isEditing && !hasModal) {
+      e.preventDefault();
+      if (typeof window.toggleQuickAddDropdown === 'function') {
+        window.toggleQuickAddDropdown(e);
+      } else if (typeof openTodoModal === 'function') {
+        openTodoModal();
+      }
+    }
   }
   
   // Navigation in Command Palette

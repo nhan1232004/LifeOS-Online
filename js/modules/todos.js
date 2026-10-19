@@ -225,11 +225,13 @@ function renderTodoList(list) {
      <span class="bento-priority-badge ${priClass}">${pl[item.priority] || 'TB'}</span>
      ${isOverdue ? '<span class="modern-tag-chip modern-tag-overdue">⚠️ Quá hạn</span>' : ''}
      ${item.date ? `<span class="modern-tag-chip modern-tag-date"><i data-lucide="calendar" class="ic-10"></i> ${fmtDate(item.date)}</span>` : ''}
-     ${item.project ? `<span class="modern-tag-chip modern-tag-project"><i data-lucide="folder" class="ic-10"></i> ${item.project}</span>` : ''}
+     ${item.project ? `<span class="modern-tag-chip modern-tag-project"><i data-lucide="folder" class="ic-10"></i> ${window.LifeOSData.escapeHtml(item.project)}</span>` : ''}
+     ${item.pomSessions ? `<span class="modern-tag-chip" style="background:rgba(255,107,107,0.12);color:#FF6B6B;border:0.5px solid rgba(255,107,107,0.25);"><i data-lucide="timer" class="ic-10"></i> ${item.pomSessions}🍅</span>` : ''}
      ${item.note ? `<span style="color:var(--text-muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">💬 ${window.LifeOSData.escapeHtml(item.note)}</span>` : ''}
     </div>
    </div>
    <div class="modern-todo-actions">
+    ${!item.done ? `<button class="icon-btn" aria-label="Tập trung Pomodoro" title="Bắt đầu Pomodoro cho việc này" onclick="if(window.startPomodoroForTodo)window.startPomodoroForTodo('${window.LifeOSData.escapeAttr(item.id)}')"><i data-lucide="timer" class="ic-14" style="color:var(--accent);"></i></button>` : ''}
     <button class="icon-btn" aria-label="Sửa việc" onclick="editTodo('${window.LifeOSData.escapeAttr(item.id)}')"><i data-lucide="pencil" class="ic-14"></i></button>
     <button class="icon-btn" aria-label="Xóa việc" style="color:var(--danger)" onclick="delTodo('${window.LifeOSData.escapeAttr(item.id)}')"><i data-lucide="trash-2" class="ic-14"></i></button>
    </div>

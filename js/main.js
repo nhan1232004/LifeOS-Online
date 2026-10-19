@@ -2,6 +2,8 @@
 /* ────────────────────────────────────────────────────────
   UTILS
 ──────────────────────────────────────────────────────── */
+const esc = s => window.LifeOSData?.escapeHtml(s) ?? String(s ?? '').replace(/[&<>'"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+window.esc = esc;
 const toLocalDateStr = (d = new Date()) => window.LifeOSData?.localDate(d) || new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 const today = () => toLocalDateStr();
 const dayOff = n => { const d=new Date(); d.setDate(d.getDate()+n); return toLocalDateStr(d); };
@@ -228,36 +230,75 @@ window.addEventListener('lifeos:themechange', () => {
 });
 
 /* ────────────────────────────────────────────────────────
-  SYNC
+  SYNC & OFFLINE QUEUE (P1)
 ──────────────────────────────────────────────────────── */
+window._pendingOfflineCols = window._pendingOfflineCols || new Set();
+
+window.addEventListener('offline', () => {
+  const lbl = document.getElementById('syncLbl');
+  const dot = document.querySelector('.sync-dot');
+  if (lbl) lbl.textContent = 'Ngoại tuyến';
+  if (dot) dot.style.background = 'var(--amber)';
+  if (typeof toast === 'function') toast('Mất kết nối mạng. Dữ liệu sẽ lưu tạm vào bộ nhớ và tự đồng bộ khi có mạng.', 'warning');
+});
+
+window.addEventListener('online', async () => {
+  const lbl = document.getElementById('syncLbl');
+  const dot = document.querySelector('.sync-dot');
+  if (lbl) lbl.textContent = 'Đang đồng bộ...';
+  if (dot) dot.style.background = 'var(--amber)';
+  try {
+    if (window._pendingOfflineCols && window._pendingOfflineCols.size > 0 && window.DB && typeof window.fbSaveAll === 'function') {
+      for (const col of Array.from(window._pendingOfflineCols)) {
+        if (Array.isArray(window.DB[col])) {
+          await window.fbSaveAll(col, window.DB[col]);
+          window._pendingOfflineCols.delete(col);
+        }
+      }
+    }
+    if (lbl) lbl.textContent = 'Đã đồng bộ';
+    if (dot) dot.style.background = 'var(--green)';
+    if (typeof toast === 'function') toast('Đã khôi phục kết nối mạng. Dữ liệu đã đồng bộ hoàn tất.', 'success');
+  } catch (err) {
+    console.warn('[LifeOS] Error syncing pending collections on reconnect:', err);
+    if (lbl) lbl.textContent = 'Lỗi đồng bộ';
+    if (dot) dot.style.background = 'var(--red)';
+  }
+});
+
 async function persist(col,items){
- const lbl=document.getElementById('syncLbl');
- const dot=document.querySelector('.sync-dot');
- if(lbl) lbl.textContent='Đang lưu...';
- if(dot) dot.style.background='var(--amber)';
- try {
-   if (!Array.isArray(items)) {
-    console.error(`[LifeOS Safety Guard] persist was called with non-array for collection "${col}". Blocked to prevent data wipeout!`, items);
+  const lbl=document.getElementById('syncLbl');
+  const dot=document.querySelector('.sync-dot');
+  if(lbl) lbl.textContent='Đang lưu...';
+  if(dot) dot.style.background='var(--amber)';
+  try {
+    if (!Array.isArray(items)) {
+      console.error(`[LifeOS Safety Guard] persist was called with non-array for collection "${col}". Blocked to prevent data wipeout!`, items);
+      if(lbl) lbl.textContent='Đã đồng bộ';
+      if(dot) dot.style.background='var(--green)';
+      return;
+    }
+    const clean = items.filter(x => x && typeof x === 'object');
+    if (window.DB) window.DB[col] = clean;
+    await window.fbSaveAll(col,clean);
+    if (window._pendingOfflineCols) window._pendingOfflineCols.delete(col);
     if(lbl) lbl.textContent='Đã đồng bộ';
     if(dot) dot.style.background='var(--green)';
-    return;
-   }
-   const clean = items.filter(x => x && typeof x === 'object');
-   await window.fbSaveAll(col,clean);
-  if (window.DB) window.DB[col] = clean;
-  if(lbl) lbl.textContent='Đã đồng bộ';
-  if(dot) dot.style.background='var(--green)';
- } catch (error) {
-  console.error('[LifeOS] persist error for "' + col + '":', error);
-  if(lbl) lbl.textContent='Lỗi đồng bộ';
-  if(dot) dot.style.background='var(--red)';
-  // Don't toast for every persist error - can be spammy during offline
-  // Only show once per minute
-  if (!window._lastPersistErrTime || Date.now() - window._lastPersistErrTime > 60000) {
-   window._lastPersistErrTime = Date.now();
-   toast('Không thể lưu dữ liệu "' + col + '". Kiểm tra kết nối mạng.', 'error');
+  } catch (error) {
+    console.error('[LifeOS] persist error for "' + col + '":', error);
+    if (window._pendingOfflineCols) window._pendingOfflineCols.add(col);
+    if(lbl) lbl.textContent = (typeof navigator !== 'undefined' && navigator.onLine === false) ? 'Ngoại tuyến' : 'Lỗi đồng bộ';
+    if(dot) dot.style.background = (typeof navigator !== 'undefined' && navigator.onLine === false) ? 'var(--amber)' : 'var(--red)';
+    // Don't toast for every persist error - can be spammy during offline
+    // Only show once per minute
+    if (!window._lastPersistErrTime || Date.now() - window._lastPersistErrTime > 60000) {
+      window._lastPersistErrTime = Date.now();
+      const msg = (typeof navigator !== 'undefined' && navigator.onLine === false)
+        ? 'Đang ngoại tuyến. Dữ liệu đã lưu tạm vào bộ nhớ và sẽ tự đồng bộ khi có mạng.'
+        : 'Không thể lưu dữ liệu "' + col + '". Kiểm tra kết nối mạng.';
+      if (typeof toast === 'function') toast(msg, (typeof navigator !== 'undefined' && navigator.onLine === false) ? 'warning' : 'error');
+    }
   }
- }
 }
 window.persist = persist;
 
@@ -1089,13 +1130,13 @@ function renderKanbanBoard() {
      const pNames = currentProj?.memberNames || {};
      memHtml = t.members.map(m => {
       const n = pNames[m] || m.split('@')[0];
-      return `<span style="background:var(--bg3); padding:2px 6px; border-radius:12px; font-size:10px; color:var(--text2);">${n}</span>`;
+      return `<span style="background:var(--bg3); padding:2px 6px; border-radius:12px; font-size:10px; color:var(--text2);">${esc(n)}</span>`;
      }).join('');
     }
     return `
     <div class="kcard" draggable="true" ondragstart="kDragStart(event, '${t.id}')" onclick="openProjTaskModal('${t.id}')">
      <div class="kpri pri-${(t.priority||'m')[0]}"></div>
-     <div class="kcard-title">${t.text}</div>
+     <div class="kcard-title">${esc(t.text)}</div>
      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
       <div style="display:flex; flex-wrap:wrap; gap:4px;">${memHtml}</div>
       ${t.comments && t.comments.length ? `<div style="font-size:10px;color:var(--text3);"><i data-lucide="message-circle" style="width:12px;height:12px"></i> ${t.comments.length}</div>` : ''}
@@ -1114,11 +1155,11 @@ function renderKanbanBoard() {
     const pNames = currentProj?.memberNames || {};
     memHtml = t.members.map(m => {
      const n = pNames[m] || m.split('@')[0];
-     return `<span style="background:var(--bg3); padding:2px 6px; border-radius:12px; font-size:10px; color:var(--text2); margin-right:4px;">${n}</span>`;
+     return `<span style="background:var(--bg3); padding:2px 6px; border-radius:12px; font-size:10px; color:var(--text2); margin-right:4px;">${esc(n)}</span>`;
     }).join('');
    }
    listHtml += `<tr style="border-bottom:1px solid var(--border); cursor:pointer;" onclick="openProjTaskModal('${t.id}')">
-    <td style="padding:10px; font-weight:500;">${t.text}</td>
+    <td style="padding:10px; font-weight:500;">${esc(t.text)}</td>
     <td style="padding:10px;">${t.status}</td>
     <td style="padding:10px;"><span class="badge ${t.priority==='high'?'b-red':t.priority==='low'?'b-green':'b-orange'}">${t.priority==='high'?'Cao':t.priority==='low'?'Thấp':'TB'}</span></td>
     <td style="padding:10px;">${memHtml}</td>
@@ -1193,12 +1234,14 @@ window.renderChatMessages = function(msgs) {
  
  container.innerHTML = msgs.map(m => {
   const isMe = m.sender === userIdentifier;
-  const name = isMe ? 'Bạn' : (pNames[m.sender] || m.sender.split('@')[0]);
+  const rawName = isMe ? 'Bạn' : (pNames[m.sender] || m.sender.split('@')[0]);
+  const name = (window.LifeOSData?.escapeHtml || (s => s))(rawName);
+  const text = (window.LifeOSData?.escapeHtml || (s => s))(m.text);
   return `
    <div style="display:flex; flex-direction:column; align-items: ${isMe?'flex-end':'flex-start'};">
     <span style="font-size:10px; color:var(--text3); margin-bottom:2px;">${name}</span>
     <div style="background:${isMe?'var(--accent)':'var(--bg3)'}; padding:6px 10px; border-radius:8px; max-width:85%; word-wrap:break-word;">
-     ${m.text}
+     ${text}
     </div>
    </div>
   `;
@@ -1859,7 +1902,7 @@ function renderCal(){
   const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   const isSel = ds === (selectedCalDate || t);
   const evs=(window.DB.events||[]).filter(e=>e.dateStart<=ds&&(e.dateEnd||e.dateStart)>=ds);
-  const pills=evs.slice(0,3).map(e=>`<span class="ev-pill" style="background:${EC[e.type]||'#8B5CF6'}22;color:${EC[e.type]||'#8B5CF6'}" onclick="event.stopPropagation();editEv('${e.id}')">${e.timeStart?e.timeStart+' ':''}${e.title}</span>`).join('');
+  const pills=evs.slice(0,3).map(e=>`<span class="ev-pill" style="background:${EC[e.type]||'#8B5CF6'}22;color:${EC[e.type]||'#8B5CF6'}" onclick="event.stopPropagation();editEv('${e.id}')">${e.timeStart?esc(e.timeStart)+' ':''}${esc(e.title)}</span>`).join('');
   const more=evs.length>3?`<span class="ev-pill" style="background:var(--surface-2);color:var(--text-muted)">+${evs.length-3}</span>`:'';
   
   // Responsive dots on mobile (<640px)
@@ -1958,7 +2001,7 @@ function renderWeek(){
    html += `<div class="wk-slot wk-allday-slot" style="min-height:36px;height:auto;padding:3px;display:flex;flex-direction:column;gap:2px;" onclick="openEv('${ds}')">
     ${allDayEvs.map(e => `
      <div class="wk-ev-allday" style="background:${EC[e.type]||'#7c4dff'};color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:600;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="event.stopPropagation();editEv('${e.id}')">
-      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${e.title}</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${esc(e.title)}</span>
       <button class="wk-ev-del" onclick="event.stopPropagation();delEvWithConfirm('${e.id}')" title="Xóa sự kiện" style="opacity:0.8;font-size:10px;margin-left:4px;">✕</button>
      </div>
     `).join('')}
@@ -1989,7 +2032,7 @@ function renderWeek(){
     const heightPx = Math.max(22, (dur / 60) * 49 - 2);
     return `<div class="wk-ev" style="top:${topPx}px; height:${heightPx}px; background:${EC[e.type]||'#7c4dff'}e6;color:#fff;border-left:3px solid ${EC[e.type]||'#7c4dff'}" onclick="event.stopPropagation();editEv('${e.id}')">
      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:2px;">
-      <div style="font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${e.title}</div>
+      <div style="font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${esc(e.title)}</div>
       <button class="wk-ev-del" onclick="event.stopPropagation();delEvWithConfirm('${e.id}')" title="Xóa sự kiện">✕</button>
      </div>
      ${e.timeEnd?`<div style="font-size:8.5px;opacity:0.9">${e.timeStart} - ${e.timeEnd}</div>`:''}
@@ -2238,7 +2281,7 @@ function renderOverview(){
   const projs=(window.DB.projects||[]).filter(p=>['Cần làm','Đang làm'].includes(p.status)).slice(0,5);
   if(!projs.length)op.innerHTML=`<tr><td colspan="4"><div class="empty">Chưa có dự án hoạt động</div></td></tr>`;
   else op.innerHTML=projs.map(p=>`<tr>
-   <td style="font-weight:600">${p.name}${p.tags&&p.tags.length?`<span class="badge bp" style="margin-left:6px;font-size:10px">${p.tags[0]}</span>`:''}</td>
+   <td style="font-weight:600">${esc(p.name)}${p.tags&&p.tags.length?`<span class="badge bp" style="margin-left:6px;font-size:10px">${esc(p.tags[0])}</span>`:''}</td>
    <td><span class="badge ${SB[p.status]||'bk'}">${p.status}</span></td>
    <td><div class="prog" style="width:80px"><div class="prog-fill" style="width:${p.status==='Hoàn thành'?100:p.status==='Đang làm'?55:15}%;background:${p.status==='Hoàn thành'?'var(--green)':p.status==='Đang làm'?'var(--amber)':'var(--accent)'}"></div></div></td>
    <td style="font-size:11px;color:${p.due&&p.due<today()?'var(--red)':'var(--text3)'}">${p.due?fmtDate(p.due):'—'}</td>
@@ -2437,21 +2480,21 @@ function exportReport() {
   ${projs.length ? projs.map(p=>{
    let prog = p.progress !== undefined ? p.progress : (p.status==='Hoàn thành'?100:p.status==='Đang làm'?50:0);
    return `<tr>
-    <td><b>${p.name}</b></td>
+    <td><b>${esc(p.name)}</b></td>
     <td>${p.status}</td>
     <td>${prog}%</td>
     <td>${p.budget ? fmtFull(p.budget)+' ₫' : '-'}</td>
-    <td>${p.evaluation || '-'}</td>
+    <td>${esc(p.evaluation || '-')}</td>
    </tr>`
   }).join('') : `<tr><td colspan='5'>Không có dự án nào</td></tr>`}
  </table>
 
  <h2>3. CÔNG VIỆC (TODO) VÀ SỰ KIỆN</h2>
  <p><b>Công việc (Todo):</b> Đã hoàn thành <b>${doneTodos}</b> / ${todos.length} việc.</p>
- ${recentTodos.length ? `<ul>${recentTodos.map(t=>`<li>${t.text}</li>`).join('')}</ul>` : ''}
+ ${recentTodos.length ? `<ul>${recentTodos.map(t=>`<li>${esc(t.text)}</li>`).join('')}</ul>` : ''}
  
  <p><b>Sự kiện tham gia:</b> <b>${evs.length}</b> sự kiện.</p>
- ${evs.length ? `<ul>${evs.map(e=>`<li><b>${fmtDate(e.dateStart)}</b>: ${e.title}</li>`).join('')}</ul>` : ''}
+ ${evs.length ? `<ul>${evs.map(e=>`<li><b>${fmtDate(e.dateStart)}</b>: ${esc(e.title)}</li>`).join('')}</ul>` : ''}
 
  <br><br>
  <p style='text-align:right; font-style:italic; color:#888'>Tạo bởi phần mềm quản lý LifeOS.</p>

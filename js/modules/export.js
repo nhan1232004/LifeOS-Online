@@ -46,34 +46,29 @@ window.exportAllData = function() {
     if (window.toast) window.toast('Đã tải xuống bản sao lưu (JSON)', 'success');
 };
 
+let pendingRestoreData = null;
+let pendingRestoreFilename = '';
+
 window.importAllData = function(event) {
     const file = event.target.files && event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = async function(e) {
+    reader.onload = function(e) {
         try {
             const parsed = JSON.parse(e.target.result);
-            if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) throw new Error('File không hợp lệ');
-
-            const collections = ['events', 'todos', 'projects', 'proj_tasks', 'income', 'expense', 'notes', 'habits', 'goals', 'journal', 'vocab', 'mocktests', 'jars'];
-            const pending = collections.filter(col => Array.isArray(parsed[col]));
-            const restoredCount = pending.length;
-
-            if (restoredCount === 0) {
-                toast('File không chứa dữ liệu LifeOS hợp lệ!', 'error');
+            const val = window.LifeOSData?.validateBackup 
+                ? window.LifeOSData.validateBackup(parsed) 
+                : { valid: typeof parsed === 'object' && parsed !== null, counts: {}, totalItems: 1 };
+            
+            if (!val.valid) {
+                toast(val.error || 'File không chứa dữ liệu LifeOS hợp lệ!', 'error');
                 return;
             }
 
-            // Persist each collection before changing in-memory state. This avoids a
-            // partial import that looks successful when a network write fails.
-            const nextDb = { ...(window.DB || {}) };
-            pending.forEach(col => { nextDb[col] = parsed[col].filter(x => x && typeof x === 'object'); });
-            for (const col of pending) await window.persist(col, nextDb[col]);
-            window.DB = nextDb;
-            if (window.renderAll) window.renderAll();
-            toast('Khôi phục dữ liệu thành công!', 'success');
-            closeSettings();
+            pendingRestoreData = parsed;
+            pendingRestoreFilename = file.name;
+            openRestoreConfirmModal(val.counts, val.totalItems, file.name);
         } catch (err) {
             console.error('Import error:', err);
             toast('Lỗi đọc file sao lưu: ' + err.message, 'error');
@@ -81,6 +76,98 @@ window.importAllData = function(event) {
     };
     reader.readAsText(file);
     event.target.value = ''; // Reset input
+};
+
+function openRestoreConfirmModal(counts, total, filename) {
+    const modal = document.getElementById('mRestoreConfirm');
+    if (!modal) {
+        if (confirm(`Bạn có chắc muốn khôi phục ${total} mục từ file "${filename}"?`)) {
+            executeRestore('overwrite');
+        }
+        return;
+    }
+    const nameEl = document.getElementById('restoreFileName');
+    if (nameEl) nameEl.textContent = filename;
+    const totalEl = document.getElementById('restoreTotalCount');
+    if (totalEl) totalEl.textContent = `${total} mục`;
+
+    const summaryEl = document.getElementById('restoreSummaryGrid');
+    if (summaryEl) {
+        const labels = {
+            todos: 'Việc cần làm',
+            projects: 'Dự án',
+            events: 'Lịch sự kiện',
+            notes: 'Ghi chú',
+            income: 'Khoản thu',
+            expense: 'Khoản chi',
+            habits: 'Thói quen',
+            goals: 'Mục tiêu',
+            jars: 'Hũ chi tiêu',
+            vocab: 'Từ vựng',
+            mocktests: 'Mock Tests',
+            journal: 'Nhật ký'
+        };
+        summaryEl.innerHTML = Object.entries(counts)
+            .filter(([_, count]) => count > 0)
+            .map(([col, count]) => `
+                <div style="background:var(--surface-2);padding:6px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+                    <span style="color:var(--text-secondary);">${labels[col] || col}:</span>
+                    <b style="color:var(--accent-hover);">${count}</b>
+                </div>
+            `).join('');
+    }
+
+    modal.style.display = 'flex';
+    modal.classList.add('open');
+    if (window.lucide) window.lucide.createIcons();
+}
+
+window.closeRestoreConfirmModal = function() {
+    const modal = document.getElementById('mRestoreConfirm');
+    if (modal) {
+        modal.classList.remove('open');
+        modal.style.display = 'none';
+    }
+    pendingRestoreData = null;
+    pendingRestoreFilename = '';
+};
+
+window.executeRestore = async function(mode) {
+    if (!pendingRestoreData) {
+        toast('Không có dữ liệu khôi phục', 'error');
+        return;
+    }
+    const restoreMode = mode || document.querySelector('input[name="restoreMode"]:checked')?.value || 'merge';
+    try {
+        toast('Đang khôi phục dữ liệu...', 'info');
+        let nextDb;
+        if (restoreMode === 'merge' && window.LifeOSData?.mergeBackup) {
+            nextDb = window.LifeOSData.mergeBackup(window.DB || {}, pendingRestoreData);
+        } else {
+            nextDb = { ...(window.DB || {}) };
+            const collections = window.LifeOSData?.COLLECTIONS || ['events', 'todos', 'projects', 'proj_tasks', 'income', 'expense', 'notes', 'habits', 'goals', 'journal', 'vocab', 'mocktests', 'jars'];
+            collections.forEach(col => {
+                if (Array.isArray(pendingRestoreData[col])) {
+                    nextDb[col] = pendingRestoreData[col].filter(x => x && typeof x === 'object');
+                }
+            });
+        }
+
+        const collections = window.LifeOSData?.COLLECTIONS || Object.keys(nextDb);
+        for (const col of collections) {
+            if (Array.isArray(nextDb[col])) {
+                await window.persist(col, nextDb[col]);
+            }
+        }
+        window.DB = nextDb;
+        if (window.renderAll) window.renderAll();
+        closeRestoreConfirmModal();
+        closeSettings();
+        toast('Khôi phục dữ liệu thành công!', 'success');
+    } catch (err) {
+        console.error('Execute restore error:', err);
+        toast('Lỗi lưu dữ liệu: ' + err.message, 'error');
+    }
 };
 
 window.openExportFinanceModal = function() {

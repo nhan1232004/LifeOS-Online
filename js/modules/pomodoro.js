@@ -34,6 +34,19 @@ pomWorker.onmessage = function() {
    stats.count++;
    stats.mins += Math.round(pomTime / 60);
    pomSaveStats(stats);
+
+   // Cross-module data linking: record focus session on the active task
+   if (pomActiveTaskId && window.DB && Array.isArray(window.DB.todos)) {
+     const tIdx = window.DB.todos.findIndex(t => String(t.id) === String(pomActiveTaskId));
+     if (tIdx >= 0) {
+       const task = window.DB.todos[tIdx];
+       task.pomSessions = (task.pomSessions || 0) + 1;
+       task.pomMinutes = (task.pomMinutes || 0) + Math.round(pomTime / 60);
+       window.persist('todos', window.DB.todos);
+       if (typeof window.renderPomodoroTasks === 'function') window.renderPomodoroTasks();
+     }
+   }
+
    toast('Hoàn thành phiên tập trung.', 'success');
    document.getElementById('pomodoroStatus').textContent = 'Đã hoàn thành. Chuyển sang thời gian nghỉ ngơi.';
   } else {
@@ -200,6 +213,7 @@ function renderPomodoroTasks() {
         </div>
         <div class="bento-task-name" style="flex:1;font-size:13px;font-weight:${isSelected ? '650' : '500'};color:${isSelected ? 'var(--accent-hover)' : 'var(--text-primary)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
           ${safeText}
+          ${t.pomSessions ? `<span class="badge" style="margin-left:6px;font-size:10px;padding:1px 5px;background:rgba(255,107,107,0.15);color:#FF6B6B;">🍅 ${t.pomSessions}</span>` : ''}
         </div>
         ${isSelected 
           ? `<button type="button" class="btn btn-ghost" onclick="event.stopPropagation();setPomActiveTask(null)" style="padding:2px 8px;font-size:11px;color:var(--danger);border-radius:var(--radius-sm);background:rgba(255,113,133,0.12);font-weight:600;">✕ Bỏ chọn</button>` 
@@ -218,5 +232,11 @@ function renderPomodoro() {
 
 window.setPomActiveTask = setPomActiveTask;
 window.renderPomodoroTasks = renderPomodoroTasks;
+window.startPomodoroForTodo = function(id) {
+  setPomActiveTask(id);
+  if (typeof nav === 'function') {
+    nav('pomodoro', document.querySelector('[data-page="pomodoro"]'));
+  }
+};
 
 
